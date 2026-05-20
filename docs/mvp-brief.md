@@ -242,6 +242,13 @@ Chaque ticket suit `skills/dod-team.md` :
 7. **Format du retry counter dans GitHub** : label `retry:2/3` ?
    commentaire structuré ? checkbox dans le body ?
 
+## 9bis. Label convention
+
+The full GitHub label taxonomy used by the agentic team (status, agent, retry,
+epic, size, type) and the PM's arbitration of the open questions above are
+documented in [`docs/labels.md`](./labels.md). That document is the contract the
+EPIC-1 poller and the EPIC-2 board both rely on — change it via ADR only.
+
 ## 10. Acceptance globale du MVP
 
 Le MVP est **DONE** quand :
