@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AgentDashboard.TicketTracking.Application\AgentDashboard.TicketTracking.Application.csproj" />
+    <ProjectReference Include="..\AgentDashboard.TicketTracking.Infrastructure\AgentDashboard.TicketTracking.Infrastructure.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Blazor.Redux" />
+    <PackageReference Include="AspNetCore.Localizer.Json" />
+  </ItemGroup>
+
+</Project>

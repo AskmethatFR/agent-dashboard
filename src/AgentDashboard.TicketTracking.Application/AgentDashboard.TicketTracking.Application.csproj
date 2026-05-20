@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\AgentDashboard.TicketTracking.Domain\AgentDashboard.TicketTracking.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/AgentDashboard.TicketTracking.Application/AgentDashboard.TicketTracking.Application.csproj" />
+    <Project Path="src/AgentDashboard.TicketTracking.Domain/AgentDashboard.TicketTracking.Domain.csproj" />
+    <Project Path="src/AgentDashboard.TicketTracking.Infrastructure/AgentDashboard.TicketTracking.Infrastructure.csproj" />
+    <Project Path="src/AgentDashboard.Web/AgentDashboard.Web.csproj" />
+  </Folder>
+</Solution>
