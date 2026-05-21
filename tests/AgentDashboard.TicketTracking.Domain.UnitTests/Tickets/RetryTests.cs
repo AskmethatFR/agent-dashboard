@@ -19,7 +19,7 @@ public sealed class RetryTests
     [InlineData(1)]
     [InlineData(2)]
     [InlineData(3)]
-    public void ConstructorAcceptsInRange(int value)
+    public void RetryThreeIsLastAttemptBeforeEscalation(int value)
     {
         new Retry(value).Value.Should().Be(value);
     }

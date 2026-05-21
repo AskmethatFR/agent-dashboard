@@ -29,6 +29,21 @@ public sealed class AgentIdTests
     }
 
     [Fact]
+    public void ConstructorAcceptsValueAtMaxLength()
+    {
+        var maxLength = new string('a', 64);
+        new AgentId(maxLength).Value.Should().Be(maxLength);
+    }
+
+    [Fact]
+    public void ConstructorRejectsValueOverMaxLength()
+    {
+        var tooLong = new string('a', 65);
+        var act = () => new AgentId(tooLong);
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
     public void EqualityIsByValue()
     {
         new AgentId("DA").Should().Be(new AgentId("DA"));

@@ -3,13 +3,13 @@ using AgentDashboard.TicketTracking.Domain.Tickets;
 
 namespace AgentDashboard.TicketTracking.Domain.Boards;
 
-public sealed record Board
+public sealed record BoardSnapshot
 {
     public IReadOnlyList<BoardColumn> Columns { get; }
     public IReadOnlyList<Ticket> Tickets { get; }
     public IReadOnlyList<Agent> Agents { get; }
 
-    public Board(
+    public BoardSnapshot(
         IReadOnlyList<BoardColumn> columns,
         IReadOnlyList<Ticket> tickets,
         IReadOnlyList<Agent> agents)
@@ -20,9 +20,14 @@ public sealed record Board
 
         var columnIds = columns.Select(c => c.Id).ToHashSet();
         var agentIds = agents.Select(a => a.Id).ToHashSet();
+        var seenTicketIds = new HashSet<TicketId>();
 
         foreach (var ticket in tickets)
         {
+            if (!seenTicketIds.Add(ticket.Id))
+                throw new ArgumentException(
+                    $"Duplicate ticket id {ticket.Id} in snapshot.",
+                    nameof(tickets));
             if (!columnIds.Contains(ticket.ColumnId))
                 throw new ArgumentException(
                     $"Ticket {ticket.Id} references unknown column {ticket.ColumnId}.",

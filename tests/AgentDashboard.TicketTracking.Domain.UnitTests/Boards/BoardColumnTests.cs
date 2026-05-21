@@ -27,4 +27,19 @@ public sealed class BoardColumnTests
         col.Id.Value.Should().Be("CREATED");
         col.Label.Should().Be("Created");
     }
+
+    [Fact]
+    public void ConstructorAcceptsLabelAtMaxLength()
+    {
+        var maxLength = new string('a', 128);
+        new BoardColumn(new BoardColumnId("CREATED"), maxLength).Label.Should().Be(maxLength);
+    }
+
+    [Fact]
+    public void ConstructorRejectsLabelOverMaxLength()
+    {
+        var tooLong = new string('a', 129);
+        var act = () => new BoardColumn(new BoardColumnId("CREATED"), tooLong);
+        act.Should().Throw<ArgumentException>();
+    }
 }
