@@ -9,7 +9,7 @@ public sealed class AgeTests
     {
         var act = () => new Age(TimeSpan.FromSeconds(-1));
 
-        act.Should().Throw<ArgumentOutOfRangeException>()
+        act.Should().ThrowExactly<ArgumentOutOfRangeException>()
             .WithParameterName("value");
     }
 

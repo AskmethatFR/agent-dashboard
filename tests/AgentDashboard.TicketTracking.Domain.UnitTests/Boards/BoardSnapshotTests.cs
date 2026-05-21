@@ -21,7 +21,7 @@ public sealed class BoardSnapshotTests
     {
         var act = () => new BoardSnapshot(null!, Array.Empty<Ticket>(), Array.Empty<Agent>());
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("columns");
     }
 
@@ -30,7 +30,7 @@ public sealed class BoardSnapshotTests
     {
         var act = () => new BoardSnapshot(Array.Empty<BoardColumn>(), null!, Array.Empty<Agent>());
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("tickets");
     }
 
@@ -39,7 +39,7 @@ public sealed class BoardSnapshotTests
     {
         var act = () => new BoardSnapshot(Array.Empty<BoardColumn>(), Array.Empty<Ticket>(), null!);
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("agents");
     }
 
@@ -71,7 +71,7 @@ public sealed class BoardSnapshotTests
             new[] { ticket },
             new[] { DevA() });
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().ThrowExactly<ArgumentException>()
             .WithParameterName("tickets")
             .WithMessage("*unknown column*");
     }
@@ -91,7 +91,7 @@ public sealed class BoardSnapshotTests
             new[] { ticket },
             new[] { DevA() });
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().ThrowExactly<ArgumentException>()
             .WithParameterName("tickets")
             .WithMessage("*unknown agent*");
     }
@@ -112,7 +112,7 @@ public sealed class BoardSnapshotTests
             new[] { ticket },
             new[] { DevA() });
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().ThrowExactly<ArgumentException>()
             .WithParameterName("tickets")
             .WithMessage("*unknown co-agent*");
     }
@@ -134,7 +134,7 @@ public sealed class BoardSnapshotTests
             new[] { ticket },
             new[] { DevA() });
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().ThrowExactly<ArgumentException>()
             .WithParameterName("tickets")
             .WithMessage("*unknown escalation target*");
     }
@@ -150,7 +150,7 @@ public sealed class BoardSnapshotTests
             new[] { ticketOne, ticketTwo },
             new[] { DevA() });
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().ThrowExactly<ArgumentException>()
             .WithParameterName("tickets")
             .WithMessage("*Duplicate ticket id*");
     }

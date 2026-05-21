@@ -56,7 +56,7 @@ public sealed class TicketTests
             null!, new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("id");
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("id");
     }
 
     [Fact]
@@ -66,7 +66,7 @@ public sealed class TicketTests
             new TicketId(1), null!, new TicketTitle("t"), new AgentId("DA"),
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("columnId");
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("columnId");
     }
 
     [Fact]
@@ -76,7 +76,7 @@ public sealed class TicketTests
             new TicketId(1), new BoardColumnId("CREATED"), null!, new AgentId("DA"),
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("title");
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("title");
     }
 
     [Fact]
@@ -86,7 +86,7 @@ public sealed class TicketTests
             new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), null!,
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("agentId");
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("agentId");
     }
 
     [Fact]
@@ -96,7 +96,7 @@ public sealed class TicketTests
             new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
             null!, new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("retry");
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("retry");
     }
 
     [Fact]
@@ -106,7 +106,7 @@ public sealed class TicketTests
             new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
             new Retry(0), null!, thinking: false, TicketFreshness.Neutral);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("age");
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("age");
     }
 
     [Fact]
@@ -117,7 +117,7 @@ public sealed class TicketTests
             coAgentId: null!,
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("coAgentId");
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("coAgentId");
     }
 
     [Fact]
@@ -141,7 +141,7 @@ public sealed class TicketTests
             escalationTarget: null!,
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
-        act.Should().Throw<ArgumentNullException>().WithParameterName("escalationTarget");
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("escalationTarget");
     }
 
     [Fact]
@@ -316,6 +316,22 @@ public sealed class TicketTests
             .Build();
 
         withEscalation.Should().NotBe(withoutEscalation);
+    }
+
+    [Fact]
+    public void Should_NotBeEqual_When_OnlyCrossReviewFlagsDifferOnEscalatedTicket()
+    {
+        var withoutCoAgent = new TicketBuilder()
+            .WithEscalationTarget("PM")
+            .AsEscalated()
+            .Build();
+        var withCoAgent = new TicketBuilder()
+            .WithEscalationTarget("PM")
+            .WithCoAgent("DB")
+            .AsEscalated()
+            .Build();
+
+        withCoAgent.Should().NotBe(withoutCoAgent);
     }
 
     [Fact]

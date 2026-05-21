@@ -10,7 +10,7 @@ public sealed class RetryTests
     {
         var act = () => new Retry(-1);
 
-        act.Should().Throw<ArgumentOutOfRangeException>()
+        act.Should().ThrowExactly<ArgumentOutOfRangeException>()
             .WithParameterName("value");
     }
 
@@ -31,7 +31,7 @@ public sealed class RetryTests
     {
         var act = () => new Retry(Retry.MaxBeforeEscalation + 1);
 
-        act.Should().Throw<ArgumentOutOfRangeException>()
+        act.Should().ThrowExactly<ArgumentOutOfRangeException>()
             .WithParameterName("value");
     }
 

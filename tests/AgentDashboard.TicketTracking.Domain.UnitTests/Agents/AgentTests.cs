@@ -13,7 +13,7 @@ public sealed class AgentTests
             new AgentGlyph("Da"),
             new AgentRole("Developer A"));
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("id");
     }
 
@@ -26,7 +26,7 @@ public sealed class AgentTests
             new AgentGlyph("Da"),
             new AgentRole("Developer A"));
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("name");
     }
 
@@ -39,7 +39,7 @@ public sealed class AgentTests
             null!,
             new AgentRole("Developer A"));
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("glyph");
     }
 
@@ -52,7 +52,7 @@ public sealed class AgentTests
             new AgentGlyph("Da"),
             null!);
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("role");
     }
 

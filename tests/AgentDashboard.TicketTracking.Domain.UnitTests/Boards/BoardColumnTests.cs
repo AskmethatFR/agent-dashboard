@@ -9,7 +9,7 @@ public sealed class BoardColumnTests
     {
         var act = () => new BoardColumn(null!, new BoardColumnLabel("Created"));
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("id");
     }
 
@@ -18,7 +18,7 @@ public sealed class BoardColumnTests
     {
         var act = () => new BoardColumn(new BoardColumnId("CREATED"), null!);
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("label");
     }
 

@@ -12,7 +12,7 @@ public sealed class TicketIdTests
     {
         var act = () => new TicketId(input);
 
-        act.Should().Throw<ArgumentOutOfRangeException>()
+        act.Should().ThrowExactly<ArgumentOutOfRangeException>()
             .WithParameterName("value");
     }
 
