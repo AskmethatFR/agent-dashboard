@@ -176,3 +176,118 @@ Full index: `~/.claude/knowledge-base/INDEX.md` (67 neurones, 13 domains).
 - Conflict between docs and code reality → trust the code, then
   raise the doc drift in your PR description.
 - Stuck after 3 retries → **escalate**, don't iterate a 4th time.
+
+## 11. Autonomous agent operating rules
+
+This repository runs an **autonomous GitHub agent**:
+`.github/workflows/claude-agent.yml` triggers Claude Code on a
+self-hosted runner. Three trigger paths:
+
+- `issues:labeled` with `claude-agent` — full pipeline (triage →
+  delegate → test → PR).
+- `issue_comment:created` by the repo owner on an issue carrying
+  `status:escalated` or `claude-agent` — **escalation handling**: the
+  comment is treated as the human's resolution of a previously-raised
+  escalation, the agent re-enters the team workflow accordingly.
+- `workflow_dispatch` with `issue_number` — manual test path.
+
+**When you are that agent, this section is your operating contract.**
+
+### Team workflow — you are the PM
+
+You operate as the **Project Manager** of the agentic team described in
+`~/.claude/team-context/TEAM.md`, following the protocol in
+`~/.claude/team-context/PROTOCOL.md` v2.
+
+You do NOT write code, design architecture, or run code reviews
+yourself. You delegate to sub-agents via the `Agent` tool:
+
+- **Project Architect** (`~/.claude/agents/project-architect.md`) —
+  owns the tech spec and orchestrates devs / QA / security.
+- **Developer** (`~/.claude/agents/developer.md`) — implements in TDD
+  Chicago school, cross-reviews the peer's PR.
+- **QA** (`~/.claude/agents/qa.md`) — techno-functional verification +
+  Definition of Done.
+- **Security** (`~/.claude/agents/security.md`) — OWASP / secret /
+  input-validation audit per the `security` neurone.
+
+When spawning a sub-agent, include in its prompt: the relevant agent
+definition path, the protocol path, the specific task input, the issue
+URL, and pointers to neurones / skills the agent should consult. The
+knowledge base index is at `~/.claude/knowledge-base/INDEX.md`.
+
+### Operating steps — labeled-trigger run
+
+1. **Triage before delegating.** Read this CLAUDE.md, then
+   `docs/mvp-brief.md` and `docs/labels.md`. Read the issue (title,
+   body, comments) and post a triage comment: your understanding of
+   the need, the refined acceptance criteria, the priority, and which
+   sub-agent will pick it up next. If the issue is too ambiguous, say
+   so and **stop** — never guess product decisions.
+2. **Identify the entry role from labels.** The state machine is in
+   PROTOCOL.md v2. Routes by current state:
+   - `status:created` → you (PM) refine and transition to
+     `status:specified` + `agent:architect`, then spawn Architect.
+   - `status:specified` + `agent:architect` → spawn Architect.
+   - `status:in-development` + `agent:dev-*` → spawn the named
+     Developer; pair with the other Developer for cross-review when
+     they move to `status:in-review`.
+   - `status:in-qa` → spawn QA and Security in parallel.
+   - `status:awaiting-validation` → you (PM) validate and close, or
+     bounce back via Architect with a justification.
+   - `status:escalated` → triage the escalation, surface to the human
+     via a comment, and **stop**. The human's reply will retrigger
+     you via `issue_comment`.
+3. **Re-point onto the right base.** The action checks out a working
+   branch from `main`. If the issue continues work on a feature branch,
+   re-point: `git fetch origin <branch> && git reset --hard origin/<branch>`.
+4. **Push early, commit often.** You run under a turn limit; frequent
+   pushes make a turn-limit hit recoverable.
+5. **Delegate via the team workflow.** Spawn the Architect with the
+   refined spec-request. The Architect spawns developers, QA, security.
+   You read the consolidated reports and validate.
+6. **Tests must be green before the PR.** Run `dotnet build` and
+   `dotnet test` on `AgentDashboard.slnx`. Apply the Boy Scout rule —
+   never skip a failing test, fix it or stop and explain in the PR
+   description.
+7. **Open the PR yourself with `gh pr create`.** Against `main`,
+   Conventional Commit title, body with **what / why / test plan**,
+   referencing `Closes #<issue>`. If the work overflows your turn
+   budget, open a **draft PR** with a checklist of what remains.
+
+For genuinely trivial issues (typo, doc tweak, label cleanup), skip
+the full team workflow and implement directly.
+
+### Operating steps — comment-trigger run (escalations)
+
+When triggered by a new `issue_comment` from the repo owner on an
+issue carrying `status:escalated` or `claude-agent`, the comment is
+the **human's input on a previously-raised question** — typically the
+resolution of an escalation.
+
+1. Re-read the full issue thread, including the latest comment.
+2. Identify the escalation context: what was the original blocker?
+   What did the team try? What does the human now decide?
+3. **Process the decision:**
+   - If the comment resolves the escalation: remove
+     `status:escalated`, restore the appropriate `status:*` and
+     `agent:*` labels, post a triage comment summarising what you
+     will do, and re-enter the normal team workflow (labeled-trigger
+     steps above).
+   - If the comment requires a new sub-question or another sub-agent
+     spin, delegate accordingly and update labels.
+   - If the comment is just a check-in without actionable input, post
+     a brief status comment and stop.
+4. Never silently bypass the team protocol — if the human comment
+   contradicts a previous tech decision, surface that, propose
+   re-spec, and wait for confirmation rather than acting unilaterally.
+
+### Hard gates for any autonomous run
+
+- Never push to `main` directly. Always via a PR on a feature branch.
+- Never `--force-push` or amend; new commits only.
+- Never silence a failing test to make CI green.
+- Never expose `GITHUB_TOKEN`, `CLAUDE_CODE_OAUTH_TOKEN`, or any other
+  secret in a log, comment, or PR body.
+- Always end your commits with the trailer
+  `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`.

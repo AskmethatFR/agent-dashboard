@@ -1,0 +1,85 @@
+name: Claude Agent
+
+# Agent autonome (PM de l'équipe agentique).
+#
+# Déclencheurs :
+#   - issues:labeled avec `claude-agent` : Claude triage, délègue à
+#     l'Architect (qui orchestre devs/QA/Sec), valide, ouvre la PR.
+#   - issue_comment:created par l'owner sur une issue marquée
+#     `status:escalated` ou `claude-agent` : Claude traite la réponse
+#     humaine à une escalation et relance le workflow d'équipe.
+#   - workflow_dispatch : test manuel, fournir le n° d'issue.
+#
+# Tourne sur le runner self-hosted `claude-agent` (machine de dev).
+
+on:
+  issues:
+    types: [labeled]
+  issue_comment:
+    types: [created]
+  workflow_dispatch:
+    inputs:
+      issue_number:
+        description: "Numéro de l'issue à traiter"
+        required: true
+
+# Un seul agent à la fois par issue, on n'annule pas un run en cours.
+concurrency:
+  group: claude-agent-${{ github.event.issue.number || inputs.issue_number }}
+  cancel-in-progress: false
+
+jobs:
+  claude-agent:
+    # Gate :
+    #   - dispatch manuel : toujours OK
+    #   - issues:labeled : seul le label `claude-agent` déclenche
+    #   - issue_comment : commentaire de l'owner sur une issue marquée
+    #     `claude-agent` ou `status:escalated` (gestion des escalades)
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'issues' && github.event.label.name == 'claude-agent') ||
+      (github.event_name == 'issue_comment'
+        && github.event.comment.user.login == github.event.repository.owner.login
+        && (contains(github.event.issue.labels.*.name, 'claude-agent')
+            || contains(github.event.issue.labels.*.name, 'status:escalated')))
+    runs-on: [self-hosted, claude-agent]
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write   # claude-code-action échange un token OIDC pour s'authentifier
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Run Claude
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # track_progress est supporté sur les events issue/PR/comment
+          # mais hard-fail sur workflow_dispatch — on le désactive donc
+          # uniquement pour les runs manuels.
+          track_progress: ${{ github.event_name != 'workflow_dispatch' }}
+          prompt: |
+            Tu es l'agent autonome (Project Manager) du repo
+            ${{ github.repository }}, et tu traites l'issue
+            #${{ github.event.issue.number || inputs.issue_number }}.
+
+            Ta toute première action : lis le fichier CLAUDE.md à la
+            racine du repo, en particulier la section « Autonomous agent
+            operating rules ». C'est ton contrat d'opération COMPLET —
+            triage, identification du rôle d'entrée depuis les labels,
+            délégation à l'Architect (qui orchestre devs/QA/Sec), tests,
+            ouverture de la PR. La section couvre aussi le cas spécifique
+            des escalations (déclencheur `issue_comment`).
+
+            Applique-la à la lettre. Ce prompt n'est qu'un pointeur :
+            la source de vérité est CLAUDE.md, pas ce bloc.
+
+            Event déclencheur : ${{ github.event_name }}
+            ${{ github.event_name == 'issue_comment' && format('Commentaire de : {0}', github.event.comment.user.login) || '' }}
+          claude_args: |
+            --max-turns 300
+            --allowedTools Bash,Edit,Write,Read,Glob,Grep,TodoWrite,Agent,Skill,TaskCreate,TaskUpdate,TaskList,TaskGet
