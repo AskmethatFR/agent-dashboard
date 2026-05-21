@@ -1,0 +1,15 @@
+@using AgentDashboard.Web.Components.Pages.TeamBoard
+
+<span class="agent @(Thinking ? "thinking" : string.Empty)" title="@Agent.Role — @Agent.Name">
+    <span class="agent-glyph">@Agent.Glyph</span>
+    @if (!Dense)
+    {
+        <span class="agent-name">@Agent.Name</span>
+    }
+</span>
+
+@code {
+    [Parameter, EditorRequired] public AgentInfo Agent { get; set; } = null!;
+    [Parameter] public bool Thinking { get; set; }
+    [Parameter] public bool Dense { get; set; }
+}

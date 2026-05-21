@@ -1,0 +1,17 @@
+@{
+    var cls = Retries >= 3 ? "danger" : Retries == 2 ? "warn" : "ok";
+    var tri = Retries == 0 ? string.Empty : Retries == 1 ? "△" : Retries == 2 ? "▲" : "▲▲";
+}
+
+<span class="retry @cls">
+    <span>⟳</span>
+    <span>@Retries/3</span>
+    @if (!string.IsNullOrEmpty(tri))
+    {
+        <span>@tri</span>
+    }
+</span>
+
+@code {
+    [Parameter] public int Retries { get; set; }
+}

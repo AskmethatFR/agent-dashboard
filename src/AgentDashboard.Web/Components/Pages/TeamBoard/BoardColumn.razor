@@ -1,0 +1,22 @@
+@using AgentDashboard.Web.Components.Pages.TeamBoard
+
+<div class="column">
+    <div class="column-header">
+        <h2 class="column-title">@Column.Label</h2>
+        <div class="column-meta">
+            <span>@Tickets.Count</span>
+        </div>
+    </div>
+    <div class="cards">
+        @foreach (var ticket in Tickets)
+        {
+            <TicketCard Ticket="ticket" Agents="Agents" />
+        }
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public ColumnDefinition Column { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyList<StubTicket> Tickets { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyDictionary<string, AgentInfo> Agents { get; set; } = null!;
+}

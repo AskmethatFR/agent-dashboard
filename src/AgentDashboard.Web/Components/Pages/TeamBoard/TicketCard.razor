@@ -1,0 +1,57 @@
+@using AgentDashboard.Web.Components.Pages.TeamBoard
+
+@{
+    var cardCls = new System.Text.StringBuilder("card");
+    if (Ticket.Escalated)          cardCls.Append(" escalated");
+    else if (Ticket.Retry >= 3)    cardCls.Append(" danger");
+    else if (Ticket.Retry == 2)    cardCls.Append(" warn");
+    if (!Ticket.Escalated && Ticket.Fresh) cardCls.Append(" fresh");
+    if (!Ticket.Escalated && Ticket.Stale) cardCls.Append(" stale");
+
+    var ageWarn = Ticket.Stale || System.Text.RegularExpressions.Regex.IsMatch(Ticket.Age, @"^[3-9]h") || System.Text.RegularExpressions.Regex.IsMatch(Ticket.Age, @"^\d{2,}h");
+}
+
+<div class="@cardCls" tabindex="0">
+    @if (Ticket.Escalated)
+    {
+        <div class="esc-badge">
+            <span>◆</span>
+            <span>esc → @Ticket.EscalationTarget</span>
+        </div>
+    }
+    <div class="card-head">
+        <span class="card-id mono">#@Ticket.Id</span>
+        <span class="card-title">@Ticket.Title</span>
+    </div>
+    <div class="card-meta">
+        @if (Ticket.CrossReview && Agents.TryGetValue(Ticket.AgentId, out var primaryAgent) && Ticket.CoAgentId is not null && Agents.TryGetValue(Ticket.CoAgentId, out var coAgent))
+        {
+            <span class="cross">
+                <AgentChip Agent="primaryAgent" Thinking="Ticket.Thinking" Dense="true" />
+                <span class="x">⇄</span>
+                <AgentChip Agent="coAgent" Dense="true" />
+            </span>
+        }
+        else if (Agents.TryGetValue(Ticket.AgentId, out var agent))
+        {
+            <AgentChip Agent="agent" Thinking="Ticket.Thinking" />
+        }
+        <RetryCounter Retries="Ticket.Retry" />
+        <span class="age @(ageWarn ? "warn" : string.Empty)">
+            @if (Ticket.Fresh)
+            {
+                <span>✦ </span>
+            }
+            ⏱ @Ticket.Age
+            @if (Ticket.Stale)
+            {
+                <span> · zZz</span>
+            }
+        </span>
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public StubTicket Ticket { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyDictionary<string, AgentInfo> Agents { get; set; } = null!;
+}
