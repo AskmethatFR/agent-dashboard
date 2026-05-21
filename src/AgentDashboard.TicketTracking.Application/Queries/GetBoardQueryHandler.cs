@@ -1,11 +1,11 @@
 using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Application.Queries.Dtos;
 using AgentDashboard.TicketTracking.Domain.Boards;
-using MediatR;
+using Cortex.Mediator.Queries;
 
 namespace AgentDashboard.TicketTracking.Application.Queries;
 
-public sealed class GetBoardQueryHandler : IRequestHandler<GetBoardQuery, BoardDto>
+public sealed class GetBoardQueryHandler : IQueryHandler<GetBoardQuery, BoardDto>
 {
     private readonly IBoardReader _boardReader;
 
@@ -15,7 +15,7 @@ public sealed class GetBoardQueryHandler : IRequestHandler<GetBoardQuery, BoardD
         _boardReader = boardReader;
     }
 
-    public async Task<BoardDto> Handle(GetBoardQuery request, CancellationToken cancellationToken)
+    public async Task<BoardDto> Handle(GetBoardQuery query, CancellationToken cancellationToken)
     {
         var snapshot = await _boardReader.GetCurrentAsync(cancellationToken).ConfigureAwait(false);
         return MapToDto(snapshot);

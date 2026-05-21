@@ -1,5 +1,4 @@
 using AgentDashboard.TicketTracking.Application;
-using AgentDashboard.TicketTracking.Application.Queries;
 using AgentDashboard.TicketTracking.Infrastructure;
 using AgentDashboard.Web.Components;
 
@@ -9,8 +8,6 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
-builder.Services.AddMediatR(cfg =>
-    cfg.RegisterServicesFromAssembly(typeof(GetBoardQuery).Assembly));
 builder.Services.AddTicketTrackingApplication();
 builder.Services.AddTicketTrackingInfrastructure();
 

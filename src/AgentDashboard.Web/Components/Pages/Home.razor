@@ -1,7 +1,7 @@
 @page "/"
 @using AgentDashboard.TicketTracking.Application.Queries
 @using AgentDashboard.TicketTracking.Application.Queries.Dtos
-@using MediatR
+@using Cortex.Mediator
 @rendermode InteractiveServer
 @inject IMediator Mediator
 
@@ -30,6 +30,6 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        Board = await Mediator.Send(new GetBoardQuery());
+        Board = await Mediator.SendQueryAsync<GetBoardQuery, BoardDto>(new GetBoardQuery(), CancellationToken.None);
     }
 }

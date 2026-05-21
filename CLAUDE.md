@@ -25,7 +25,7 @@ the human only acts on the Escalation Inbox.
 | Front | **Blazor Server** (Interactive Server) | SignalR built-in, single deploy unit, no SPA split |
 | State management (Blazor) | `Blazor.Redux` 0.1.0 | Owner's own library, predictable store pattern |
 | i18n | `AspNetCore.Localizer.Json` 1.0.4 | Owner's own library, EN + FR from MVP |
-| CQRS | `MediatR` 13 | Standard, in-process bus, no broker |
+| CQRS | `Cortex.Mediator` 3.1.2 | MIT, explicit `IQuery`/`ICommand` split, no broker (see ADR-003) |
 | Persistence | **SQLite** (single file) | Zero external service, OSS-friendly |
 | Read-side | `Dapper` | Lightweight, paired with EF Core for writes |
 | GitHub API | `Octokit` | Standard .NET client |

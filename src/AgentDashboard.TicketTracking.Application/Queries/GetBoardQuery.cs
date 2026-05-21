@@ -1,6 +1,6 @@
 using AgentDashboard.TicketTracking.Application.Queries.Dtos;
-using MediatR;
+using Cortex.Mediator.Queries;
 
 namespace AgentDashboard.TicketTracking.Application.Queries;
 
-public sealed record GetBoardQuery : IRequest<BoardDto>;
+public sealed record GetBoardQuery : IQuery<BoardDto>;
