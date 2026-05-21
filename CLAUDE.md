@@ -163,7 +163,7 @@ Full index: `~/.claude/knowledge-base/INDEX.md` (67 neurones, 13 domains).
 - **Don't bypass `Directory.Packages.props`** — every package version
   is centralised. Adding a version in a `csproj` breaks the build.
 - **Don't write LINQ-heavy queries in Razor components.** Reads go
-  through MediatR queries against Dapper-backed read models.
+  through Cortex.Mediator queries against Dapper-backed read models.
 - **Don't write multi-paragraph XML doc comments.** One-liner max,
   only when the *why* is non-obvious. Self-documenting code first.
 - **Don't ship a commit that breaks `dotnet build`.** Local CI gate:

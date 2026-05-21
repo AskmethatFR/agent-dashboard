@@ -28,7 +28,7 @@ acts is the Escalation Inbox.
 
 ## Stack
 
-- **Backend:** .NET 10 + ASP.NET Core + MediatR (CQRS)
+- **Backend:** .NET 10 + ASP.NET Core + Cortex.Mediator (CQRS)
 - **Frontend:** Blazor Server (Interactive Server) — SignalR for live updates
 - **Persistence:** SQLite single-file (writes, reads, event store) — no external service
 - **Ingestion:** GitHub polling (no inbound webhook) + Claude Code transcript tailer
