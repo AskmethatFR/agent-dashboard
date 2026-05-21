@@ -115,9 +115,12 @@ are ignored.
 ### Open questions left for the human (deferred)
 - Q4 — Live refresh mechanism (Blazor circuit vs SignalR hub) → **Architect's
   call**, will be settled in the EPIC-2 tech spec.
-- Q5 — GitHub rate-limit handling beyond 5000 req/h (multi-instance, org-level
-  limits) → **deferred to v1.0 final**, MVP assumes a single instance with a
-  personal/installation token.
+- Q5 — GitHub rate-limit handling — **RESOLVED by scope change (2026-05-21).**
+  Polling default lowered from 60s to 600s (10 min), min 300s, with a manual
+  refresh button always available in the topbar. At ~6 req/h the 5000 req/h
+  cap is no longer a concern even with several instances on the same token.
+  ETag / conditional requests remain a defensive nice-to-have but are not a
+  scope driver anymore.
 - Q6 — Initial historical window for closed tickets at startup → **defaulted to
   7 days**, configurable via `INITIAL_HISTORY_DAYS` (env). Will be confirmed in
   EPIC-1 tech spec.

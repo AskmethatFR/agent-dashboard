@@ -28,7 +28,9 @@ quoi que ce soit ailleurs que sur ta machine."
 ## 3. Scope IN — ce qui doit être livré
 
 - **Polling GitHub Issues** d'un repo configuré, toutes les N secondes
-  (défaut 60s), pour récupérer les tickets actifs et leur état
+  (défaut **600s / 10 min**), pour récupérer les tickets actifs et leur état
+- **Bouton de refresh manuel** dans la topbar, toujours dispo,
+  qui force un poll immédiat hors planning
 - **Persistance SQLite** (single file, dans un volume monté)
 - **Page Team Board** servie en Blazor Server, affichant les tickets
   groupés par statut (7 colonnes selon la state machine)
@@ -67,7 +69,10 @@ quoi que ce soit ailleurs que sur ta machine."
 
 **Acceptance criteria à refiner :**
 - Un worker en arrière-plan poll l'API GitHub à un intervalle configurable
-  (défaut 60s, min 30s pour respecter le rate-limit)
+  (**défaut 600s / 10 min, min 300s / 5 min**). À cette fréquence le quota
+  GitHub n'est plus une contrainte (~6 req/h sur 5000/h disponibles).
+- Le worker peut aussi être déclenché à la demande (refresh manuel
+  depuis l'UI) — un poll out-of-band ne réinitialise PAS la planification
 - Chaque Issue ouverte du repo configuré devient un `Ticket` côté SQLite
 - L'état du ticket dérive du label GitHub `status:*` (mapping configurable)
 - Le compteur de retry dérive d'un label `retry:N` ou d'un champ équivalent
@@ -106,7 +111,9 @@ historique au-delà du current state.
   - Stale (> seuil configurable, défaut 3h) : indicateur `zZz`
   - Escalated : badge `◆ esc → <agent cible>`
 - Top bar avec brand `team/`, navigation (autres écrans = liens vers
-  pages placeholder "coming soon" pour v1.1+), horloge UTC live
+  pages placeholder "coming soon" pour v1.1+), horloge UTC live,
+  **et un bouton de refresh manuel** qui déclenche un poll immédiat
+  via l'ingestion (EPIC-1) et rafraîchit le board
 - Design system : IBM Plex Sans + Mono, dark mode, tokens portés depuis
   `design/styles.css`
 - Mise à jour live : quand l'ingestion détecte un changement, la page
@@ -141,7 +148,7 @@ sans recompilation.
 - Variables d'environnement :
   - `GITHUB_TOKEN` (obligatoire, fail-fast si absent)
   - `GITHUB_REPO` (format `owner/repo`, obligatoire)
-  - `POLL_INTERVAL_SECONDS` (optionnel, défaut 60)
+  - `POLL_INTERVAL_SECONDS` (optionnel, défaut 600, min 300)
   - `DASHBOARD_PORT` (optionnel, défaut 8080)
   - `DATA_PATH` (optionnel, défaut `/data`)
 - Validation des configs au démarrage avec messages d'erreur clairs
