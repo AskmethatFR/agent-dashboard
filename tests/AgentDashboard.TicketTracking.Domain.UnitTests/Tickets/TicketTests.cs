@@ -266,22 +266,56 @@ public sealed class TicketTests
         a.Should().Be(b);
     }
 
-    [Fact]
-    public void Should_NotBeEqual_When_IdsDiffer()
-    {
-        var a = new TicketBuilder().WithId(1).AsOpen().Build();
-        var b = new TicketBuilder().WithId(2).AsOpen().Build();
+    public static IEnumerable<object[]> NotEqualVariants() =>
+    [
+        ["Id"],
+        ["ColumnId"],
+        ["Title"],
+        ["AgentId"],
+        ["Retry"],
+        ["Age"],
+        ["IsThinking"],
+        ["Freshness"],
+        ["CoAgentAndCrossReview"],
+        ["EscalationTargetAndEscalated"],
+    ];
 
-        a.Should().NotBe(b);
+    [Theory]
+    [MemberData(nameof(NotEqualVariants))]
+    public void Should_NotBeEqual_When_PropertyDiffers(string property)
+    {
+        var baseTicket = new TicketBuilder().Build();
+        var modified = ApplyDivergence(new TicketBuilder(), property).Build();
+
+        modified.Should().NotBe(baseTicket, $"differing {property} should break equality");
     }
 
-    [Fact]
-    public void Should_NotBeEqual_When_TitlesDiffer()
+    private static TicketBuilder ApplyDivergence(TicketBuilder builder, string property) => property switch
     {
-        var a = new TicketBuilder().WithTitle("alpha").AsOpen().Build();
-        var b = new TicketBuilder().WithTitle("beta").AsOpen().Build();
+        "Id" => builder.WithId(99),
+        "ColumnId" => builder.WithColumn("DONE"),
+        "Title" => builder.WithTitle("other"),
+        "AgentId" => builder.WithAgent("DB"),
+        "Retry" => builder.WithRetry(3),
+        "Age" => builder.WithAge(TimeSpan.FromHours(5)),
+        "IsThinking" => builder.WithThinking(true),
+        "Freshness" => builder.WithFreshness(TicketFreshness.Fresh),
+        "CoAgentAndCrossReview" => builder.WithCoAgent("DB").AsInCrossReview(),
+        "EscalationTargetAndEscalated" => builder.WithEscalationTarget("PM").AsEscalated(),
+        _ => throw new ArgumentOutOfRangeException(nameof(property), property, "Unknown divergence"),
+    };
 
-        a.Should().NotBe(b);
+    [Fact]
+    public void Should_NotBeEqual_When_OnlyEscalationFlagsDifferOnCrossReviewedTicket()
+    {
+        var withoutEscalation = new TicketBuilder().WithCoAgent("DB").AsInCrossReview().Build();
+        var withEscalation = new TicketBuilder()
+            .WithCoAgent("DB")
+            .WithEscalationTarget("PM")
+            .AsInCrossReview()
+            .Build();
+
+        withEscalation.Should().NotBe(withoutEscalation);
     }
 
     [Fact]

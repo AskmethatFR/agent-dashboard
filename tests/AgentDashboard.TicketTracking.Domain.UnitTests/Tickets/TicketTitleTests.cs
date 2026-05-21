@@ -9,7 +9,7 @@ public sealed class TicketTitleTests
     {
         var act = () => new TicketTitle(null!);
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("value");
     }
 
@@ -21,7 +21,7 @@ public sealed class TicketTitleTests
     {
         var act = () => new TicketTitle(input);
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().ThrowExactly<ArgumentException>()
             .WithParameterName("value");
     }
 
@@ -46,7 +46,7 @@ public sealed class TicketTitleTests
 
         var act = () => new TicketTitle(tooLong);
 
-        act.Should().Throw<ArgumentOutOfRangeException>()
+        act.Should().ThrowExactly<ArgumentOutOfRangeException>()
             .WithParameterName("value");
     }
 
@@ -75,10 +75,8 @@ public sealed class TicketTitleTests
     {
         var act = () => new TicketTitle(input);
 
-        act.Should().Throw<ArgumentException>()
-            .WithParameterName("value")
-            .Which.Should().NotBeOfType<ArgumentNullException>()
-            .And.NotBeOfType<ArgumentOutOfRangeException>();
+        act.Should().ThrowExactly<ArgumentException>()
+            .WithParameterName("value");
     }
 
     [Fact]

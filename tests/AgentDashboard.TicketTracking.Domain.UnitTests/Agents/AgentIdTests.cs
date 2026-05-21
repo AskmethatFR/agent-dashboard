@@ -9,7 +9,7 @@ public sealed class AgentIdTests
     {
         var act = () => new AgentId(null!);
 
-        act.Should().Throw<ArgumentNullException>()
+        act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("value");
     }
 
@@ -21,7 +21,7 @@ public sealed class AgentIdTests
     {
         var act = () => new AgentId(input);
 
-        act.Should().Throw<ArgumentException>()
+        act.Should().ThrowExactly<ArgumentException>()
             .WithParameterName("value");
     }
 
@@ -46,7 +46,7 @@ public sealed class AgentIdTests
 
         var act = () => new AgentId(tooLong);
 
-        act.Should().Throw<ArgumentOutOfRangeException>()
+        act.Should().ThrowExactly<ArgumentOutOfRangeException>()
             .WithParameterName("value");
     }
 
