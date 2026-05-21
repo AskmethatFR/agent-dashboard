@@ -5,4 +5,7 @@
     <Project Path="src/AgentDashboard.TicketTracking.Infrastructure/AgentDashboard.TicketTracking.Infrastructure.csproj" />
     <Project Path="src/AgentDashboard.Web/AgentDashboard.Web.csproj" />
   </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/AgentDashboard.Web.Tests/AgentDashboard.Web.Tests.csproj" />
+  </Folder>
 </Solution>
