@@ -295,3 +295,78 @@ resolution of an escalation.
   secret in a log, comment, or PR body.
 - Always end your commits with the trailer
   `Co-Authored-By: Claude Opus 4.7 (1M context) <noreply@anthropic.com>`.
+
+## 12. Test bar — project-local quality gate
+
+This repo enforces test quality through **two layers** that both apply.
+The mechanical gate catches gross coverage drops; the review-time rules
+catch the kind of test theatre that line coverage misses (e.g. 3
+structural tests "covering" a component with 6 conditional branches).
+
+### 12.1 Mechanical gate (CI, non-negotiable)
+
+`.github/workflows/ci.yml` runs `dotnet test` with `coverlet.msbuild`
+and **fails the build** when either threshold is missed:
+
+| Metric | Threshold |
+|---|---|
+| Line coverage (total) | **80%** |
+| Branch coverage (total) | **80%** |
+
+This is the **floor**, not the target. Do not lower it to make CI
+green — write the missing tests, or reduce the diff. If a class is
+genuinely impossible to test (e.g. `Program.cs` composition root),
+exclude it explicitly via coverlet attributes / `ExcludeByFile`, not
+by lowering the threshold.
+
+### 12.2 Review-time rules (human + QA agent judgment)
+
+The coverage gate alone is gameable — these rules close the gaps:
+
+- **Every conditional branch introduced by a PR must have a test that
+  fails when the branch is inverted.** Stricter than line coverage:
+  an `@if` block with no `@else` still has two branches.
+- **Structural assertions do not count as covering logic.** "The page
+  renders 7 columns" verifies the layout exists; it does not verify
+  any computation, regex, severity-class cascade, or conditional
+  render. If a `.razor` contains `@if`, ternaries, regex, or a `class`
+  builder, it needs behavior tests, not just structure tests.
+- **One test file per unit that carries logic.** Pages aggregate;
+  tests live next to the unit they exercise (`TicketCardTests`,
+  `AgentChipTests`, `RetryCounterTests`), not all dumped in
+  `TeamBoardPageTests`.
+- **Stub / seed data is part of the contract.** Static fixtures like
+  `StubTickets` must have cohesion tests: every referenced id resolves,
+  every documented invariant holds (`CrossReview ⇒ CoAgentId != null`,
+  every `ColumnId` exists in `Columns`, every `AgentId` exists in
+  `Agents`). Otherwise they silently rot.
+- **Tests must be Chicago-school as defined in
+  `tests/chicago-school.md`.** Real collaborators, state-based asserts,
+  no domain mocking.
+
+### 12.3 What the QA sub-agent must enforce on every PR
+
+Before signing off, the QA agent walks the diff and reports:
+
+1. List every conditional branch (`if/else`, ternary, switch, regex,
+   `class` builder, null-check guard) introduced by the diff.
+2. For each, name the test that pins it. Missing → **reject**.
+3. Re-run `dotnet test` locally: pass = green AND both 80% thresholds
+   met. Threshold drop ≥ 2 pts vs `main` → **reject** even if still
+   above 80%.
+4. Flag any test that asserts only structure (`HaveCount`, `Contain`
+   on a layout string) when the code under test has conditional
+   behavior — this is the most common failure mode and must be
+   rejected.
+
+"Tests pass + coverage above threshold" is **necessary but not
+sufficient**. The QA agent reads the diff against the test file.
+
+### 12.4 Out of scope for MVP (future hardening)
+
+- Mutation testing via Stryker.NET — run nightly or behind a
+  `mutate` label, not on every PR (too slow).
+- Per-assembly thresholds — Domain and Application should be higher
+  than Web once they exist.
+- Branch coverage delta enforcement via `reportgenerator` historical
+  diff.
