@@ -104,7 +104,7 @@ public sealed class GetBoardQueryHandlerShould
         var dto = await handler.Handle(new GetBoardQuery(), CancellationToken.None);
 
         string[] expectedCreatedTitles = ["alpha", "gamma"];
-        dto.Columns[0].Tickets.Select(t => t.Title).Should().BeEquivalentTo(expectedCreatedTitles);
+        dto.Columns[0].Tickets.Select(t => t.Title).Should().Equal(expectedCreatedTitles);
         dto.Columns[1].Tickets.Select(t => t.Title).Should().Equal("beta");
     }
 
