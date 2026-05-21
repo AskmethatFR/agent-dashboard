@@ -6,43 +6,42 @@ namespace AgentDashboard.TicketTracking.Domain.UnitTests.Tickets;
 
 public sealed class TicketTests
 {
-    private static TicketId AnyId() => new(1);
-    private static BoardColumnId AnyColumn() => new("CREATED");
-    private static AgentId DevA() => new("DA");
-    private static AgentId DevB() => new("DB");
-    private static AgentId Pm() => new("PM");
-    private static Retry Zero() => new(0);
-    private static Age TenMinutes() => new(TimeSpan.FromMinutes(10));
-
     [Fact]
-    public void OpenBuildsTicketWithoutCoAgentNorEscalation()
+    public void Should_LeaveCoAgentNull_When_OpenedWithoutPair()
     {
-        var ticket = Ticket.Open(
-            AnyId(), AnyColumn(), "any title", DevA(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
+        var ticket = new TicketBuilder().AsOpen().Build();
 
         ticket.CoAgentId.Should().BeNull();
         ticket.IsInCrossReview.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Should_LeaveEscalationNull_When_OpenedWithoutEscalation()
+    {
+        var ticket = new TicketBuilder().AsOpen().Build();
+
         ticket.IsEscalated.Should().BeFalse();
         ticket.EscalationTarget.Should().BeNull();
     }
 
     [Fact]
-    public void OpenAssignsAllProperties()
+    public void Should_AssignAllProperties_When_Built()
     {
-        var ticket = Ticket.Open(
-            new TicketId(42),
-            new BoardColumnId("IN_DEVELOPMENT"),
-            "implement feature",
-            DevA(),
-            new Retry(1),
-            new Age(TimeSpan.FromHours(1)),
-            thinking: true,
-            TicketFreshness.Fresh);
+        var ticket = new TicketBuilder()
+            .WithId(42)
+            .WithColumn("IN_DEVELOPMENT")
+            .WithTitle("implement feature")
+            .WithAgent("DA")
+            .WithRetry(1)
+            .WithAge(TimeSpan.FromHours(1))
+            .WithThinking(true)
+            .WithFreshness(TicketFreshness.Fresh)
+            .AsOpen()
+            .Build();
 
         ticket.Id.Value.Should().Be(42);
         ticket.ColumnId.Value.Should().Be("IN_DEVELOPMENT");
-        ticket.Title.Should().Be("implement feature");
+        ticket.Title.Value.Should().Be("implement feature");
         ticket.AgentId.Value.Should().Be("DA");
         ticket.Retry.Value.Should().Be(1);
         ticket.Age.Value.Should().Be(TimeSpan.FromHours(1));
@@ -51,190 +50,159 @@ public sealed class TicketTests
     }
 
     [Fact]
-    public void InCrossReviewRequiresCoAgent()
+    public void Should_Throw_ArgumentNullException_When_OpenedWithNullId()
     {
-        var act = () => Ticket.InCrossReview(
-            AnyId(), AnyColumn(), "t", DevA(),
-            coAgentId: null!,
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentNullException>();
+        var act = () => Ticket.Open(
+            null!, new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
+            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("id");
     }
 
     [Fact]
-    public void InCrossReviewBuildsTicketWithCoAgentAndCrossReviewFlag()
+    public void Should_Throw_ArgumentNullException_When_OpenedWithNullColumnId()
     {
-        var ticket = Ticket.InCrossReview(
-            AnyId(), AnyColumn(), "t", DevA(), DevB(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
+        var act = () => Ticket.Open(
+            new TicketId(1), null!, new TicketTitle("t"), new AgentId("DA"),
+            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
-        ticket.CoAgentId.Should().Be(DevB());
+        act.Should().Throw<ArgumentNullException>().WithParameterName("columnId");
+    }
+
+    [Fact]
+    public void Should_Throw_ArgumentNullException_When_OpenedWithNullTitle()
+    {
+        var act = () => Ticket.Open(
+            new TicketId(1), new BoardColumnId("CREATED"), null!, new AgentId("DA"),
+            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("title");
+    }
+
+    [Fact]
+    public void Should_Throw_ArgumentNullException_When_OpenedWithNullAgentId()
+    {
+        var act = () => Ticket.Open(
+            new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), null!,
+            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("agentId");
+    }
+
+    [Fact]
+    public void Should_Throw_ArgumentNullException_When_OpenedWithNullRetry()
+    {
+        var act = () => Ticket.Open(
+            new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
+            null!, new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("retry");
+    }
+
+    [Fact]
+    public void Should_Throw_ArgumentNullException_When_OpenedWithNullAge()
+    {
+        var act = () => Ticket.Open(
+            new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
+            new Retry(0), null!, thinking: false, TicketFreshness.Neutral);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("age");
+    }
+
+    [Fact]
+    public void Should_Throw_ArgumentNullException_When_InCrossReviewWithoutCoAgent()
+    {
+        var act = () => Ticket.InCrossReview(
+            new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
+            coAgentId: null!,
+            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("coAgentId");
+    }
+
+    [Fact]
+    public void Should_SetCrossReviewFlag_When_BuiltInCrossReview()
+    {
+        var ticket = new TicketBuilder()
+            .WithCoAgent("DB")
+            .AsInCrossReview()
+            .Build();
+
+        ticket.CoAgentId.Should().Be(new AgentId("DB"));
         ticket.IsInCrossReview.Should().BeTrue();
         ticket.IsEscalated.Should().BeFalse();
     }
 
     [Fact]
-    public void EscalatedRequiresEscalationTarget()
+    public void Should_Throw_ArgumentNullException_When_EscalatedWithoutEscalationTarget()
     {
         var act = () => Ticket.Escalated(
-            AnyId(), AnyColumn(), "t", DevA(),
+            new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
             escalationTarget: null!,
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentNullException>();
+            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
+
+        act.Should().Throw<ArgumentNullException>().WithParameterName("escalationTarget");
     }
 
     [Fact]
-    public void EscalatedBuildsTicketWithEscalationTargetAndFlag()
+    public void Should_SetEscalatedFlag_When_BuiltEscalated()
     {
-        var ticket = Ticket.Escalated(
-            AnyId(), AnyColumn(), "t", DevA(), Pm(),
-            new Retry(3), TenMinutes(), thinking: false, TicketFreshness.Neutral);
+        var ticket = new TicketBuilder()
+            .WithEscalationTarget("PM")
+            .WithRetry(3)
+            .AsEscalated()
+            .Build();
 
-        ticket.EscalationTarget.Should().Be(Pm());
+        ticket.EscalationTarget.Should().Be(new AgentId("PM"));
         ticket.IsEscalated.Should().BeTrue();
         ticket.IsInCrossReview.Should().BeFalse();
     }
 
     [Fact]
-    public void InCrossReviewMayAlsoBeEscalated()
+    public void Should_BeBothEscalatedAndInCrossReview_When_InCrossReviewWithEscalationTarget()
     {
-        var ticket = Ticket.InCrossReview(
-            AnyId(), AnyColumn(), "t", DevA(), DevB(),
-            new Retry(3), TenMinutes(), thinking: false, TicketFreshness.Neutral,
-            escalationTarget: Pm());
+        var ticket = new TicketBuilder()
+            .WithCoAgent("DB")
+            .WithEscalationTarget("PM")
+            .WithRetry(3)
+            .AsInCrossReview()
+            .Build();
 
         ticket.IsInCrossReview.Should().BeTrue();
         ticket.IsEscalated.Should().BeTrue();
-        ticket.CoAgentId.Should().Be(DevB());
-        ticket.EscalationTarget.Should().Be(Pm());
+        ticket.CoAgentId.Should().Be(new AgentId("DB"));
+        ticket.EscalationTarget.Should().Be(new AgentId("PM"));
     }
 
     [Fact]
-    public void EscalatedMayAlsoBeInCrossReview()
+    public void Should_BeBothEscalatedAndInCrossReview_When_EscalatedWithCoAgent()
     {
-        var ticket = Ticket.Escalated(
-            AnyId(), AnyColumn(), "t", DevA(), Pm(),
-            new Retry(3), TenMinutes(), thinking: false, TicketFreshness.Neutral,
-            coAgentId: DevB());
+        var ticket = new TicketBuilder()
+            .WithCoAgent("DB")
+            .WithEscalationTarget("PM")
+            .WithRetry(3)
+            .AsEscalated()
+            .Build();
 
         ticket.IsInCrossReview.Should().BeTrue();
         ticket.IsEscalated.Should().BeTrue();
-        ticket.CoAgentId.Should().Be(DevB());
-        ticket.EscalationTarget.Should().Be(Pm());
+        ticket.CoAgentId.Should().Be(new AgentId("DB"));
+        ticket.EscalationTarget.Should().Be(new AgentId("PM"));
     }
 
     [Fact]
-    public void OpenRejectsNullId()
+    public void Should_AcceptFreshFreshness_When_Open()
     {
-        var act = () => Ticket.Open(
-            null!, AnyColumn(), "t", DevA(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentNullException>();
-    }
+        var ticket = new TicketBuilder().WithFreshness(TicketFreshness.Fresh).AsOpen().Build();
 
-    [Fact]
-    public void OpenRejectsNullColumnId()
-    {
-        var act = () => Ticket.Open(
-            AnyId(), null!, "t", DevA(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentNullException>();
-    }
-
-    [Fact]
-    public void OpenRejectsNullAgentId()
-    {
-        var act = () => Ticket.Open(
-            AnyId(), AnyColumn(), "t", null!,
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentNullException>();
-    }
-
-    [Fact]
-    public void OpenRejectsNullRetry()
-    {
-        var act = () => Ticket.Open(
-            AnyId(), AnyColumn(), "t", DevA(),
-            null!, TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentNullException>();
-    }
-
-    [Fact]
-    public void OpenRejectsNullAge()
-    {
-        var act = () => Ticket.Open(
-            AnyId(), AnyColumn(), "t", DevA(),
-            Zero(), null!, thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentNullException>();
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData("\t")]
-    public void OpenRejectsEmptyTitle(string title)
-    {
-        var act = () => Ticket.Open(
-            AnyId(), AnyColumn(), title, DevA(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public void OpenRejectsNullTitle()
-    {
-        var act = () => Ticket.Open(
-            AnyId(), AnyColumn(), null!, DevA(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public void OpenAcceptsTitleAtMaxLength()
-    {
-        var maxTitle = new string('a', Ticket.MaxTitleLength);
-        var ticket = Ticket.Open(
-            AnyId(), AnyColumn(), maxTitle, DevA(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        ticket.Title.Should().Be(maxTitle);
-    }
-
-    [Fact]
-    public void OpenRejectsTitleOverMaxLength()
-    {
-        var tooLong = new string('a', Ticket.MaxTitleLength + 1);
-        var act = () => Ticket.Open(
-            AnyId(), AnyColumn(), tooLong, DevA(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Theory]
-    [InlineData("hello\nworld")]
-    [InlineData("carriage\rreturn")]
-    [InlineData("null\0byte")]
-    public void OpenRejectsControlCharactersInTitle(string title)
-    {
-        var act = () => Ticket.Open(
-            AnyId(), AnyColumn(), title, DevA(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Fact]
-    public void OpenAcceptsFreshFreshness()
-    {
-        var ticket = Ticket.Open(
-            AnyId(), AnyColumn(), "t", DevA(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Fresh);
         ticket.Freshness.Should().Be(TicketFreshness.Fresh);
     }
 
     [Fact]
-    public void OpenAcceptsStaleFreshness()
+    public void Should_AcceptStaleFreshness_When_Open()
     {
-        var ticket = Ticket.Open(
-            AnyId(), AnyColumn(), "t", DevA(),
-            Zero(), TenMinutes(), thinking: false, TicketFreshness.Stale);
+        var ticket = new TicketBuilder().WithFreshness(TicketFreshness.Stale).AsOpen().Build();
+
         ticket.Freshness.Should().Be(TicketFreshness.Stale);
     }
 
@@ -246,15 +214,12 @@ public sealed class TicketTests
     [InlineData(0, true,  TicketSeverity.Escalated)]
     [InlineData(2, true,  TicketSeverity.Escalated)]
     [InlineData(3, true,  TicketSeverity.Escalated)]
-    public void SeverityFollowsCascade(int retry, bool escalated, TicketSeverity expected)
+    public void Should_DeriveSeverity_When_RetryAndEscalationVary(int retry, bool escalated, TicketSeverity expected)
     {
+        var builder = new TicketBuilder().WithRetry(retry);
         var ticket = escalated
-            ? Ticket.Escalated(
-                AnyId(), AnyColumn(), "t", DevA(), Pm(),
-                new Retry(retry), TenMinutes(), thinking: false, TicketFreshness.Neutral)
-            : Ticket.Open(
-                AnyId(), AnyColumn(), "t", DevA(),
-                new Retry(retry), TenMinutes(), thinking: false, TicketFreshness.Neutral);
+            ? builder.WithEscalationTarget("PM").AsEscalated().Build()
+            : builder.AsOpen().Build();
 
         ticket.Severity.Should().Be(expected);
     }
@@ -263,23 +228,23 @@ public sealed class TicketTests
     [InlineData(false, TicketFreshness.Neutral)]
     [InlineData(true,  TicketFreshness.Fresh)]
     [InlineData(false, TicketFreshness.Stale)]
-    public void SeverityIsUnaffectedByThinkingAndFreshness(bool thinking, TicketFreshness freshness)
+    public void Should_KeepSeverityIndependentOfThinkingAndFreshness(bool thinking, TicketFreshness freshness)
     {
-        var ticket = Ticket.Open(
-            AnyId(), AnyColumn(), "t", DevA(),
-            new Retry(2), TenMinutes(), thinking, freshness);
+        var ticket = new TicketBuilder()
+            .WithRetry(2)
+            .WithThinking(thinking)
+            .WithFreshness(freshness)
+            .AsOpen()
+            .Build();
+
         ticket.Severity.Should().Be(TicketSeverity.Warn);
     }
 
     [Fact]
-    public void SeverityIsUnaffectedByCrossReview()
+    public void Should_KeepSeverityIndependentOfCrossReview()
     {
-        var solo = Ticket.Open(
-            AnyId(), AnyColumn(), "t", DevA(),
-            new Retry(2), TenMinutes(), thinking: false, TicketFreshness.Neutral);
-        var paired = Ticket.InCrossReview(
-            AnyId(), AnyColumn(), "t", DevA(), DevB(),
-            new Retry(2), TenMinutes(), thinking: false, TicketFreshness.Neutral);
+        var solo = new TicketBuilder().WithRetry(2).AsOpen().Build();
+        var paired = new TicketBuilder().WithRetry(2).WithCoAgent("DB").AsInCrossReview().Build();
 
         solo.Severity.Should().Be(paired.Severity);
     }

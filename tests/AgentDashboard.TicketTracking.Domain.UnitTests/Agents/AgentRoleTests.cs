@@ -2,12 +2,12 @@ using AgentDashboard.TicketTracking.Domain.Agents;
 
 namespace AgentDashboard.TicketTracking.Domain.UnitTests.Agents;
 
-public sealed class AgentIdTests
+public sealed class AgentRoleTests
 {
     [Fact]
     public void Should_Throw_ArgumentNullException_When_ValueIsNull()
     {
-        var act = () => new AgentId(null!);
+        var act = () => new AgentRole(null!);
 
         act.Should().Throw<ArgumentNullException>()
             .WithParameterName("value");
@@ -19,7 +19,7 @@ public sealed class AgentIdTests
     [InlineData("\t")]
     public void Should_Throw_ArgumentException_When_ValueIsEmptyOrWhitespace(string input)
     {
-        var act = () => new AgentId(input);
+        var act = () => new AgentRole(input);
 
         act.Should().Throw<ArgumentException>()
             .WithParameterName("value");
@@ -28,23 +28,23 @@ public sealed class AgentIdTests
     [Fact]
     public void Should_Accept_When_ValueLengthIsOne()
     {
-        new AgentId("a").Value.Should().Be("a");
+        new AgentRole("r").Value.Should().Be("r");
     }
 
     [Fact]
     public void Should_Accept_When_ValueLengthIsExactlyMaxLength()
     {
-        var atMax = new string('a', AgentId.MaxLength);
+        var atMax = new string('r', AgentRole.MaxLength);
 
-        new AgentId(atMax).Value.Should().Be(atMax);
+        new AgentRole(atMax).Value.Should().Be(atMax);
     }
 
     [Fact]
     public void Should_Throw_ArgumentOutOfRangeException_When_ValueLengthIsAboveMaxLength()
     {
-        var tooLong = new string('a', AgentId.MaxLength + 1);
+        var tooLong = new string('r', AgentRole.MaxLength + 1);
 
-        var act = () => new AgentId(tooLong);
+        var act = () => new AgentRole(tooLong);
 
         act.Should().Throw<ArgumentOutOfRangeException>()
             .WithParameterName("value");
@@ -53,7 +53,7 @@ public sealed class AgentIdTests
     [Fact]
     public void Should_ExposeMaxLength_As_StaticReadonly_NotConst()
     {
-        var field = typeof(AgentId).GetField(nameof(AgentId.MaxLength));
+        var field = typeof(AgentRole).GetField(nameof(AgentRole.MaxLength));
 
         field.Should().NotBeNull();
         field!.IsInitOnly.Should().BeTrue();
@@ -61,40 +61,47 @@ public sealed class AgentIdTests
     }
 
     [Fact]
+    public void Should_HaveMaxLength_Of_64()
+    {
+        AgentRole.MaxLength.Should().Be(64);
+    }
+
+    [Fact]
     public void Should_PreserveValue_WithoutTrimming_When_ValueHasSurroundingSpaces()
     {
-        new AgentId(" DA ").Value.Should().Be(" DA ");
+        new AgentRole(" Developer ").Value.Should().Be(" Developer ");
     }
 
     [Fact]
     public void Should_BeCaseSensitive_When_ComparingTwoInstances()
     {
-        new AgentId("DA").Should().NotBe(new AgentId("da"));
+        new AgentRole("Developer").Should().NotBe(new AgentRole("developer"));
     }
 
     [Fact]
     public void Should_BeEqual_When_TwoInstancesHaveSameValue()
     {
-        new AgentId("DA").Should().Be(new AgentId("DA"));
+        new AgentRole("Developer").Should().Be(new AgentRole("Developer"));
     }
 
     [Fact]
     public void Should_NotBeEqual_When_TwoInstancesHaveDifferentValues()
     {
-        new AgentId("DA").Should().NotBe(new AgentId("DB"));
+        new AgentRole("Developer").Should().NotBe(new AgentRole("QA"));
     }
 
     [Fact]
     public void Should_ProduceEqualHashCodes_When_TwoInstancesHaveSameValue()
     {
-        new AgentId("DA").GetHashCode().Should().Be(new AgentId("DA").GetHashCode());
+        new AgentRole("Developer").GetHashCode()
+            .Should().Be(new AgentRole("Developer").GetHashCode());
     }
 
     [Fact]
     public void Should_BeSymmetric_When_ComparingEqualInstances()
     {
-        var a = new AgentId("DA");
-        var b = new AgentId("DA");
+        var a = new AgentRole("Developer");
+        var b = new AgentRole("Developer");
 
         a.Equals(b).Should().Be(b.Equals(a));
         a.Equals(b).Should().BeTrue();
@@ -103,18 +110,18 @@ public sealed class AgentIdTests
     [Fact]
     public void Should_ReturnFalse_When_EqualsCalledWithNull()
     {
-        new AgentId("DA").Equals(null).Should().BeFalse();
+        new AgentRole("Developer").Equals(null).Should().BeFalse();
     }
 
     [Fact]
     public void Should_ReturnFalse_When_EqualsCalledWithStringOfSameValue()
     {
-        new AgentId("DA").Equals("DA").Should().BeFalse();
+        new AgentRole("Developer").Equals("Developer").Should().BeFalse();
     }
 
     [Fact]
     public void Should_ReturnValue_When_ToStringIsCalled()
     {
-        new AgentId("DA").ToString().Should().Be("DA");
+        new AgentRole("Developer").ToString().Should().Be("Developer");
     }
 }

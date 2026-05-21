@@ -1,20 +1,21 @@
 namespace AgentDashboard.TicketTracking.Domain.Boards;
 
-public sealed record BoardColumnId
+public sealed record BoardColumnLabel
 {
-    public static readonly int MaxLength = 64;
+    public static readonly int MaxLength = 128;
 
     public string Value { get; }
 
-    public BoardColumnId(string value)
+    public BoardColumnLabel(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("BoardColumnId cannot be empty.", nameof(value));
+            throw new ArgumentException("Column label cannot be empty.", nameof(value));
         if (value.Length > MaxLength)
             throw new ArgumentOutOfRangeException(
                 nameof(value),
-                $"BoardColumnId cannot exceed {MaxLength} characters.");
+                $"Column label cannot exceed {MaxLength} characters.");
+
         Value = value;
     }
 

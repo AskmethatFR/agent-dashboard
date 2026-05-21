@@ -1,148 +1,192 @@
 using AgentDashboard.TicketTracking.Domain.Agents;
 using AgentDashboard.TicketTracking.Domain.Boards;
 using AgentDashboard.TicketTracking.Domain.Tickets;
+using AgentDashboard.TicketTracking.Domain.UnitTests.Agents;
+using AgentDashboard.TicketTracking.Domain.UnitTests.Tickets;
 
 namespace AgentDashboard.TicketTracking.Domain.UnitTests.Boards;
 
 public sealed class BoardSnapshotTests
 {
-    private static Agent DevA() => new(new AgentId("DA"), "DevA", "Da", "Developer A");
-    private static Agent DevB() => new(new AgentId("DB"), "DevB", "Db", "Developer B");
-    private static Agent Pm() => new(new AgentId("PM"), "PM", "PM", "Project Manager");
+    private static Agent DevA() => new AgentBuilder().WithId("DA").WithName("DevA").WithGlyph("Da").WithRole("Developer A").Build();
+    private static Agent DevB() => new AgentBuilder().WithId("DB").WithName("DevB").WithGlyph("Db").WithRole("Developer B").Build();
+    private static Agent Pm() => new AgentBuilder().WithId("PM").WithName("PM").WithGlyph("PM").WithRole("Project Manager").Build();
 
-    private static BoardColumn CreatedCol() => new(new BoardColumnId("CREATED"), "Created");
-    private static BoardColumn DevCol() => new(new BoardColumnId("IN_DEVELOPMENT"), "In Development");
-    private static BoardColumn QaCol() => new(new BoardColumnId("IN_QA"), "In QA");
-
-    private static Ticket SimpleTicket(int id, BoardColumnId column, AgentId owner) =>
-        Ticket.Open(
-            new TicketId(id), column, "t", owner,
-            new Retry(0), new Age(TimeSpan.Zero),
-            thinking: false, TicketFreshness.Neutral);
+    private static BoardColumn CreatedColumn() => new(new BoardColumnId("CREATED"), new BoardColumnLabel("Created"));
+    private static BoardColumn DevColumn() => new(new BoardColumnId("IN_DEVELOPMENT"), new BoardColumnLabel("In Development"));
+    private static BoardColumn QaColumn() => new(new BoardColumnId("IN_QA"), new BoardColumnLabel("In QA"));
 
     [Fact]
-    public void RejectsNullColumns()
+    public void Should_Throw_ArgumentNullException_When_ColumnsIsNull()
     {
         var act = () => new BoardSnapshot(null!, Array.Empty<Ticket>(), Array.Empty<Agent>());
-        act.Should().Throw<ArgumentNullException>();
+
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("columns");
     }
 
     [Fact]
-    public void RejectsNullTickets()
+    public void Should_Throw_ArgumentNullException_When_TicketsIsNull()
     {
         var act = () => new BoardSnapshot(Array.Empty<BoardColumn>(), null!, Array.Empty<Agent>());
-        act.Should().Throw<ArgumentNullException>();
+
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("tickets");
     }
 
     [Fact]
-    public void RejectsNullAgents()
+    public void Should_Throw_ArgumentNullException_When_AgentsIsNull()
     {
         var act = () => new BoardSnapshot(Array.Empty<BoardColumn>(), Array.Empty<Ticket>(), null!);
-        act.Should().Throw<ArgumentNullException>();
+
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("agents");
     }
 
     [Fact]
-    public void AcceptsEmptySnapshot()
+    public void Should_BuildEmptySnapshot_When_AllCollectionsAreEmpty()
     {
         var snapshot = new BoardSnapshot(
             Array.Empty<BoardColumn>(),
             Array.Empty<Ticket>(),
             Array.Empty<Agent>());
+
         snapshot.Columns.Should().BeEmpty();
         snapshot.Tickets.Should().BeEmpty();
         snapshot.Agents.Should().BeEmpty();
     }
 
     [Fact]
-    public void RejectsTicketReferencingUnknownColumn()
+    public void Should_Throw_ArgumentException_When_TicketReferencesUnknownColumn()
     {
-        var ticket = Ticket.Open(
-            new TicketId(1), new BoardColumnId("MISSING"), "t", new AgentId("DA"),
-            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
+        var ticket = new TicketBuilder()
+            .WithId(1)
+            .WithColumn("MISSING")
+            .WithAgent("DA")
+            .AsOpen()
+            .Build();
+
         var act = () => new BoardSnapshot(
-            new[] { CreatedCol() },
+            new[] { CreatedColumn() },
             new[] { ticket },
             new[] { DevA() });
-        act.Should().Throw<ArgumentException>().WithMessage("*unknown column*");
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("tickets")
+            .WithMessage("*unknown column*");
     }
 
     [Fact]
-    public void RejectsTicketReferencingUnknownAgent()
+    public void Should_Throw_ArgumentException_When_TicketReferencesUnknownAgent()
     {
-        var act = () => new BoardSnapshot(
-            new[] { CreatedCol() },
-            new[] { SimpleTicket(1, new BoardColumnId("CREATED"), new AgentId("GHOST")) },
-            new[] { DevA() });
-        act.Should().Throw<ArgumentException>().WithMessage("*unknown agent*");
-    }
+        var ticket = new TicketBuilder()
+            .WithId(1)
+            .WithColumn("CREATED")
+            .WithAgent("GHOST")
+            .AsOpen()
+            .Build();
 
-    [Fact]
-    public void RejectsTicketReferencingUnknownCoAgent()
-    {
-        var ticket = Ticket.InCrossReview(
-            new TicketId(1), new BoardColumnId("CREATED"), "t",
-            new AgentId("DA"), new AgentId("GHOST"),
-            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
         var act = () => new BoardSnapshot(
-            new[] { CreatedCol() },
+            new[] { CreatedColumn() },
             new[] { ticket },
             new[] { DevA() });
-        act.Should().Throw<ArgumentException>().WithMessage("*unknown co-agent*");
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("tickets")
+            .WithMessage("*unknown agent*");
     }
 
     [Fact]
-    public void RejectsTicketReferencingUnknownEscalationTarget()
+    public void Should_Throw_ArgumentException_When_TicketReferencesUnknownCoAgent()
     {
-        var ticket = Ticket.Escalated(
-            new TicketId(1), new BoardColumnId("CREATED"), "t",
-            new AgentId("DA"), new AgentId("GHOST"),
-            new Retry(3), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
+        var ticket = new TicketBuilder()
+            .WithId(1)
+            .WithColumn("CREATED")
+            .WithAgent("DA")
+            .WithCoAgent("GHOST")
+            .AsInCrossReview()
+            .Build();
+
         var act = () => new BoardSnapshot(
-            new[] { CreatedCol() },
+            new[] { CreatedColumn() },
             new[] { ticket },
             new[] { DevA() });
-        act.Should().Throw<ArgumentException>().WithMessage("*unknown escalation target*");
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("tickets")
+            .WithMessage("*unknown co-agent*");
     }
 
     [Fact]
-    public void RejectsDuplicateTicketIds()
+    public void Should_Throw_ArgumentException_When_TicketReferencesUnknownEscalationTarget()
     {
-        var t1 = SimpleTicket(1, new BoardColumnId("CREATED"), new AgentId("DA"));
-        var t2 = SimpleTicket(1, new BoardColumnId("CREATED"), new AgentId("DA"));
+        var ticket = new TicketBuilder()
+            .WithId(1)
+            .WithColumn("CREATED")
+            .WithAgent("DA")
+            .WithEscalationTarget("GHOST")
+            .WithRetry(3)
+            .AsEscalated()
+            .Build();
+
         var act = () => new BoardSnapshot(
-            new[] { CreatedCol() },
-            new[] { t1, t2 },
+            new[] { CreatedColumn() },
+            new[] { ticket },
             new[] { DevA() });
-        act.Should().Throw<ArgumentException>().WithMessage("*Duplicate ticket id*");
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("tickets")
+            .WithMessage("*unknown escalation target*");
     }
 
     [Fact]
-    public void AcceptsCoherentSnapshot()
+    public void Should_Throw_ArgumentException_When_TwoTicketsShareSameId()
     {
-        var ticket = Ticket.InCrossReview(
-            new TicketId(1), new BoardColumnId("CREATED"), "t",
-            new AgentId("DA"), new AgentId("DB"),
-            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral,
-            escalationTarget: new AgentId("PM"));
+        var ticketOne = new TicketBuilder().WithId(1).WithColumn("CREATED").WithAgent("DA").AsOpen().Build();
+        var ticketTwo = new TicketBuilder().WithId(1).WithColumn("CREATED").WithAgent("DA").AsOpen().Build();
+
+        var act = () => new BoardSnapshot(
+            new[] { CreatedColumn() },
+            new[] { ticketOne, ticketTwo },
+            new[] { DevA() });
+
+        act.Should().Throw<ArgumentException>()
+            .WithParameterName("tickets")
+            .WithMessage("*Duplicate ticket id*");
+    }
+
+    [Fact]
+    public void Should_BuildSnapshot_When_AllReferencesAreCoherent()
+    {
+        var ticket = new TicketBuilder()
+            .WithId(1)
+            .WithColumn("CREATED")
+            .WithAgent("DA")
+            .WithCoAgent("DB")
+            .WithEscalationTarget("PM")
+            .AsInCrossReview()
+            .Build();
+
         var snapshot = new BoardSnapshot(
-            new[] { CreatedCol() },
+            new[] { CreatedColumn() },
             new[] { ticket },
             new[] { DevA(), DevB(), Pm() });
+
         snapshot.Tickets.Should().HaveCount(1);
         snapshot.Columns.Should().HaveCount(1);
         snapshot.Agents.Should().HaveCount(3);
     }
 
     [Fact]
-    public void AcceptsMultipleTicketsAcrossColumnsAndAgents()
+    public void Should_BuildSnapshot_When_MultipleTicketsAcrossColumnsAndAgents()
     {
-        var t1 = SimpleTicket(1, new BoardColumnId("CREATED"), new AgentId("DA"));
-        var t2 = SimpleTicket(2, new BoardColumnId("IN_DEVELOPMENT"), new AgentId("DB"));
-        var t3 = SimpleTicket(3, new BoardColumnId("IN_QA"), new AgentId("PM"));
+        var ticketOne = new TicketBuilder().WithId(1).WithColumn("CREATED").WithAgent("DA").AsOpen().Build();
+        var ticketTwo = new TicketBuilder().WithId(2).WithColumn("IN_DEVELOPMENT").WithAgent("DB").AsOpen().Build();
+        var ticketThree = new TicketBuilder().WithId(3).WithColumn("IN_QA").WithAgent("PM").AsOpen().Build();
 
         var snapshot = new BoardSnapshot(
-            new[] { CreatedCol(), DevCol(), QaCol() },
-            new[] { t1, t2, t3 },
+            new[] { CreatedColumn(), DevColumn(), QaColumn() },
+            new[] { ticketOne, ticketTwo, ticketThree },
             new[] { DevA(), DevB(), Pm() });
 
         int[] expectedTicketIds = [1, 2, 3];

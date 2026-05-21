@@ -2,16 +2,19 @@ namespace AgentDashboard.TicketTracking.Domain.Agents;
 
 public sealed record AgentId
 {
-    public const int MaxLength = 64;
+    public static readonly int MaxLength = 64;
 
     public string Value { get; }
 
     public AgentId(string value)
     {
+        ArgumentNullException.ThrowIfNull(value);
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("AgentId cannot be empty.", nameof(value));
         if (value.Length > MaxLength)
-            throw new ArgumentException($"AgentId cannot exceed {MaxLength} characters.", nameof(value));
+            throw new ArgumentOutOfRangeException(
+                nameof(value),
+                $"AgentId cannot exceed {MaxLength} characters.");
         Value = value;
     }
 

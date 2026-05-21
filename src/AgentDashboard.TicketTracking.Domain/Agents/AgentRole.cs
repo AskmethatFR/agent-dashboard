@@ -1,20 +1,21 @@
-namespace AgentDashboard.TicketTracking.Domain.Boards;
+namespace AgentDashboard.TicketTracking.Domain.Agents;
 
-public sealed record BoardColumnId
+public sealed record AgentRole
 {
     public static readonly int MaxLength = 64;
 
     public string Value { get; }
 
-    public BoardColumnId(string value)
+    public AgentRole(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
         if (string.IsNullOrWhiteSpace(value))
-            throw new ArgumentException("BoardColumnId cannot be empty.", nameof(value));
+            throw new ArgumentException("Agent role cannot be empty.", nameof(value));
         if (value.Length > MaxLength)
             throw new ArgumentOutOfRangeException(
                 nameof(value),
-                $"BoardColumnId cannot exceed {MaxLength} characters.");
+                $"Agent role cannot exceed {MaxLength} characters.");
+
         Value = value;
     }
 

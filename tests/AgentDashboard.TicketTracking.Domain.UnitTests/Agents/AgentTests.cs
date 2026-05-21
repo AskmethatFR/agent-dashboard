@@ -4,88 +4,133 @@ namespace AgentDashboard.TicketTracking.Domain.UnitTests.Agents;
 
 public sealed class AgentTests
 {
-    private static AgentId AnyId() => new("DA");
-
     [Fact]
-    public void ConstructorRejectsNullId()
+    public void Should_Throw_ArgumentNullException_When_IdIsNull()
     {
-        var act = () => new Agent(null!, "DevA", "Da", "Developer A");
-        act.Should().Throw<ArgumentNullException>();
-    }
+        var act = () => new Agent(
+            null!,
+            new AgentName("DevA"),
+            new AgentGlyph("Da"),
+            new AgentRole("Developer A"));
 
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData(null)]
-    public void ConstructorRejectsEmptyName(string? name)
-    {
-        var act = () => new Agent(AnyId(), name!, "Da", "Developer A");
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData(null)]
-    public void ConstructorRejectsEmptyGlyph(string? glyph)
-    {
-        var act = () => new Agent(AnyId(), "DevA", glyph!, "Developer A");
-        act.Should().Throw<ArgumentException>();
-    }
-
-    [Theory]
-    [InlineData("")]
-    [InlineData(" ")]
-    [InlineData(null)]
-    public void ConstructorRejectsEmptyRole(string? role)
-    {
-        var act = () => new Agent(AnyId(), "DevA", "Da", role!);
-        act.Should().Throw<ArgumentException>();
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("id");
     }
 
     [Fact]
-    public void ConstructorBuildsValidAgent()
+    public void Should_Throw_ArgumentNullException_When_NameIsNull()
     {
-        var agent = new Agent(new AgentId("DA"), "DevA", "Da", "Developer A");
-        agent.Id.Value.Should().Be("DA");
-        agent.Name.Should().Be("DevA");
-        agent.Glyph.Should().Be("Da");
-        agent.Role.Should().Be("Developer A");
+        var act = () => new Agent(
+            new AgentId("DA"),
+            null!,
+            new AgentGlyph("Da"),
+            new AgentRole("Developer A"));
+
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("name");
     }
 
     [Fact]
-    public void ConstructorAcceptsFieldsAtMaxLength()
+    public void Should_Throw_ArgumentNullException_When_GlyphIsNull()
     {
-        var name = new string('n', Agent.MaxNameLength);
-        var glyph = new string('g', Agent.MaxGlyphLength);
-        var role = new string('r', Agent.MaxRoleLength);
-        var agent = new Agent(AnyId(), name, glyph, role);
-        agent.Name.Should().Be(name);
-        agent.Glyph.Should().Be(glyph);
-        agent.Role.Should().Be(role);
+        var act = () => new Agent(
+            new AgentId("DA"),
+            new AgentName("DevA"),
+            null!,
+            new AgentRole("Developer A"));
+
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("glyph");
     }
 
     [Fact]
-    public void ConstructorRejectsNameOverMaxLength()
+    public void Should_Throw_ArgumentNullException_When_RoleIsNull()
     {
-        var tooLong = new string('n', Agent.MaxNameLength + 1);
-        var act = () => new Agent(AnyId(), tooLong, "Da", "Developer A");
-        act.Should().Throw<ArgumentException>();
+        var act = () => new Agent(
+            new AgentId("DA"),
+            new AgentName("DevA"),
+            new AgentGlyph("Da"),
+            null!);
+
+        act.Should().Throw<ArgumentNullException>()
+            .WithParameterName("role");
     }
 
     [Fact]
-    public void ConstructorRejectsGlyphOverMaxLength()
+    public void Should_ExposeAllProperties_When_Built()
     {
-        var tooLong = new string('g', Agent.MaxGlyphLength + 1);
-        var act = () => new Agent(AnyId(), "DevA", tooLong, "Developer A");
-        act.Should().Throw<ArgumentException>();
+        var agent = new AgentBuilder()
+            .WithId("DA")
+            .WithName("DevA")
+            .WithGlyph("Da")
+            .WithRole("Developer A")
+            .Build();
+
+        agent.Id.Should().Be(new AgentId("DA"));
+        agent.Name.Should().Be(new AgentName("DevA"));
+        agent.Glyph.Should().Be(new AgentGlyph("Da"));
+        agent.Role.Should().Be(new AgentRole("Developer A"));
     }
 
     [Fact]
-    public void ConstructorRejectsRoleOverMaxLength()
+    public void Should_BeEqual_When_TwoAgentsHaveSameProperties()
     {
-        var tooLong = new string('r', Agent.MaxRoleLength + 1);
-        var act = () => new Agent(AnyId(), "DevA", "Da", tooLong);
-        act.Should().Throw<ArgumentException>();
+        var first = new AgentBuilder().Build();
+        var second = new AgentBuilder().Build();
+
+        first.Should().Be(second);
+    }
+
+    [Fact]
+    public void Should_NotBeEqual_When_IdsDiffer()
+    {
+        var first = new AgentBuilder().WithId("DA").Build();
+        var second = new AgentBuilder().WithId("DB").Build();
+
+        first.Should().NotBe(second);
+    }
+
+    [Fact]
+    public void Should_NotBeEqual_When_NamesDiffer()
+    {
+        var first = new AgentBuilder().WithName("DevA").Build();
+        var second = new AgentBuilder().WithName("DevX").Build();
+
+        first.Should().NotBe(second);
+    }
+
+    [Fact]
+    public void Should_ProduceEqualHashCodes_When_TwoAgentsHaveSameProperties()
+    {
+        var first = new AgentBuilder().Build();
+        var second = new AgentBuilder().Build();
+
+        first.GetHashCode().Should().Be(second.GetHashCode());
+    }
+
+    [Fact]
+    public void Should_BeSymmetric_When_ComparingTwoEqualAgents()
+    {
+        var first = new AgentBuilder().Build();
+        var second = new AgentBuilder().Build();
+
+        first.Equals(second).Should().Be(second.Equals(first));
+        first.Equals(second).Should().BeTrue();
+    }
+
+    [Fact]
+    public void Should_ReturnFalse_When_EqualsCalledWithNull()
+    {
+        var agent = new AgentBuilder().Build();
+
+        agent.Equals(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Should_ReturnFalse_When_EqualsCalledWithDifferentType()
+    {
+        var agent = new AgentBuilder().Build();
+
+        agent.Equals("DevA").Should().BeFalse();
     }
 }

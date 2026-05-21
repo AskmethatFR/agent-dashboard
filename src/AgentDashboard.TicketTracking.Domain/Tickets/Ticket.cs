@@ -5,11 +5,9 @@ namespace AgentDashboard.TicketTracking.Domain.Tickets;
 
 public sealed record Ticket
 {
-    public const int MaxTitleLength = 512;
-
     public TicketId Id { get; }
     public BoardColumnId ColumnId { get; }
-    public string Title { get; }
+    public TicketTitle Title { get; }
     public AgentId AgentId { get; }
     public AgentId? CoAgentId { get; }
     public bool IsInCrossReview { get; }
@@ -23,7 +21,7 @@ public sealed record Ticket
     private Ticket(
         TicketId id,
         BoardColumnId columnId,
-        string title,
+        TicketTitle title,
         AgentId agentId,
         AgentId? coAgentId,
         bool crossReview,
@@ -51,7 +49,7 @@ public sealed record Ticket
     public static Ticket Open(
         TicketId id,
         BoardColumnId columnId,
-        string title,
+        TicketTitle title,
         AgentId agentId,
         Retry retry,
         Age age,
@@ -69,7 +67,7 @@ public sealed record Ticket
     public static Ticket InCrossReview(
         TicketId id,
         BoardColumnId columnId,
-        string title,
+        TicketTitle title,
         AgentId agentId,
         AgentId coAgentId,
         Retry retry,
@@ -91,7 +89,7 @@ public sealed record Ticket
     public static Ticket Escalated(
         TicketId id,
         BoardColumnId columnId,
-        string title,
+        TicketTitle title,
         AgentId agentId,
         AgentId escalationTarget,
         Retry retry,
@@ -118,29 +116,16 @@ public sealed record Ticket
     private static void GuardCommonInputs(
         TicketId id,
         BoardColumnId columnId,
-        string title,
+        TicketTitle title,
         AgentId agentId,
         Retry retry,
         Age age)
     {
         ArgumentNullException.ThrowIfNull(id);
         ArgumentNullException.ThrowIfNull(columnId);
+        ArgumentNullException.ThrowIfNull(title);
         ArgumentNullException.ThrowIfNull(agentId);
         ArgumentNullException.ThrowIfNull(retry);
         ArgumentNullException.ThrowIfNull(age);
-        GuardTitle(title);
-    }
-
-    private static void GuardTitle(string title)
-    {
-        if (string.IsNullOrWhiteSpace(title))
-            throw new ArgumentException("Ticket title cannot be empty.", nameof(title));
-        if (title.Length > MaxTitleLength)
-            throw new ArgumentException($"Ticket title cannot exceed {MaxTitleLength} characters.", nameof(title));
-        foreach (var c in title)
-        {
-            if (char.IsControl(c) && c != '\t')
-                throw new ArgumentException("Ticket title cannot contain control characters.", nameof(title));
-        }
     }
 }

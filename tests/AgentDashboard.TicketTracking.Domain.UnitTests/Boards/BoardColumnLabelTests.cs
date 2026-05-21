@@ -1,13 +1,13 @@
-using AgentDashboard.TicketTracking.Domain.Agents;
+using AgentDashboard.TicketTracking.Domain.Boards;
 
-namespace AgentDashboard.TicketTracking.Domain.UnitTests.Agents;
+namespace AgentDashboard.TicketTracking.Domain.UnitTests.Boards;
 
-public sealed class AgentIdTests
+public sealed class BoardColumnLabelTests
 {
     [Fact]
     public void Should_Throw_ArgumentNullException_When_ValueIsNull()
     {
-        var act = () => new AgentId(null!);
+        var act = () => new BoardColumnLabel(null!);
 
         act.Should().Throw<ArgumentNullException>()
             .WithParameterName("value");
@@ -19,7 +19,7 @@ public sealed class AgentIdTests
     [InlineData("\t")]
     public void Should_Throw_ArgumentException_When_ValueIsEmptyOrWhitespace(string input)
     {
-        var act = () => new AgentId(input);
+        var act = () => new BoardColumnLabel(input);
 
         act.Should().Throw<ArgumentException>()
             .WithParameterName("value");
@@ -28,23 +28,23 @@ public sealed class AgentIdTests
     [Fact]
     public void Should_Accept_When_ValueLengthIsOne()
     {
-        new AgentId("a").Value.Should().Be("a");
+        new BoardColumnLabel("a").Value.Should().Be("a");
     }
 
     [Fact]
     public void Should_Accept_When_ValueLengthIsExactlyMaxLength()
     {
-        var atMax = new string('a', AgentId.MaxLength);
+        var atMax = new string('l', BoardColumnLabel.MaxLength);
 
-        new AgentId(atMax).Value.Should().Be(atMax);
+        new BoardColumnLabel(atMax).Value.Should().Be(atMax);
     }
 
     [Fact]
     public void Should_Throw_ArgumentOutOfRangeException_When_ValueLengthIsAboveMaxLength()
     {
-        var tooLong = new string('a', AgentId.MaxLength + 1);
+        var tooLong = new string('l', BoardColumnLabel.MaxLength + 1);
 
-        var act = () => new AgentId(tooLong);
+        var act = () => new BoardColumnLabel(tooLong);
 
         act.Should().Throw<ArgumentOutOfRangeException>()
             .WithParameterName("value");
@@ -53,7 +53,7 @@ public sealed class AgentIdTests
     [Fact]
     public void Should_ExposeMaxLength_As_StaticReadonly_NotConst()
     {
-        var field = typeof(AgentId).GetField(nameof(AgentId.MaxLength));
+        var field = typeof(BoardColumnLabel).GetField(nameof(BoardColumnLabel.MaxLength));
 
         field.Should().NotBeNull();
         field!.IsInitOnly.Should().BeTrue();
@@ -61,40 +61,47 @@ public sealed class AgentIdTests
     }
 
     [Fact]
+    public void Should_HaveMaxLength_Of_128()
+    {
+        BoardColumnLabel.MaxLength.Should().Be(128);
+    }
+
+    [Fact]
     public void Should_PreserveValue_WithoutTrimming_When_ValueHasSurroundingSpaces()
     {
-        new AgentId(" DA ").Value.Should().Be(" DA ");
+        new BoardColumnLabel(" Created ").Value.Should().Be(" Created ");
     }
 
     [Fact]
     public void Should_BeCaseSensitive_When_ComparingTwoInstances()
     {
-        new AgentId("DA").Should().NotBe(new AgentId("da"));
+        new BoardColumnLabel("Created").Should().NotBe(new BoardColumnLabel("created"));
     }
 
     [Fact]
     public void Should_BeEqual_When_TwoInstancesHaveSameValue()
     {
-        new AgentId("DA").Should().Be(new AgentId("DA"));
+        new BoardColumnLabel("Created").Should().Be(new BoardColumnLabel("Created"));
     }
 
     [Fact]
     public void Should_NotBeEqual_When_TwoInstancesHaveDifferentValues()
     {
-        new AgentId("DA").Should().NotBe(new AgentId("DB"));
+        new BoardColumnLabel("Created").Should().NotBe(new BoardColumnLabel("Done"));
     }
 
     [Fact]
     public void Should_ProduceEqualHashCodes_When_TwoInstancesHaveSameValue()
     {
-        new AgentId("DA").GetHashCode().Should().Be(new AgentId("DA").GetHashCode());
+        new BoardColumnLabel("Created").GetHashCode()
+            .Should().Be(new BoardColumnLabel("Created").GetHashCode());
     }
 
     [Fact]
     public void Should_BeSymmetric_When_ComparingEqualInstances()
     {
-        var a = new AgentId("DA");
-        var b = new AgentId("DA");
+        var a = new BoardColumnLabel("Created");
+        var b = new BoardColumnLabel("Created");
 
         a.Equals(b).Should().Be(b.Equals(a));
         a.Equals(b).Should().BeTrue();
@@ -103,18 +110,18 @@ public sealed class AgentIdTests
     [Fact]
     public void Should_ReturnFalse_When_EqualsCalledWithNull()
     {
-        new AgentId("DA").Equals(null).Should().BeFalse();
+        new BoardColumnLabel("Created").Equals(null).Should().BeFalse();
     }
 
     [Fact]
     public void Should_ReturnFalse_When_EqualsCalledWithStringOfSameValue()
     {
-        new AgentId("DA").Equals("DA").Should().BeFalse();
+        new BoardColumnLabel("Created").Equals("Created").Should().BeFalse();
     }
 
     [Fact]
     public void Should_ReturnValue_When_ToStringIsCalled()
     {
-        new AgentId("DA").ToString().Should().Be("DA");
+        new BoardColumnLabel("Created").ToString().Should().Be("Created");
     }
 }
