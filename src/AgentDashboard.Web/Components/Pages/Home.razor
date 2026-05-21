@@ -1,7 +1,39 @@
-﻿@page "/"
+@page "/"
 
-<PageTitle>Home</PageTitle>
+@{
+    var byCol = StubTickets.Columns.ToDictionary(
+        col => col.Id,
+        col => (IReadOnlyList<StubTicket>)StubTickets.Tickets.Where(t => t.ColumnId == col.Id).ToList());
 
-<h1>Hello, world!</h1>
+    var activeCount  = StubTickets.Tickets.Count(t => t.ColumnId != "DONE");
+    var escCount     = StubTickets.Tickets.Count(t => t.Escalated);
+    var staleCount   = StubTickets.Tickets.Count(t => t.Stale);
+    var totalCount   = StubTickets.Tickets.Count;
+}
 
-Welcome to your new app.
+<PageTitle>team/ — Board</PageTitle>
+
+<div class="app">
+    <TopBar />
+
+    <div class="board-wrap">
+        <div class="board-header">
+            <div class="counts">
+                <span><strong>@activeCount</strong> active</span>
+                <span class="esc"><strong>@escCount</strong> escalated</span>
+                <span class="stale"><strong>@staleCount</strong> stale</span>
+                <span style="color:var(--tx-3)">· @totalCount total today</span>
+            </div>
+        </div>
+
+        <div class="columns">
+            @foreach (var col in StubTickets.Columns)
+            {
+                <BoardColumn
+                    Column="col"
+                    Tickets="byCol[col.Id]"
+                    Agents="StubTickets.Agents" />
+            }
+        </div>
+    </div>
+</div>
