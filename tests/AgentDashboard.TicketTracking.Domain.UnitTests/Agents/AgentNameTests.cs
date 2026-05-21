@@ -23,16 +23,6 @@ public sealed class AgentNameTests
         var act = () => new AgentName(input);
 
         act.Should().Throw<ArgumentException>()
-            .Which.Should().NotBeOfType<ArgumentNullException>()
-            .And.NotBeOfType<ArgumentOutOfRangeException>();
-    }
-
-    [Fact]
-    public void Should_Use_Value_AsParameterName_When_ValueIsEmpty()
-    {
-        var act = () => new AgentName("");
-
-        act.Should().Throw<ArgumentException>()
             .WithParameterName("value");
     }
 

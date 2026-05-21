@@ -145,7 +145,7 @@ an entity with `Equals`/`GetHashCode` overridden on `Id` only.
 
 - More files (5 new VOs + 5 new test classes). The total LOC of the
   domain layer goes up by ~150 lines; the total LOC of tests goes up
-  significantly (test count moved from 109 → ~232) — most of that
+  significantly (test count moved from 109 → 231) — most of that
   growth is rule-1/2/3/4 discipline, not VO churn.
 
 #### Negative

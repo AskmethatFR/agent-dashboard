@@ -79,4 +79,10 @@ public sealed class AgeTests
     {
         new Age(TimeSpan.FromMinutes(5)).Equals(TimeSpan.FromMinutes(5)).Should().BeFalse();
     }
+
+    [Fact]
+    public void Should_HaveWarningThreshold_Of_3Hours()
+    {
+        Age.WarningThreshold.Should().Be(TimeSpan.FromHours(3));
+    }
 }

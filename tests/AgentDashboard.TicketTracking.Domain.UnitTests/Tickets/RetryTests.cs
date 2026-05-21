@@ -1,3 +1,4 @@
+using System.Reflection;
 using AgentDashboard.TicketTracking.Domain.Tickets;
 
 namespace AgentDashboard.TicketTracking.Domain.UnitTests.Tickets;
@@ -85,5 +86,41 @@ public sealed class RetryTests
     public void Should_ReturnFalse_When_EqualsCalledWithBoxedInt()
     {
         new Retry(2).Equals(2).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Should_ExposeMaxBeforeEscalation_As_StaticReadonly_NotConst()
+    {
+        var field = typeof(Retry).GetField(
+            nameof(Retry.MaxBeforeEscalation),
+            BindingFlags.Public | BindingFlags.Static);
+
+        field.Should().NotBeNull();
+        field!.IsInitOnly.Should().BeTrue("MaxBeforeEscalation must be static readonly to avoid compile-time inlining drift");
+        field.IsLiteral.Should().BeFalse("MaxBeforeEscalation must NOT be const");
+    }
+
+    [Fact]
+    public void Should_ExposeWarnAt_As_StaticReadonly_NotConst()
+    {
+        var field = typeof(Retry).GetField(
+            nameof(Retry.WarnAt),
+            BindingFlags.Public | BindingFlags.Static);
+
+        field.Should().NotBeNull();
+        field!.IsInitOnly.Should().BeTrue("WarnAt must be static readonly to avoid compile-time inlining drift");
+        field.IsLiteral.Should().BeFalse("WarnAt must NOT be const");
+    }
+
+    [Fact]
+    public void Should_HaveMaxBeforeEscalation_Of_3()
+    {
+        Retry.MaxBeforeEscalation.Should().Be(3);
+    }
+
+    [Fact]
+    public void Should_HaveWarnAt_Of_2()
+    {
+        Retry.WarnAt.Should().Be(2);
     }
 }

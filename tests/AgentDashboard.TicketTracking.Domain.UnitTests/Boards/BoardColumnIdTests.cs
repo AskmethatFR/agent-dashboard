@@ -61,6 +61,12 @@ public sealed class BoardColumnIdTests
     }
 
     [Fact]
+    public void Should_HaveMaxLength_Of_64()
+    {
+        BoardColumnId.MaxLength.Should().Be(64);
+    }
+
+    [Fact]
     public void Should_PreserveValue_WithoutTrimming_When_ValueHasSurroundingSpaces()
     {
         new BoardColumnId(" CREATED ").Value.Should().Be(" CREATED ");

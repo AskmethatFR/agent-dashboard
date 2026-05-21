@@ -2,8 +2,8 @@ namespace AgentDashboard.TicketTracking.Domain.Tickets;
 
 public sealed record Retry
 {
-    public const int MaxBeforeEscalation = 3;
-    public const int WarnAt = 2;
+    public static readonly int MaxBeforeEscalation = 3;
+    public static readonly int WarnAt = 2;
 
     public int Value { get; }
 

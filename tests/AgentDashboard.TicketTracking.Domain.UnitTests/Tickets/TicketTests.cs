@@ -248,4 +248,90 @@ public sealed class TicketTests
 
         solo.Severity.Should().Be(paired.Severity);
     }
+
+    [Fact]
+    public void Should_BeEqual_When_TwoTicketsBuiltWithSameProperties()
+    {
+        var a = new TicketBuilder()
+            .WithId(7).WithColumn("CREATED").WithTitle("t").WithAgent("DA")
+            .WithRetry(0).WithAge(TimeSpan.FromMinutes(10))
+            .WithThinking(false).WithFreshness(TicketFreshness.Neutral)
+            .AsOpen().Build();
+        var b = new TicketBuilder()
+            .WithId(7).WithColumn("CREATED").WithTitle("t").WithAgent("DA")
+            .WithRetry(0).WithAge(TimeSpan.FromMinutes(10))
+            .WithThinking(false).WithFreshness(TicketFreshness.Neutral)
+            .AsOpen().Build();
+
+        a.Should().Be(b);
+    }
+
+    [Fact]
+    public void Should_NotBeEqual_When_IdsDiffer()
+    {
+        var a = new TicketBuilder().WithId(1).AsOpen().Build();
+        var b = new TicketBuilder().WithId(2).AsOpen().Build();
+
+        a.Should().NotBe(b);
+    }
+
+    [Fact]
+    public void Should_NotBeEqual_When_TitlesDiffer()
+    {
+        var a = new TicketBuilder().WithTitle("alpha").AsOpen().Build();
+        var b = new TicketBuilder().WithTitle("beta").AsOpen().Build();
+
+        a.Should().NotBe(b);
+    }
+
+    [Fact]
+    public void Should_HaveSameHashCode_When_PropertiesMatch()
+    {
+        var a = new TicketBuilder()
+            .WithId(7).WithColumn("CREATED").WithTitle("t").WithAgent("DA")
+            .WithRetry(0).WithAge(TimeSpan.FromMinutes(10))
+            .WithThinking(false).WithFreshness(TicketFreshness.Neutral)
+            .AsOpen().Build();
+        var b = new TicketBuilder()
+            .WithId(7).WithColumn("CREATED").WithTitle("t").WithAgent("DA")
+            .WithRetry(0).WithAge(TimeSpan.FromMinutes(10))
+            .WithThinking(false).WithFreshness(TicketFreshness.Neutral)
+            .AsOpen().Build();
+
+        a.GetHashCode().Should().Be(b.GetHashCode());
+    }
+
+    [Fact]
+    public void Should_ReturnFalse_When_EqualsCalledWithNull()
+    {
+        var ticket = new TicketBuilder().AsOpen().Build();
+
+        ticket.Equals(null).Should().BeFalse();
+    }
+
+    [Fact]
+    public void Should_ReturnFalse_When_EqualsCalledWithDifferentType()
+    {
+        var ticket = new TicketBuilder().AsOpen().Build();
+
+        ticket.Equals("not a ticket").Should().BeFalse();
+    }
+
+    [Fact]
+    public void Should_BeSymmetric_When_EqualsCalledOnEqualTickets()
+    {
+        var a = new TicketBuilder()
+            .WithId(7).WithColumn("CREATED").WithTitle("t").WithAgent("DA")
+            .WithRetry(0).WithAge(TimeSpan.FromMinutes(10))
+            .WithThinking(false).WithFreshness(TicketFreshness.Neutral)
+            .AsOpen().Build();
+        var b = new TicketBuilder()
+            .WithId(7).WithColumn("CREATED").WithTitle("t").WithAgent("DA")
+            .WithRetry(0).WithAge(TimeSpan.FromMinutes(10))
+            .WithThinking(false).WithFreshness(TicketFreshness.Neutral)
+            .AsOpen().Build();
+
+        a.Equals(b).Should().Be(b.Equals(a));
+        a.Equals(b).Should().BeTrue();
+    }
 }
