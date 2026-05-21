@@ -185,10 +185,14 @@ self-hosted runner. Three trigger paths:
 
 - `issues:labeled` with `claude-agent` — full pipeline (triage →
   delegate → test → PR).
-- `issue_comment:created` by the repo owner on an issue carrying
-  `status:escalated` or `claude-agent` — **escalation handling**: the
-  comment is treated as the human's resolution of a previously-raised
-  escalation, the agent re-enters the team workflow accordingly.
+- `issue_comment:created` by the repo owner, **on an issue (not a PR)**
+  carrying `status:escalated` or `claude-agent`, **and containing the
+  marker `/claude`** — **escalation handling**: the comment is treated
+  as the human's resolution of a previously-raised escalation, the
+  agent re-enters the team workflow accordingly. The marker is required
+  so that ordinary review comments (especially on PRs) never re-trigger
+  a run. **Never include `/claude` in your own comments** — that would
+  trigger an infinite loop.
 - `workflow_dispatch` with `issue_number` — manual test path.
 
 **When you are that agent, this section is your operating contract.**
