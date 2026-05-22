@@ -15,6 +15,9 @@ namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.GitHub;
 //   7. Options carries the hardcoded dogfooding repo identity
 //      (AskmethatFR / agent-dashboard) regardless of configuration input
 //      — see ADR-005.
+//   8. An arbitrary GITHUB_REPO entry in configuration is silently ignored
+//      and the dogfooding constants are still exposed — pins the v1.0
+//      decision that GITHUB_REPO has no effect (ADR-005, anti-regression).
 public sealed class GitHubPollingOptionsFactoryShould
 {
     private const string ValidToken = "ghp_examplePAT12345";
@@ -100,6 +103,24 @@ public sealed class GitHubPollingOptionsFactoryShould
         var options = GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
 
         options.Token.Should().Be(ValidToken);
+        options.RepositoryOwner.Should().Be("AskmethatFR");
+        options.RepositoryName.Should().Be("agent-dashboard");
+    }
+
+    [Fact]
+    public void ExposeDogfoodingRepositoryConstants_WhenConfigContainsArbitraryGitHubRepoKey()
+    {
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["GITHUB_TOKEN"] = ValidToken,
+                ["GITHUB_REPO"] = "evil/repo",
+            })
+            .Build();
+        var logger = new RecordingLogger();
+
+        var options = GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
+
         options.RepositoryOwner.Should().Be("AskmethatFR");
         options.RepositoryName.Should().Be("agent-dashboard");
     }

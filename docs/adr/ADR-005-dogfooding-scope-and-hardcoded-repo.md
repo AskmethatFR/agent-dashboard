@@ -141,6 +141,17 @@ is DONE." Speculative scaffolding now would be the exact opposite.
   use them as labels. Pinning the values at object construction (via
   the factory) is the smallest possible surface change.
 
+### Security implications
+
+No secret is introduced — the target repo identity (`AskmethatFR /
+agent-dashboard`) is public information. PAT handling is unchanged:
+the `GITHUB_TOKEN` env var is read at startup, fail-fast on
+missing/empty, never logged. As marginal A05/A10 hardening, the
+misconfiguration "operator sets `GITHUB_REPO=<wrong-value>` and the
+poller boots against the wrong repo" is now impossible — the key is
+ignored by `GitHubPollingOptionsFactory`. As reviewed in the Security
+audit attached to #30.
+
 ## Migration
 
 - One PR (issue #30), on the same branch as #14 (`feat/issue-14-top-bar`)
