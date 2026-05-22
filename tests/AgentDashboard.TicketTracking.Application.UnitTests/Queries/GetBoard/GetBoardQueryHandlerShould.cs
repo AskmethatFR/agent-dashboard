@@ -1,11 +1,11 @@
-using AgentDashboard.TicketTracking.Application.Queries;
-using AgentDashboard.TicketTracking.Application.Queries.Dtos;
-using AgentDashboard.TicketTracking.Application.UnitTests.Queries.Stubs;
+using AgentDashboard.TicketTracking.Application.Queries.GetBoard;
+using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos;
+using AgentDashboard.TicketTracking.Application.UnitTests.Stubs;
 using AgentDashboard.TicketTracking.TestShared.Agents;
 using AgentDashboard.TicketTracking.TestShared.Boards;
 using AgentDashboard.TicketTracking.TestShared.Tickets;
 
-namespace AgentDashboard.TicketTracking.Application.UnitTests.Queries;
+namespace AgentDashboard.TicketTracking.Application.UnitTests.Queries.GetBoard;
 
 public sealed class GetBoardQueryHandlerShould
 {

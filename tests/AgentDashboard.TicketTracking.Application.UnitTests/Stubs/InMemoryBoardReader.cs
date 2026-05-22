@@ -1,7 +1,7 @@
 using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Domain.Boards;
 
-namespace AgentDashboard.TicketTracking.Application.UnitTests.Queries.Stubs;
+namespace AgentDashboard.TicketTracking.Application.UnitTests.Stubs;
 
 internal sealed class InMemoryBoardReader : IBoardReader
 {

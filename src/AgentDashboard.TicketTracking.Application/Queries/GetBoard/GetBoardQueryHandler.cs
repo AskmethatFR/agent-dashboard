@@ -1,9 +1,9 @@
 using AgentDashboard.TicketTracking.Application.Ports;
-using AgentDashboard.TicketTracking.Application.Queries.Dtos;
+using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos;
 using AgentDashboard.TicketTracking.Domain.Boards;
 using Cortex.Mediator.Queries;
 
-namespace AgentDashboard.TicketTracking.Application.Queries;
+namespace AgentDashboard.TicketTracking.Application.Queries.GetBoard;
 
 public sealed class GetBoardQueryHandler : IQueryHandler<GetBoardQuery, BoardDto>
 {
