@@ -4,4 +4,9 @@
     <ProjectReference Include="..\AgentDashboard.TicketTracking.Domain\AgentDashboard.TicketTracking.Domain.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="Cortex.Mediator" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
 </Project>

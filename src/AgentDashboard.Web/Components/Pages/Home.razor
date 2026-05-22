@@ -1,7 +1,35 @@
-﻿@page "/"
+@page "/"
+@using AgentDashboard.TicketTracking.Application.Queries.GetBoard
+@using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos
+@using Cortex.Mediator
+@rendermode InteractiveServer
+@inject IMediator Mediator
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Board</PageTitle>
 
-<h1>Hello, world!</h1>
+@if (Board is null)
+{
+    <p>Loading...</p>
+}
+else
+{
+    <section class="board">
+        @foreach (var column in Board.Columns)
+        {
+            <header>@column.Label</header>
+            @foreach (var ticket in column.Tickets)
+            {
+                <div class="card">@ticket.Title</div>
+            }
+        }
+    </section>
+}
 
-Welcome to your new app.
+@code {
+    private BoardDto? Board { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        Board = await Mediator.SendQueryAsync<GetBoardQuery, BoardDto>(new GetBoardQuery(), CancellationToken.None);
+    }
+}

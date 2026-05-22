@@ -25,7 +25,7 @@ the human only acts on the Escalation Inbox.
 | Front | **Blazor Server** (Interactive Server) | SignalR built-in, single deploy unit, no SPA split |
 | State management (Blazor) | `Blazor.Redux` 0.1.0 | Owner's own library, predictable store pattern |
 | i18n | `AspNetCore.Localizer.Json` 1.0.4 | Owner's own library, EN + FR from MVP |
-| CQRS | `MediatR` 13 | Standard, in-process bus, no broker |
+| CQRS | `Cortex.Mediator` 3.1.2 | MIT, explicit `IQuery`/`ICommand` split, no broker (see ADR-003) |
 | Persistence | **SQLite** (single file) | Zero external service, OSS-friendly |
 | Read-side | `Dapper` | Lightweight, paired with EF Core for writes |
 | GitHub API | `Octokit` | Standard .NET client |
@@ -163,7 +163,7 @@ Full index: `~/.claude/knowledge-base/INDEX.md` (67 neurones, 13 domains).
 - **Don't bypass `Directory.Packages.props`** — every package version
   is centralised. Adding a version in a `csproj` breaks the build.
 - **Don't write LINQ-heavy queries in Razor components.** Reads go
-  through MediatR queries against Dapper-backed read models.
+  through Cortex.Mediator queries against Dapper-backed read models.
 - **Don't write multi-paragraph XML doc comments.** One-liner max,
   only when the *why* is non-obvious. Self-documenting code first.
 - **Don't ship a commit that breaks `dotnet build`.** Local CI gate:
