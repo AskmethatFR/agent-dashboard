@@ -1,9 +1,12 @@
 using AgentDashboard.TicketTracking.Domain.Tickets;
+using AgentDashboard.TicketTracking.Domain.UnitTests.Contracts;
 
 namespace AgentDashboard.TicketTracking.Domain.UnitTests.Tickets;
 
-public sealed class AgeTests
+public sealed class AgeTests : RecordEqualityContract<Age>
 {
+    protected override Age NewInstance() => new(TimeSpan.FromMinutes(5));
+
     [Fact]
     public void Should_Throw_ArgumentOutOfRangeException_When_ValueIsNegative()
     {
@@ -40,38 +43,9 @@ public sealed class AgeTests
     }
 
     [Fact]
-    public void Should_BeEqual_When_TwoInstancesHaveSameValue()
-    {
-        new Age(TimeSpan.FromMinutes(5)).Should().Be(new Age(TimeSpan.FromMinutes(5)));
-    }
-
-    [Fact]
     public void Should_NotBeEqual_When_TwoInstancesHaveDifferentValues()
     {
         new Age(TimeSpan.FromMinutes(5)).Should().NotBe(new Age(TimeSpan.FromMinutes(6)));
-    }
-
-    [Fact]
-    public void Should_ProduceEqualHashCodes_When_TwoInstancesHaveSameValue()
-    {
-        new Age(TimeSpan.FromMinutes(5)).GetHashCode()
-            .Should().Be(new Age(TimeSpan.FromMinutes(5)).GetHashCode());
-    }
-
-    [Fact]
-    public void Should_BeSymmetric_When_ComparingEqualInstances()
-    {
-        var a = new Age(TimeSpan.FromMinutes(5));
-        var b = new Age(TimeSpan.FromMinutes(5));
-
-        a.Equals(b).Should().Be(b.Equals(a));
-        a.Equals(b).Should().BeTrue();
-    }
-
-    [Fact]
-    public void Should_ReturnFalse_When_EqualsCalledWithNull()
-    {
-        new Age(TimeSpan.FromMinutes(5)).Equals(null).Should().BeFalse();
     }
 
     [Fact]

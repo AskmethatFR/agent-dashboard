@@ -1,9 +1,12 @@
 using AgentDashboard.TicketTracking.Domain.Tickets;
+using AgentDashboard.TicketTracking.Domain.UnitTests.Contracts;
 
 namespace AgentDashboard.TicketTracking.Domain.UnitTests.Tickets;
 
-public sealed class TicketIdTests
+public sealed class TicketIdTests : RecordEqualityContract<TicketId>
 {
+    protected override TicketId NewInstance() => new(42);
+
     [Theory]
     [InlineData(0)]
     [InlineData(-1)]
@@ -26,37 +29,9 @@ public sealed class TicketIdTests
     }
 
     [Fact]
-    public void Should_BeEqual_When_TwoInstancesHaveSameValue()
-    {
-        new TicketId(42).Should().Be(new TicketId(42));
-    }
-
-    [Fact]
     public void Should_NotBeEqual_When_TwoInstancesHaveDifferentValues()
     {
         new TicketId(42).Should().NotBe(new TicketId(43));
-    }
-
-    [Fact]
-    public void Should_ProduceEqualHashCodes_When_TwoInstancesHaveSameValue()
-    {
-        new TicketId(42).GetHashCode().Should().Be(new TicketId(42).GetHashCode());
-    }
-
-    [Fact]
-    public void Should_BeSymmetric_When_ComparingEqualInstances()
-    {
-        var a = new TicketId(42);
-        var b = new TicketId(42);
-
-        a.Equals(b).Should().Be(b.Equals(a));
-        a.Equals(b).Should().BeTrue();
-    }
-
-    [Fact]
-    public void Should_ReturnFalse_When_EqualsCalledWithNull()
-    {
-        new TicketId(42).Equals(null).Should().BeFalse();
     }
 
     [Fact]

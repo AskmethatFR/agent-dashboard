@@ -1,10 +1,13 @@
 using System.Reflection;
 using AgentDashboard.TicketTracking.Domain.Tickets;
+using AgentDashboard.TicketTracking.Domain.UnitTests.Contracts;
 
 namespace AgentDashboard.TicketTracking.Domain.UnitTests.Tickets;
 
-public sealed class RetryTests
+public sealed class RetryTests : RecordEqualityContract<Retry>
 {
+    protected override Retry NewInstance() => new(2);
+
     [Fact]
     public void Should_Throw_ArgumentOutOfRangeException_When_ValueIsBelowMinimum()
     {
@@ -49,37 +52,9 @@ public sealed class RetryTests
     }
 
     [Fact]
-    public void Should_BeEqual_When_TwoInstancesHaveSameValue()
-    {
-        new Retry(2).Should().Be(new Retry(2));
-    }
-
-    [Fact]
     public void Should_NotBeEqual_When_TwoInstancesHaveDifferentValues()
     {
         new Retry(1).Should().NotBe(new Retry(2));
-    }
-
-    [Fact]
-    public void Should_ProduceEqualHashCodes_When_TwoInstancesHaveSameValue()
-    {
-        new Retry(2).GetHashCode().Should().Be(new Retry(2).GetHashCode());
-    }
-
-    [Fact]
-    public void Should_BeSymmetric_When_ComparingEqualInstances()
-    {
-        var a = new Retry(2);
-        var b = new Retry(2);
-
-        a.Equals(b).Should().Be(b.Equals(a));
-        a.Equals(b).Should().BeTrue();
-    }
-
-    [Fact]
-    public void Should_ReturnFalse_When_EqualsCalledWithNull()
-    {
-        new Retry(2).Equals(null).Should().BeFalse();
     }
 
     [Fact]
