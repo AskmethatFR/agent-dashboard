@@ -10,6 +10,7 @@ builder.Services.AddRazorComponents()
 
 builder.Services.AddTicketTrackingApplication();
 builder.Services.AddTicketTrackingInfrastructure();
+builder.Services.AddTicketTrackingGitHubIngestion(builder.Configuration);
 
 var app = builder.Build();
 
@@ -30,3 +31,6 @@ app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
 
 app.Run();
+
+// Expose Program for WebApplicationFactory<Program> in test projects.
+public partial class Program;

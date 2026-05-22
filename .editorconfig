@@ -29,6 +29,11 @@ dotnet_diagnostic.CS8604.severity = error
 # Unused
 dotnet_diagnostic.IDE0005.severity = warning
 
+# Logging placeholders use snake_case to match the documented structured-log
+# contract (see ADR-004; AC #3 of issue #5 — repo, issue_count, duration_ms,
+# next_poll_in_seconds). The Pascal-case rule conflicts with that contract.
+dotnet_diagnostic.CA1727.severity = suggestion
+
 [*.razor]
 indent_size = 4
 
