@@ -27,8 +27,15 @@ quoi que ce soit ailleurs que sur ta machine."
 
 ## 3. Scope IN — ce qui doit être livré
 
-- **Polling GitHub Issues** d'un repo configuré, toutes les N secondes
-  (défaut **600s / 10 min**), pour récupérer les tickets actifs et leur état
+> **v1.0 = dogfooding strict.** Le repo cible est codé en dur sur
+> `AskmethatFR/agent-dashboard` (le dashboard observe la team agentique
+> qui le développe). La paramétrisation du repo cible — et donc l'usage
+> OSS générique — est explicitement reportée post-v1 (voir issue #29
+> sur le contrat multi-repo).
+
+- **Polling GitHub Issues** du repo dogfooding (hardcodé v1.0), toutes
+  les N secondes (défaut **600s / 10 min**), pour récupérer les tickets
+  actifs et leur état
 - **Bouton de refresh manuel** dans la topbar, toujours dispo,
   qui force un poll immédiat hors planning
 - **Persistance SQLite** (single file, dans un volume monté)
@@ -53,7 +60,8 @@ quoi que ce soit ailleurs que sur ta machine."
 | Transcript ingestion (`.jsonl`) | v1.1 (avec Sessions) |
 | Webhook GitHub entrant | jamais (polling = choix archi) |
 | Authentification utilisateur | v2.0 si besoin |
-| Multi-repo / multi-tenant | post v1 |
+| Multi-repo / multi-tenant | post v1 (issue #29) |
+| Paramétrisation du repo cible (OSS générique, tout repo) | post v1 (issue #29) |
 | Export, recherche, filtres avancés | v1.0 final |
 | Notifications (mail, push) | v2.0 |
 | Persistance Postgres | non — SQLite est le choix MVP |
@@ -147,10 +155,12 @@ sans recompilation.
   - Seuil "stale" en heures
 - Variables d'environnement :
   - `GITHUB_TOKEN` (obligatoire, fail-fast si absent)
-  - `GITHUB_REPO` (format `owner/repo`, obligatoire)
   - `POLL_INTERVAL_SECONDS` (optionnel, défaut 600, min 300)
   - `DASHBOARD_PORT` (optionnel, défaut 8080)
   - `DATA_PATH` (optionnel, défaut `/data`)
+- Le repo cible est **hardcodé** sur `AskmethatFR/agent-dashboard`
+  pour v1.0 (dogfooding strict, cf §3). Aucun env var `GITHUB_REPO`
+  n'est lu ni accepté. La paramétrisation est reportée post-v1 (#29).
 - Validation des configs au démarrage avec messages d'erreur clairs
 - Exemple `agent-roster.example.yml` commit au repo
 - I18n EN + FR dès le MVP via `AspNetCore.Localizer.Json` (au minimum
@@ -161,7 +171,8 @@ sans recompilation.
 - `IValidateOptions<T>` pour validation au démarrage
 - `AspNetCore.Localizer.Json` (déjà câblé)
 
-**Hors scope :** hot reload de la config, UI de config, multi-repo.
+**Hors scope :** hot reload de la config, UI de config, multi-repo,
+paramétrisation du repo cible (hardcodé v1.0, voir #29).
 
 ---
 
@@ -181,9 +192,10 @@ sans recompilation.
     -v $(pwd)/agent-roster.yml:/config/agent-roster.yml:ro \
     -v $(pwd)/data:/data \
     -e GITHUB_TOKEN=ghp_xxx \
-    -e GITHUB_REPO=owner/repo \
     ghcr.io/askmethatfr/agent-dashboard:0.1
   ```
+  Le repo cible est hardcodé sur `AskmethatFR/agent-dashboard` pour
+  v1.0 (dogfooding). La paramétrisation arrive post-v1 (issue #29).
 - `docker-compose.yml` d'exemple à la racine
 - Healthcheck HTTP intégré à l'image
 
@@ -259,8 +271,10 @@ EPIC-1 poller and the EPIC-2 board both rely on — change it via ADR only.
 ## 10. Acceptance globale du MVP
 
 Le MVP est **DONE** quand :
-- [ ] Un nouvel utilisateur clone le README, copie le bloc `docker run`,
-      remplace `ghp_xxx` + `owner/repo`, et voit son board sous 2 minutes
+- [ ] L'auteur lance le bloc `docker run` du README (en remplaçant
+      `ghp_xxx` par son PAT), et voit le board du repo dogfooding
+      `AskmethatFR/agent-dashboard` sous 2 minutes
+      (l'usage par un tiers sur son propre repo arrive post-v1, #29)
 - [ ] Le board reflète l'état réel et se met à jour seul
 - [ ] L'image est publiée sur `ghcr.io/askmethatfr/agent-dashboard:0.1`
 - [ ] Un contributeur OSS peut cloner, `dotnet run`, et travailler en local
