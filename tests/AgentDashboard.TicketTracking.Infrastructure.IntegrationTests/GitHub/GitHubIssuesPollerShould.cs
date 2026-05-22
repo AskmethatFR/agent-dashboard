@@ -25,7 +25,7 @@ namespace AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.GitHub;
 public sealed class GitHubIssuesPollerShould : IAsyncLifetime
 {
     private const string ValidToken = "ghp_examplePAT12345";
-    private const string ValidRepo = "askmethatfr/agent-dashboard";
+    private const string ExpectedRepoLabel = "AskmethatFR/agent-dashboard";
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(600);
 
     private FakeTimeProvider _timeProvider = null!;
@@ -47,7 +47,6 @@ public sealed class GitHubIssuesPollerShould : IAsyncLifetime
                     configuration.AddInMemoryCollection(new Dictionary<string, string?>
                     {
                         ["GITHUB_TOKEN"] = ValidToken,
-                        ["GITHUB_REPO"] = ValidRepo,
                         ["POLL_INTERVAL_SECONDS"] = ((int)PollInterval.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture),
                     });
                 });
@@ -148,7 +147,7 @@ public sealed class GitHubIssuesPollerShould : IAsyncLifetime
         entry.State.Keys.Should().Contain("issue_count");
         entry.State.Keys.Should().Contain("duration_ms");
         entry.State.Keys.Should().Contain("next_poll_in_seconds");
-        entry.State["repo"].Should().Be(ValidRepo);
+        entry.State["repo"].Should().Be(ExpectedRepoLabel);
         entry.State["issue_count"].Should().Be(2);
     }
 

@@ -7,13 +7,12 @@ namespace AgentDashboard.Web.Tests.Hosting;
 
 // Test list for host fail-fast on missing GitHub ingestion env vars:
 //   1. GITHUB_TOKEN missing -> boot throws InvalidOperationException mentioning GITHUB_TOKEN
-//   2. GITHUB_REPO missing  -> boot throws InvalidOperationException mentioning GITHUB_REPO
 public sealed class HostBootShould
 {
     [Fact]
     public void FailFast_WhenGitHubTokenIsMissing()
     {
-        using var factory = BuildFactory(token: null, repo: "owner/repo");
+        using var factory = BuildFactory(token: null);
 
         var act = () => factory.CreateClient();
 
@@ -21,18 +20,7 @@ public sealed class HostBootShould
             .WithMessage("*GITHUB_TOKEN*");
     }
 
-    [Fact]
-    public void FailFast_WhenGitHubRepoIsMissing()
-    {
-        using var factory = BuildFactory(token: "ghp_examplePAT", repo: null);
-
-        var act = () => factory.CreateClient();
-
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*GITHUB_REPO*");
-    }
-
-    private static WebApplicationFactory<Program> BuildFactory(string? token, string? repo)
+    private static WebApplicationFactory<Program> BuildFactory(string? token)
     {
         return new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
@@ -42,7 +30,6 @@ public sealed class HostBootShould
                     configuration.Sources.Clear();
                     var pairs = new Dictionary<string, string?>();
                     if (token is not null) pairs["GITHUB_TOKEN"] = token;
-                    if (repo is not null) pairs["GITHUB_REPO"] = repo;
                     configuration.AddInMemoryCollection(pairs);
                 });
             });
