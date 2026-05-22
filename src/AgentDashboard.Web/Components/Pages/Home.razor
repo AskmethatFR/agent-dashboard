@@ -7,6 +7,8 @@
 
 <PageTitle>Board</PageTitle>
 
+<header>team/</header>
+
 @if (Board is null)
 {
     <p>Loading...</p>
@@ -16,7 +18,7 @@ else
     <section class="board">
         @foreach (var column in Board.Columns)
         {
-            <header>@column.Label</header>
+            <h2>@column.Label (@column.Tickets.Count)</h2>
             @foreach (var ticket in column.Tickets)
             {
                 <div class="card">@ticket.Title</div>
