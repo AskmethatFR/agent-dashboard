@@ -8,6 +8,7 @@
   <Folder Name="/tests/">
     <Project Path="tests/AgentDashboard.TicketTracking.Application.UnitTests/AgentDashboard.TicketTracking.Application.UnitTests.csproj" />
     <Project Path="tests/AgentDashboard.TicketTracking.Domain.UnitTests/AgentDashboard.TicketTracking.Domain.UnitTests.csproj" />
+    <Project Path="tests/AgentDashboard.TicketTracking.TestShared/AgentDashboard.TicketTracking.TestShared.csproj" />
     <Project Path="tests/AgentDashboard.Web.Tests/AgentDashboard.Web.Tests.csproj" />
   </Folder>
 </Solution>

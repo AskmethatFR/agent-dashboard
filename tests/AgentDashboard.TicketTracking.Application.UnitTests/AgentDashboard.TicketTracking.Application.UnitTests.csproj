@@ -16,6 +16,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\AgentDashboard.TicketTracking.Application\AgentDashboard.TicketTracking.Application.csproj" />
     <ProjectReference Include="..\..\src\AgentDashboard.TicketTracking.Domain\AgentDashboard.TicketTracking.Domain.csproj" />
+    <ProjectReference Include="..\AgentDashboard.TicketTracking.TestShared\AgentDashboard.TicketTracking.TestShared.csproj" />
   </ItemGroup>
 
 </Project>
