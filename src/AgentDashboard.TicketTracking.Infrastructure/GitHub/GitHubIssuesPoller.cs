@@ -11,6 +11,7 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
     private readonly GitHubPollingOptions _options;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<GitHubIssuesPoller> _logger;
+    private readonly string _repoLabel;
 
     public GitHubIssuesPoller(
         IGitHubIssuesClient client,
@@ -29,6 +30,7 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
         _options = options;
         _timeProvider = timeProvider;
         _logger = logger;
+        _repoLabel = $"{options.RepositoryOwner}/{options.RepositoryName}";
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -78,7 +80,7 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
 
             GitHubIssuesPollerLog.PollSucceeded(
                 _logger,
-                $"{_options.RepositoryOwner}/{_options.RepositoryName}",
+                _repoLabel,
                 issues.Count,
                 (long)elapsed.TotalMilliseconds,
                 nextPollInSeconds);
