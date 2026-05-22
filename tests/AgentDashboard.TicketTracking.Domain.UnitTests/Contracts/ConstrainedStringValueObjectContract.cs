@@ -1,6 +1,7 @@
 namespace AgentDashboard.TicketTracking.Domain.UnitTests.Contracts;
 
-public abstract class ConstrainedStringValueObjectContract<T> where T : notnull
+public abstract class ConstrainedStringValueObjectContract<T> : RecordEqualityContract<T>
+    where T : notnull
 {
     protected abstract T Create(string value);
 
@@ -13,6 +14,8 @@ public abstract class ConstrainedStringValueObjectContract<T> where T : notnull
     protected abstract string OtherSampleValue { get; }
 
     protected abstract string SampleValueAlternateCase { get; }
+
+    protected override T NewInstance() => Create(SampleValue);
 
     [Fact]
     public void Should_Throw_ArgumentNullException_When_ValueIsNull()
@@ -86,38 +89,9 @@ public abstract class ConstrainedStringValueObjectContract<T> where T : notnull
     }
 
     [Fact]
-    public void Should_BeEqual_When_TwoInstancesHaveSameValue()
-    {
-        Create(SampleValue).Should().Be(Create(SampleValue));
-    }
-
-    [Fact]
     public void Should_NotBeEqual_When_TwoInstancesHaveDifferentValues()
     {
         Create(SampleValue).Should().NotBe(Create(OtherSampleValue));
-    }
-
-    [Fact]
-    public void Should_ProduceEqualHashCodes_When_TwoInstancesHaveSameValue()
-    {
-        Create(SampleValue).GetHashCode()
-            .Should().Be(Create(SampleValue).GetHashCode());
-    }
-
-    [Fact]
-    public void Should_BeSymmetric_When_ComparingEqualInstances()
-    {
-        var a = Create(SampleValue);
-        var b = Create(SampleValue);
-
-        a.Equals(b).Should().Be(b.Equals(a));
-        a.Equals(b).Should().BeTrue();
-    }
-
-    [Fact]
-    public void Should_ReturnFalse_When_EqualsCalledWithNull()
-    {
-        Create(SampleValue).Equals(null).Should().BeFalse();
     }
 
     [Fact]
