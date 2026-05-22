@@ -1,0 +1,5 @@
+.live-clock {
+    font-family: var(--ff-mono);
+    font-variant-numeric: tabular-nums;
+    color: var(--tx-1);
+}
