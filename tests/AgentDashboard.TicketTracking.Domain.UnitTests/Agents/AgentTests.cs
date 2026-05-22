@@ -1,10 +1,13 @@
 using AgentDashboard.TicketTracking.Domain.Agents;
+using AgentDashboard.TicketTracking.Domain.UnitTests.Contracts;
 using AgentDashboard.TicketTracking.TestShared.Agents;
 
 namespace AgentDashboard.TicketTracking.Domain.UnitTests.Agents;
 
-public sealed class AgentTests
+public sealed class AgentTests : RecordEqualityContract<Agent>
 {
+    protected override Agent NewInstance() => AgentFixtures.Build();
+
     [Fact]
     public void Should_Throw_ArgumentNullException_When_IdIsNull()
     {
@@ -73,15 +76,6 @@ public sealed class AgentTests
     }
 
     [Fact]
-    public void Should_BeEqual_When_TwoAgentsHaveSameProperties()
-    {
-        var first = AgentFixtures.Build();
-        var second = AgentFixtures.Build();
-
-        first.Should().Be(second);
-    }
-
-    [Fact]
     public void Should_NotBeEqual_When_IdsDiffer()
     {
         var first = AgentFixtures.Build(id: "DA");
@@ -97,40 +91,5 @@ public sealed class AgentTests
         var second = AgentFixtures.Build(name: "DevX");
 
         first.Should().NotBe(second);
-    }
-
-    [Fact]
-    public void Should_ProduceEqualHashCodes_When_TwoAgentsHaveSameProperties()
-    {
-        var first = AgentFixtures.Build();
-        var second = AgentFixtures.Build();
-
-        first.GetHashCode().Should().Be(second.GetHashCode());
-    }
-
-    [Fact]
-    public void Should_BeSymmetric_When_ComparingTwoEqualAgents()
-    {
-        var first = AgentFixtures.Build();
-        var second = AgentFixtures.Build();
-
-        first.Equals(second).Should().Be(second.Equals(first));
-        first.Equals(second).Should().BeTrue();
-    }
-
-    [Fact]
-    public void Should_ReturnFalse_When_EqualsCalledWithNull()
-    {
-        var agent = AgentFixtures.Build();
-
-        agent.Equals(null).Should().BeFalse();
-    }
-
-    [Fact]
-    public void Should_ReturnFalse_When_EqualsCalledWithDifferentType()
-    {
-        var agent = AgentFixtures.Build();
-
-        agent.Equals("DevA").Should().BeFalse();
     }
 }

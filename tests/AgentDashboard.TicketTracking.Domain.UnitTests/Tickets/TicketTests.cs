@@ -1,12 +1,23 @@
 using AgentDashboard.TicketTracking.Domain.Agents;
 using AgentDashboard.TicketTracking.Domain.Boards;
 using AgentDashboard.TicketTracking.Domain.Tickets;
+using AgentDashboard.TicketTracking.Domain.UnitTests.Contracts;
 using AgentDashboard.TicketTracking.TestShared.Tickets;
 
 namespace AgentDashboard.TicketTracking.Domain.UnitTests.Tickets;
 
-public sealed class TicketTests
+public sealed class TicketTests : RecordEqualityContract<Ticket>
 {
+    protected override Ticket NewInstance() => TicketFixtures.Open(
+        id: 7,
+        columnId: "CREATED",
+        title: "t",
+        agentId: "DA",
+        retry: 0,
+        age: TimeSpan.FromMinutes(10),
+        thinking: false,
+        freshness: TicketFreshness.Neutral);
+
     [Fact]
     public void Should_LeaveCoAgentNull_When_OpenedWithoutPair()
     {
@@ -231,15 +242,6 @@ public sealed class TicketTests
         solo.Severity.Should().Be(paired.Severity);
     }
 
-    [Fact]
-    public void Should_BeEqual_When_TwoTicketsBuiltWithSameProperties()
-    {
-        var a = FullyAssembled();
-        var b = FullyAssembled();
-
-        a.Should().Be(b);
-    }
-
     public static IEnumerable<object[]> NotEqualVariants() =>
     [
         ["Id"],
@@ -296,49 +298,4 @@ public sealed class TicketTests
 
         withCoAgent.Should().NotBe(withoutCoAgent);
     }
-
-    [Fact]
-    public void Should_HaveSameHashCode_When_PropertiesMatch()
-    {
-        var a = FullyAssembled();
-        var b = FullyAssembled();
-
-        a.GetHashCode().Should().Be(b.GetHashCode());
-    }
-
-    [Fact]
-    public void Should_ReturnFalse_When_EqualsCalledWithNull()
-    {
-        var ticket = TicketFixtures.Default;
-
-        ticket.Equals(null).Should().BeFalse();
-    }
-
-    [Fact]
-    public void Should_ReturnFalse_When_EqualsCalledWithDifferentType()
-    {
-        var ticket = TicketFixtures.Default;
-
-        ticket.Equals("not a ticket").Should().BeFalse();
-    }
-
-    [Fact]
-    public void Should_BeSymmetric_When_EqualsCalledOnEqualTickets()
-    {
-        var a = FullyAssembled();
-        var b = FullyAssembled();
-
-        a.Equals(b).Should().Be(b.Equals(a));
-        a.Equals(b).Should().BeTrue();
-    }
-
-    private static Ticket FullyAssembled() => TicketFixtures.Open(
-        id: 7,
-        columnId: "CREATED",
-        title: "t",
-        agentId: "DA",
-        retry: 0,
-        age: TimeSpan.FromMinutes(10),
-        thinking: false,
-        freshness: TicketFreshness.Neutral);
 }
