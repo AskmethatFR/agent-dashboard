@@ -11,12 +11,13 @@
     <PackageReference Include="xunit" />
     <PackageReference Include="xunit.runner.visualstudio" />
     <PackageReference Include="FluentAssertions" />
-    <PackageReference Include="bunit" />
-    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\AgentDashboard.Web\AgentDashboard.Web.csproj" />
+    <ProjectReference Include="..\..\src\AgentDashboard.TicketTracking.Infrastructure\AgentDashboard.TicketTracking.Infrastructure.csproj" />
   </ItemGroup>
 
 </Project>
