@@ -1,3 +1,57 @@
+:root {
+  --bg-0: #07090d;
+  --bg-1: #0b0e14;
+  --bg-2: #11151d;
+  --bg-3: #161b25;
+  --bg-4: #1c2230;
+  --bg-hover: #1a2030;
+
+  --bd-1: #16191f;
+  --bd-2: #232936;
+  --bd-3: #2e3545;
+
+  --tx-0: #e8ecf3;
+  --tx-1: #aab3c4;
+  --tx-2: #707b8e;
+  --tx-3: #4d566a;
+  --tx-4: #353d4d;
+
+  --st-fresh: #4ad6e0;
+  --st-fresh-dim: rgba(74, 214, 224, 0.18);
+  --st-warn: #e6a33a;
+  --st-danger: #e5484d;
+  --st-esc: #ff5b62;
+  --st-ok: #3bc97a;
+  --st-stale: #6b7689;
+  --st-info: #7c8cf8;
+
+  --r-1: 3px;
+  --r-2: 5px;
+  --r-3: 7px;
+
+  --ff-sans: "IBM Plex Sans", system-ui, sans-serif;
+  --ff-mono: "IBM Plex Mono", ui-monospace, monospace;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; height: 100%; }
+
+body {
+  background: var(--bg-0);
+  color: var(--tx-0);
+  font-family: var(--ff-sans);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+}
+
+button, input { font: inherit; color: inherit; background: none; border: 0; padding: 0; }
+button { cursor: pointer; }
+button:focus-visible, input:focus-visible { outline: 1px solid var(--st-info); outline-offset: 1px; }
+input { width: 100%; }
+
+.mono { font-family: var(--ff-mono); }
+
 h1:focus {
     outline: none;
 }
