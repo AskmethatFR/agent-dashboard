@@ -1,8 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
     <BlazorDisableThrowNavigationException>true</BlazorDisableThrowNavigationException>
+    <UserSecretsId>2eaa1826-9009-47f2-bd8b-9123be876eab</UserSecretsId>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="AgentDashboard.Web.Tests" />
+  </ItemGroup>
 
   <ItemGroup>
     <ProjectReference Include="..\AgentDashboard.TicketTracking.Application\AgentDashboard.TicketTracking.Application.csproj" />
