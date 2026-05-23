@@ -122,8 +122,7 @@ h1:focus {
     letter-spacing: 0;
 }
 
-.agent.thinking .agent-glyph,
-.agent-glyph.thinking {
+.agent.thinking .agent-glyph {
     border-color: var(--st-fresh);
     color: var(--tx-0);
     background: rgba(74, 214, 224, 0.08);
@@ -131,8 +130,7 @@ h1:focus {
     overflow: hidden;
 }
 
-.agent.thinking .agent-glyph::after,
-.agent-glyph.thinking::after {
+.agent.thinking .agent-glyph::after {
     content: "";
     position: absolute;
     inset: 0;
