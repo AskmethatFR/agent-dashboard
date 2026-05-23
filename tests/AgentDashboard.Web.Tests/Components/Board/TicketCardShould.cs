@@ -43,7 +43,7 @@ public class TicketCardShould
     }
 
     [Fact]
-    public void RenderAgentChipWithThinkingClass_WhenIsThinkingIsTrue()
+    public void PassIsThinkingTrueToAgentChip_WhenTicketIsThinking()
     {
         using var ctx = new BunitContext();
         var cut = ctx.Render<TicketCard>(p => p
@@ -51,12 +51,11 @@ public class TicketCardShould
             .Add(c => c.Agents, Agents));
 
         var agentChip = cut.FindComponent<AgentChip>();
-        var instance = agentChip.Instance;
-        instance.GetAgentClass().Should().Be("agent thinking");
+        agentChip.Instance.IsThinking.Should().BeTrue();
     }
 
     [Fact]
-    public void RenderAgentChipWithAgentClass_WhenIsThinkingIsFalse()
+    public void PassIsThinkingFalseToAgentChip_WhenTicketIsNotThinking()
     {
         using var ctx = new BunitContext();
         var cut = ctx.Render<TicketCard>(p => p
@@ -64,8 +63,7 @@ public class TicketCardShould
             .Add(c => c.Agents, Agents));
 
         var agentChip = cut.FindComponent<AgentChip>();
-        var instance = agentChip.Instance;
-        instance.GetAgentClass().Should().Be("agent");
+        agentChip.Instance.IsThinking.Should().BeFalse();
     }
 
     [Fact]
@@ -77,7 +75,7 @@ public class TicketCardShould
             .Add(c => c.Ticket, unknownAgentTicket)
             .Add(c => c.Agents, Agents));
 
-        // AgentChip renders nothing when Agent is null
+        // AgentChip renders nothing when Agent is null - verify no agent markup is present
         cut.Markup.Should().NotContain("agent-glyph");
         cut.Markup.Should().NotContain("agent-name");
     }

@@ -1,6 +1,7 @@
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard;
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos;
 using AgentDashboard.TicketTracking.Application.UnitTests.Stubs;
+using AgentDashboard.TicketTracking.Domain.Tickets;
 using AgentDashboard.TicketTracking.TestShared.Agents;
 using AgentDashboard.TicketTracking.TestShared.Boards;
 using AgentDashboard.TicketTracking.TestShared.Tickets;
@@ -26,6 +27,7 @@ public sealed class GetBoardQueryHandlerShould
         var dto = await handler.Handle(new GetBoardQuery(), CancellationToken.None);
 
         dto.Columns.Should().BeEmpty();
+        dto.Agents.Should().BeEmpty();
     }
 
     [Fact]
@@ -58,6 +60,7 @@ public sealed class GetBoardQueryHandlerShould
 
         dto.Columns[0].Tickets.Should().HaveCount(1);
         dto.Columns[1].Tickets.Should().NotBeNull().And.BeEmpty();
+        dto.Agents.Should().ContainSingle();
     }
 
     [Fact]
@@ -79,10 +82,11 @@ public sealed class GetBoardQueryHandlerShould
         string[] expectedCreatedTitles = ["alpha", "gamma"];
         dto.Columns[0].Tickets.Select(t => t.Title).Should().Equal(expectedCreatedTitles);
         dto.Columns[1].Tickets.Select(t => t.Title).Should().Equal("beta");
+        dto.Agents.Should().ContainSingle();
     }
 
     [Fact]
-    public async Task Should_ProjectOnlyTitleValue_When_MappingTicket()
+    public async Task Should_ProjectTitleAndAgentIdAndIsThinking_When_MappingTicket()
     {
         var snapshot = BoardSnapshotFixtures.Build(
             columns: new[] { BoardColumnFixtures.Created },
@@ -92,7 +96,26 @@ public sealed class GetBoardQueryHandlerShould
 
         var dto = await handler.Handle(new GetBoardQuery(), CancellationToken.None);
 
-        dto.Columns.Single().Tickets.Single().Should().BeEquivalentTo(new TicketDto("hello"));
+        dto.Columns.Single().Tickets.Single().Should().BeEquivalentTo(
+            new TicketDto("hello", "DA", false));
+    }
+
+    [Fact]
+    public async Task Should_MapAgents_When_SnapshotContainsAgents()
+    {
+        var snapshot = BoardSnapshotFixtures.Build(
+            columns: new[] { BoardColumnFixtures.Created },
+            tickets: Array.Empty<Ticket>(),
+            agents: new[] { AgentFixtures.DevA, AgentFixtures.DevB });
+        var handler = new GetBoardQueryHandler(new InMemoryBoardReader(snapshot));
+
+        var dto = await handler.Handle(new GetBoardQuery(), CancellationToken.None);
+
+        dto.Agents.Should().BeEquivalentTo(new[]
+        {
+            new AgentDto("DA", "DevA", "Da", "Developer A"),
+            new AgentDto("DB", "DevB", "Db", "Developer B"),
+        });
     }
 
     [Fact]
