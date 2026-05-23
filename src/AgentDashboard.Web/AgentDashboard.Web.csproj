@@ -17,6 +17,7 @@
   <ItemGroup>
     <PackageReference Include="Blazor.Redux" />
     <PackageReference Include="AspNetCore.Localizer.Json" />
+    <PackageReference Include="System.Reactive" />
   </ItemGroup>
 
 </Project>

@@ -1,5 +1,11 @@
-using AgentDashboard.TicketTracking.Application.Ports;
-using AgentDashboard.Web.Tests.Components.Layout.TopBar.Fakes;
+using AgentDashboard.TicketTracking.Application;
+using AgentDashboard.TicketTracking.Infrastructure;
+using AgentDashboard.Web.Store;
+using Blazor.Redux;
+using Blazor.Redux.Core;
+using Blazor.Redux.Dispatching;
+using Blazor.Redux.Extensions;
+using Blazor.Redux.Interfaces;
 using Bunit;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
@@ -9,9 +15,6 @@ using TopBarComponent = AgentDashboard.Web.Components.Layout.TopBar.TopBar;
 
 namespace AgentDashboard.Web.Tests.Components.Layout.TopBar;
 
-// Test list for TopBar:
-//   1. Composition smoke — all four regions are present:
-//      brand wordmark, primary nav, live clock, refresh button.
 public sealed class TopBarShould
 {
     [Fact]
@@ -32,7 +35,23 @@ public sealed class TopBarShould
         var ctx = new BunitContext();
         ctx.Services.AddSingleton<TimeProvider>(
             new FakeTimeProvider(new DateTimeOffset(2026, 5, 22, 10, 30, 0, TimeSpan.Zero)));
-        ctx.Services.AddSingleton<IBoardRefreshTrigger>(new FakeBoardRefreshTrigger());
+        ctx.Services.AddTicketTrackingApplication();
+        ctx.Services.AddTicketTrackingInfrastructure();
+
+        ctx.Services.AddBlazorRedux(new BlazorReduxOption
+        {
+            Slices = [BoardSlice.Initial],
+            ReplayLastAction = false,
+            SnapshotStrategy = SnapshotStrategy.DeepCopy,
+            EffectsCancellationStrategy = EffectsCancellationStrategy.None,
+        });
+
+        ctx.Services.AddScoped<IReducer<BoardSlice, LoadBoardAction>, LoadBoardReducer>();
+        ctx.Services.AddScoped<IReducer<BoardSlice, LoadBoardSuccessAction>, LoadBoardSuccessReducer>();
+        ctx.Services.AddScoped<IReducer<BoardSlice, LoadBoardFailureAction>, LoadBoardFailureReducer>();
+        ctx.Services.AddScoped<IAsyncReducer<BoardSlice, LoadBoardAction>, LoadBoardAsyncReducer>();
+        ctx.Services.AddScoped<IDispatcher, Dispatcher>();
+
         return ctx;
     }
 }

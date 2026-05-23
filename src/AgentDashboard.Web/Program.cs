@@ -1,6 +1,11 @@
 using AgentDashboard.TicketTracking.Application;
 using AgentDashboard.TicketTracking.Infrastructure;
 using AgentDashboard.Web.Components;
+using AgentDashboard.Web.Store;
+using Blazor.Redux;
+using Blazor.Redux.Core;
+using Blazor.Redux.Extensions;
+using Blazor.Redux.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -12,13 +17,29 @@ builder.Services.AddTicketTrackingApplication();
 builder.Services.AddTicketTrackingInfrastructure();
 builder.Services.AddTicketTrackingGitHubIngestion(builder.Configuration);
 
+// State management - Blazor.Redux
+builder.Services.AddBlazorRedux(new BlazorReduxOption
+{
+    Slices = [BoardSlice.Initial],
+    ReplayLastAction = false,
+    SnapshotStrategy = SnapshotStrategy.DeepCopy,
+    EffectsCancellationStrategy = EffectsCancellationStrategy.None
+});
+
+// Register reducers
+builder.Services.AddScoped<IReducer<BoardSlice, LoadBoardAction>, LoadBoardReducer>();
+builder.Services.AddScoped<IReducer<BoardSlice, LoadBoardSuccessAction>, LoadBoardSuccessReducer>();
+builder.Services.AddScoped<IReducer<BoardSlice, LoadBoardFailureAction>, LoadBoardFailureReducer>();
+
+// Register async reducer
+builder.Services.AddScoped<IAsyncReducer<BoardSlice, LoadBoardAction>, LoadBoardAsyncReducer>();
+
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);

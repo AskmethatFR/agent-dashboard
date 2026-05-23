@@ -1,20 +1,28 @@
 @page "/"
-@using AgentDashboard.TicketTracking.Application.Queries.GetBoard
 @using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos
-@using Cortex.Mediator
+@using AgentDashboard.Web.Store
+@using Blazor.Redux.Core
+@using Blazor.Redux.Interfaces
+@implements IDisposable
 @rendermode InteractiveServer
-@inject IMediator Mediator
+@inject Blazor.Redux.Core.Store Store
+@inject IAsyncDispatcher Dispatcher
 
 <PageTitle>Board</PageTitle>
 
-@if (Board is null)
+@if (_isLoading && _board is null)
 {
     <p>Loading...</p>
+}
+else if (_error is not null)
+{
+    <p class="error">@_error</p>
+    <button @onclick="LoadBoard">Retry</button>
 }
 else
 {
     <section class="board">
-        @foreach (var column in Board.Columns)
+        @foreach (var column in _board!.Columns)
         {
             <h2>@column.Label (@column.Tickets.Count)</h2>
             @foreach (var ticket in column.Tickets)
@@ -26,10 +34,29 @@ else
 }
 
 @code {
-    private BoardDto? Board { get; set; }
+    private BoardDto? _board;
+    private bool _isLoading;
+    private string? _error;
+    private IDisposable? _subscription;
 
     protected override async Task OnInitializedAsync()
     {
-        Board = await Mediator.SendQueryAsync<GetBoardQuery, BoardDto>(new GetBoardQuery(), CancellationToken.None);
+        _subscription = Store.ObserveSlice<BoardSlice>()
+            .Subscribe(slice =>
+            {
+                _board = slice.Board;
+                _isLoading = slice.IsLoading;
+                _error = slice.Error;
+                InvokeAsync(StateHasChanged);
+            });
+
+        await Dispatcher.DispatchAsync<BoardSlice, LoadBoardAction>(new LoadBoardAction());
     }
+
+    private async Task LoadBoard()
+    {
+        await Dispatcher.DispatchAsync<BoardSlice, LoadBoardAction>(new LoadBoardAction());
+    }
+
+    public void Dispose() => _subscription?.Dispose();
 }
