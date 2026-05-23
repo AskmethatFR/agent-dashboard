@@ -1,0 +1,26 @@
+@using System.Globalization
+@implements IDisposable
+@inject TimeProvider TimeProvider
+@rendermode InteractiveServer
+
+<span class="live-clock mono" aria-live="off" aria-atomic="true">@_now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) UTC</span>
+
+@code {
+    private DateTimeOffset _now;
+    private ITimer? _timer;
+
+    protected override void OnInitialized()
+    {
+        _now = TimeProvider.GetUtcNow();
+        _timer = TimeProvider.CreateTimer(_ => Tick(), state: null,
+            dueTime: TimeSpan.FromSeconds(1), period: TimeSpan.FromSeconds(1));
+    }
+
+    private void Tick()
+    {
+        _now = TimeProvider.GetUtcNow();
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose() => _timer?.Dispose();
+}

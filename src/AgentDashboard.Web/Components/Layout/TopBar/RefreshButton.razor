@@ -1,0 +1,90 @@
+@using AgentDashboard.TicketTracking.Application.Ports
+@implements IDisposable
+@inject IBoardRefreshTrigger BoardRefreshTrigger
+@inject TimeProvider TimeProvider
+@rendermode InteractiveServer
+
+<button type="button"
+        class="refresh-btn @StateCssClass"
+        aria-label="Refresh tickets now"
+        aria-busy="@(_isBusy ? "true" : "false")"
+        title="@Tooltip"
+        disabled="@_isBusy"
+        @onclick="HandleClickAsync">
+    &#x27F3;
+</button>
+
+@code {
+    private bool _isBusy;
+    private string? _errorMessage;
+    private DateTimeOffset _cooldownUntil;
+    private ITimer? _errorClearTimer;
+    private CancellationTokenSource? _cts;
+
+    private string StateCssClass =>
+        (_isBusy, _errorMessage) switch
+        {
+            (true, _) => "is-busy",
+            (false, not null) => "is-error",
+            _ => string.Empty,
+        };
+
+    private string Tooltip =>
+        _errorMessage is null
+            ? "Refresh tickets now"
+            : $"Refresh failed: {_errorMessage}";
+
+    protected override void OnInitialized()
+    {
+        _cts = new CancellationTokenSource();
+    }
+
+    private async Task HandleClickAsync()
+    {
+        if (_isBusy)
+        {
+            return;
+        }
+
+        if (TimeProvider.GetUtcNow() < _cooldownUntil)
+        {
+            return;
+        }
+
+        _errorMessage = null;
+        _errorClearTimer?.Dispose();
+        _errorClearTimer = null;
+
+        _isBusy = true;
+        try
+        {
+            await BoardRefreshTrigger.TriggerNowAsync(_cts?.Token ?? CancellationToken.None);
+            _cooldownUntil = TimeProvider.GetUtcNow() + TimeSpan.FromSeconds(1);
+        }
+        catch (Exception ex)
+        {
+            _errorMessage = ex.Message;
+            _errorClearTimer = TimeProvider.CreateTimer(_ => ClearError(), state: null,
+                dueTime: TimeSpan.FromSeconds(3), period: Timeout.InfiniteTimeSpan);
+        }
+        finally
+        {
+            _isBusy = false;
+        }
+    }
+
+    private void ClearError()
+    {
+        _errorMessage = null;
+        _errorClearTimer?.Dispose();
+        _errorClearTimer = null;
+        InvokeAsync(StateHasChanged);
+    }
+
+    public void Dispose()
+    {
+        _errorClearTimer?.Dispose();
+        _cts?.Cancel();
+        _cts?.Dispose();
+    }
+}

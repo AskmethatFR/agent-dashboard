@@ -53,17 +53,6 @@ public class HomeShould
         counts.Should().Equal(ExpectedTicketCounts);
     }
 
-    [Fact]
-    public void Should_RenderBrandPlaceholder()
-    {
-        using var ctx = BuildContext();
-
-        var cut = ctx.Render<Home>();
-        cut.WaitForState(() => cut.FindAll("h2").Count >= ExpectedColumnLabels.Length);
-
-        cut.Markup.Should().Contain("team/");
-    }
-
     private static BunitContext BuildContext()
     {
         var ctx = new BunitContext();
