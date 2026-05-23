@@ -1,0 +1,30 @@
+.nav {
+    display: flex;
+    gap: 2px;
+    margin-left: 4px;
+}
+
+.nav-item {
+    padding: 6px 10px;
+    border-radius: var(--r-1);
+    color: var(--tx-2);
+    font-size: 12.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.nav-item:hover {
+    color: var(--tx-0);
+    background: var(--bg-2);
+}
+
+.nav-item.active {
+    color: var(--tx-0);
+    background: var(--bg-3);
+}
+
+.nav-item[disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+}

@@ -41,9 +41,10 @@ docker run -p 8080:8080 \
   -v ~/.claude/projects:/claude-data:ro \
   -v ./data:/data \
   -e GITHUB_TOKEN=$GITHUB_TOKEN \
-  -e GITHUB_REPO=your-org/your-repo \
   ghcr.io/askmethatfr/agent-dashboard:latest
 ```
+
+v1.0 observes `AskmethatFR/agent-dashboard` (dogfooding). Generic multi-repo support — see #29 — is planned post-v1.
 
 Then open http://localhost:8080.
 

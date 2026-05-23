@@ -1,3 +1,6 @@
+# --- Tool symlinks injected by agentic CLIs (never commit) ---
+.antigravitycli/
+
 # --- .NET ---
 [Bb]in/
 [Oo]bj/
