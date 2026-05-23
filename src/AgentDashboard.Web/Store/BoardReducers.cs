@@ -5,9 +5,6 @@ using Cortex.Mediator;
 
 namespace AgentDashboard.Web.Store;
 
-/// <summary>
-/// Reducer for LoadBoardAction - sets loading state.
-/// </summary>
 public sealed class LoadBoardReducer : IReducer<BoardSlice, LoadBoardAction>
 {
     public BoardSlice Reduce(BoardSlice slice, LoadBoardAction action)
@@ -16,9 +13,6 @@ public sealed class LoadBoardReducer : IReducer<BoardSlice, LoadBoardAction>
     }
 }
 
-/// <summary>
-/// Reducer for LoadBoardSuccessAction - updates board with data.
-/// </summary>
 public sealed class LoadBoardSuccessReducer : IReducer<BoardSlice, LoadBoardSuccessAction>
 {
     public BoardSlice Reduce(BoardSlice slice, LoadBoardSuccessAction action)
@@ -27,9 +21,6 @@ public sealed class LoadBoardSuccessReducer : IReducer<BoardSlice, LoadBoardSucc
     }
 }
 
-/// <summary>
-/// Reducer for LoadBoardFailureAction - sets error state.
-/// </summary>
 public sealed class LoadBoardFailureReducer : IReducer<BoardSlice, LoadBoardFailureAction>
 {
     public BoardSlice Reduce(BoardSlice slice, LoadBoardFailureAction action)
@@ -38,9 +29,6 @@ public sealed class LoadBoardFailureReducer : IReducer<BoardSlice, LoadBoardFail
     }
 }
 
-/// <summary>
-/// Async reducer for loading board data.
-/// </summary>
 public sealed class LoadBoardAsyncReducer : IAsyncReducer<BoardSlice, LoadBoardAction>
 {
     private readonly IMediator _mediator;

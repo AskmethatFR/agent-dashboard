@@ -6,7 +6,6 @@ using AgentDashboard.Web.Components.Layout.TopBar;
 using AgentDashboard.Web.Store;
 using Blazor.Redux;
 using Blazor.Redux.Core;
-using Blazor.Redux.Dispatching;
 using Blazor.Redux.Extensions;
 using Blazor.Redux.Interfaces;
 using Bunit;
@@ -88,7 +87,6 @@ public sealed class RefreshButtonShould
         ctx.Services.AddScoped<IReducer<BoardSlice, LoadBoardSuccessAction>, LoadBoardSuccessReducer>();
         ctx.Services.AddScoped<IReducer<BoardSlice, LoadBoardFailureAction>, LoadBoardFailureReducer>();
         ctx.Services.AddScoped<IAsyncReducer<BoardSlice, LoadBoardAction>, LoadBoardAsyncReducer>();
-        ctx.Services.AddScoped<IDispatcher, Dispatcher>();
 
         return ctx;
     }

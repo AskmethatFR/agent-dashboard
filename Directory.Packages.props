@@ -20,7 +20,6 @@
 
     <!-- Blazor state management (AskmethatFR/Blazor.Redux) -->
     <PackageVersion Include="Blazor.Redux" Version="0.1.0" />
-    <PackageVersion Include="System.Reactive" Version="6.1.0" />
 
     <!-- JSON-based localization (AskmethatFR/AspNetCore.Localizer.Json) -->
     <PackageVersion Include="AspNetCore.Localizer.Json" Version="1.0.4" />

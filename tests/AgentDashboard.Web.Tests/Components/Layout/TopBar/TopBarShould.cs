@@ -3,7 +3,6 @@ using AgentDashboard.TicketTracking.Infrastructure;
 using AgentDashboard.Web.Store;
 using Blazor.Redux;
 using Blazor.Redux.Core;
-using Blazor.Redux.Dispatching;
 using Blazor.Redux.Extensions;
 using Blazor.Redux.Interfaces;
 using Bunit;
@@ -50,7 +49,6 @@ public sealed class TopBarShould
         ctx.Services.AddScoped<IReducer<BoardSlice, LoadBoardSuccessAction>, LoadBoardSuccessReducer>();
         ctx.Services.AddScoped<IReducer<BoardSlice, LoadBoardFailureAction>, LoadBoardFailureReducer>();
         ctx.Services.AddScoped<IAsyncReducer<BoardSlice, LoadBoardAction>, LoadBoardAsyncReducer>();
-        ctx.Services.AddScoped<IDispatcher, Dispatcher>();
 
         return ctx;
     }

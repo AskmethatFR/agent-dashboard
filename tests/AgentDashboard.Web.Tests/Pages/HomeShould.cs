@@ -6,7 +6,6 @@ using AngleSharp.Dom;
 using Bunit;
 using Blazor.Redux;
 using Blazor.Redux.Core;
-using Blazor.Redux.Dispatching;
 using Blazor.Redux.Extensions;
 using Blazor.Redux.Interfaces;
 using FluentAssertions;
@@ -79,8 +78,7 @@ public class HomeShould
         ctx.Services.AddScoped<IReducer<BoardSlice, LoadBoardSuccessAction>, LoadBoardSuccessReducer>();
         ctx.Services.AddScoped<IReducer<BoardSlice, LoadBoardFailureAction>, LoadBoardFailureReducer>();
         ctx.Services.AddScoped<IAsyncReducer<BoardSlice, LoadBoardAction>, LoadBoardAsyncReducer>();
-        ctx.Services.AddScoped<IDispatcher, Dispatcher>();
-        
+
         return ctx;
     }
 
