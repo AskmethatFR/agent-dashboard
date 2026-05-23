@@ -90,3 +90,57 @@ h1:focus {
 .form-floating > .form-control-plaintext:focus::placeholder, .form-floating > .form-control:focus::placeholder {
     text-align: start;
 }
+
+/* ============ Board Components — AgentChip (15.1) ============ */
+.agent {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.agent-glyph {
+    width: 22px;
+    height: 22px;
+    border-radius: 4px;
+    background: var(--bg-3);
+    border: 1px solid var(--bd-3);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: var(--ff-mono);
+    font-size: 10.5px;
+    color: var(--tx-1);
+    letter-spacing: 0;
+    flex-shrink: 0;
+    font-weight: 500;
+}
+
+.agent-name {
+    font-family: var(--ff-sans);
+    font-size: 12.5px;
+    color: var(--tx-0);
+    letter-spacing: 0;
+}
+
+.agent.thinking .agent-glyph,
+.agent-glyph.thinking {
+    border-color: var(--st-fresh);
+    color: var(--tx-0);
+    background: rgba(74, 214, 224, 0.08);
+    position: relative;
+    overflow: hidden;
+}
+
+.agent.thinking .agent-glyph::after,
+.agent-glyph.thinking::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: var(--st-fresh-dim);
+    animation: think 1.6s ease-in-out infinite;
+}
+
+@keyframes think {
+    0%, 100% { opacity: 0; }
+    50% { opacity: 0.6; }
+}

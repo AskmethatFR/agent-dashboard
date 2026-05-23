@@ -1,0 +1,16 @@
+@* 15.1 - AgentChip Razor component *@
+@using AgentDashboard.TicketTracking.Domain.Agents
+
+<span class="@($"agent{(Thinking ? " thinking" : "")}")" title="@($"{Agent.Role} — {Agent.Name}")">
+    <span class="agent-glyph">@Agent.Glyph</span>
+    @if (!Dense)
+    {
+        <span class="agent-name">@Agent.Name</span>
+    }
+</span>
+
+@code {
+    [Parameter] public Agent Agent { get; set; } = null!;
+    [Parameter] public bool Thinking { get; set; }
+    [Parameter] public bool Dense { get; set; }
+}
