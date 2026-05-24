@@ -1,15 +1,18 @@
 @using Microsoft.AspNetCore.Components
 @using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos
 
-<div class="ticket-card" @key="Ticket">
-    <div class="ticket-header">
-        <div class="ticket-title">@Ticket.Title</div>
+<div class="card" @key="Ticket">
+    <div class="card-head">
+        <span class="card-title">@Ticket.Title</span>
     </div>
-    <div class="ticket-body">
-        <AgentChip
-            Agent="@GetAgentFromId(Ticket.AgentId)"
-            IsThinking="Ticket.IsThinking"
-            IsDense="false" />
+    <div class="card-meta">
+        @if (GetAgentFromId(Ticket.AgentId) is { } agent)
+        {
+            <AgentChip
+                Agent="agent"
+                IsThinking="Ticket.IsThinking"
+                IsDense="true" />
+        }
     </div>
 </div>
 
