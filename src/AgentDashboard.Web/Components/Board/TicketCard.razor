@@ -1,0 +1,24 @@
+@using Microsoft.AspNetCore.Components
+@using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos
+
+<div class="ticket-card" @key="Ticket">
+    <div class="ticket-header">
+        <div class="ticket-title">@Ticket.Title</div>
+    </div>
+    <div class="ticket-body">
+        <AgentChip
+            Agent="@GetAgentFromId(Ticket.AgentId)"
+            IsThinking="Ticket.IsThinking"
+            IsDense="false" />
+    </div>
+</div>
+
+@code {
+    [Parameter, EditorRequired] public TicketDto Ticket { get; set; } = null!;
+    [Parameter, EditorRequired] public IReadOnlyList<AgentDto> Agents { get; set; } = null!;
+
+    private AgentDto? GetAgentFromId(string agentId)
+    {
+        return Agents.FirstOrDefault(a => a.Id == agentId);
+    }
+}

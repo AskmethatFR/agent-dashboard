@@ -1,4 +1,4 @@
-using AgentDashboard.TicketTracking.Domain.Agents;
+using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos;
 using AgentDashboard.Web.Components.Board;
 using Bunit;
 using FluentAssertions;
@@ -8,11 +8,8 @@ namespace AgentDashboard.Web.Tests.Components.Board;
 
 public class AgentChipShould
 {
-    private static readonly Agent DevA = new(
-        new AgentId("dev-a"),
-        new AgentName("Developer A"),
-        new AgentGlyph("DA"),
-        new AgentRole("developer"));
+    private static readonly AgentDto DevA = new(
+        "dev-a", "Developer A", "DA", "developer");
 
     [Fact]
     public void RenderNothing_WhenAgentIsNull()

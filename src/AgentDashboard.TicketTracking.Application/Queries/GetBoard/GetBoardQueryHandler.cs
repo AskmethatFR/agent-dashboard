@@ -23,6 +23,10 @@ public sealed class GetBoardQueryHandler : IQueryHandler<GetBoardQuery, BoardDto
 
     private static BoardDto MapToDto(BoardSnapshot snapshot)
     {
+        var agentDtos = snapshot.Agents
+            .Select(a => new AgentDto(a.Id.Value, a.Name.Value, a.Glyph.Value, a.Role.Value))
+            .ToList();
+
         var ticketsByColumn = snapshot.Tickets
             .GroupBy(t => t.ColumnId)
             .ToDictionary(g => g.Key, g => g.ToList());
@@ -31,12 +35,12 @@ public sealed class GetBoardQueryHandler : IQueryHandler<GetBoardQuery, BoardDto
             .Select(column =>
             {
                 var tickets = ticketsByColumn.TryGetValue(column.Id, out var list)
-                    ? list.Select(t => new TicketDto(t.Title.Value)).ToList()
+                    ? list.Select(t => new TicketDto(t.Title.Value, t.AgentId.Value, t.IsThinking)).ToList()
                     : new List<TicketDto>();
                 return new BoardColumnDto(column.Label.Value, tickets);
             })
             .ToList();
 
-        return new BoardDto(columns);
+        return new BoardDto(columns, agentDtos);
     }
 }

@@ -1,5 +1,6 @@
 @page "/"
 @using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos
+@using AgentDashboard.Web.Components.Board
 @using AgentDashboard.Web.Store
 @using Blazor.Redux.Core
 @using Blazor.Redux.Interfaces
@@ -27,7 +28,7 @@ else
             <h2>@column.Label (@column.Tickets.Count)</h2>
             @foreach (var ticket in column.Tickets)
             {
-                <div class="card">@ticket.Title</div>
+                <TicketCard Ticket="ticket" Agents="_board.Agents" />
             }
         }
     </section>
