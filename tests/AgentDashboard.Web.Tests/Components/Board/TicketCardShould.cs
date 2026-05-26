@@ -1,12 +1,14 @@
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos;
 using AgentDashboard.Web.Components.Board;
+using AgentDashboard.Web.Components.Shared;
+using AgentDashboard.Web.Tests.Infrastructure;
 using Bunit;
 using FluentAssertions;
 using Xunit;
 
 namespace AgentDashboard.Web.Tests.Components.Board;
 
-public class TicketCardShould
+public class TicketCardShould : IClassFixture<BunitFixture>
 {
     private static readonly AgentDto DevADto = new(
         "dev-a", "Developer A", "DA", "developer");
@@ -19,11 +21,14 @@ public class TicketCardShould
 
     private static readonly IReadOnlyList<AgentDto> Agents = new List<AgentDto> { DevADto };
 
+    private readonly BunitFixture _ctx;
+
+    public TicketCardShould(BunitFixture ctx) => _ctx = ctx;
+
     [Fact]
     public void RenderTicketTitle()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<TicketCard>(p => p
+        var cut = _ctx.Context.Render<TicketCard>(p => p
             .Add(c => c.Ticket, SampleTicket)
             .Add(c => c.Agents, Agents));
 
@@ -33,8 +38,7 @@ public class TicketCardShould
     [Fact]
     public void RenderAgentChipWithGlyphAndName()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<TicketCard>(p => p
+        var cut = _ctx.Context.Render<TicketCard>(p => p
             .Add(c => c.Ticket, SampleTicket)
             .Add(c => c.Agents, Agents));
 
@@ -45,8 +49,7 @@ public class TicketCardShould
     [Fact]
     public void PassIsThinkingTrueToAgentChip_WhenTicketIsThinking()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<TicketCard>(p => p
+        var cut = _ctx.Context.Render<TicketCard>(p => p
             .Add(c => c.Ticket, ThinkingTicket)
             .Add(c => c.Agents, Agents));
 
@@ -57,8 +60,7 @@ public class TicketCardShould
     [Fact]
     public void PassIsThinkingFalseToAgentChip_WhenTicketIsNotThinking()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<TicketCard>(p => p
+        var cut = _ctx.Context.Render<TicketCard>(p => p
             .Add(c => c.Ticket, SampleTicket)
             .Add(c => c.Agents, Agents));
 
@@ -69,14 +71,37 @@ public class TicketCardShould
     [Fact]
     public void RenderNothingForAgentChip_WhenAgentNotFound()
     {
-        using var ctx = new BunitContext();
         var unknownAgentTicket = new TicketDto("Orphan ticket", "unknown-id", false);
-        var cut = ctx.Render<TicketCard>(p => p
+        var cut = _ctx.Context.Render<TicketCard>(p => p
             .Add(c => c.Ticket, unknownAgentTicket)
             .Add(c => c.Agents, Agents));
 
         // AgentChip renders nothing when Agent is null - verify no agent markup is present
         cut.Markup.Should().NotContain("agent-glyph");
         cut.Markup.Should().NotContain("agent-name");
+    }
+
+    [Fact]
+    public void Should_RenderRetryCounter_When_RetryCountGreaterThanZero()
+    {
+        var ticketWithRetry = new TicketDto("Fix the bug", "dev-a", false, RetryCount: 2);
+        var cut = _ctx.Context.Render<TicketCard>(p => p
+            .Add(c => c.Ticket, ticketWithRetry)
+            .Add(c => c.Agents, Agents));
+
+        var retryCounter = cut.FindComponent<RetryCounter>();
+        retryCounter.Should().NotBeNull();
+        retryCounter.Instance.Current.Should().Be(2);
+    }
+
+    [Fact]
+    public void Should_NotRenderRetryCounter_When_RetryCountIsZero()
+    {
+        var ticketNoRetry = new TicketDto("Fix the bug", "dev-a", false, RetryCount: 0);
+        var cut = _ctx.Context.Render<TicketCard>(p => p
+            .Add(c => c.Ticket, ticketNoRetry)
+            .Add(c => c.Agents, Agents));
+
+        cut.FindAll(".retry-counter").Should().BeEmpty();
     }
 }

@@ -3,11 +3,11 @@
 @inject TimeProvider TimeProvider
 @rendermode InteractiveServer
 
-<span class="live-clock mono" aria-live="off" aria-atomic="true">@_now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) UTC</span>
+<span class="live-clock mono" aria-live="polite" aria-atomic="true">@_now.ToString("HH:mm:ss", CultureInfo.InvariantCulture) UTC</span>
 
 @code {
     private DateTimeOffset _now;
-    private ITimer? _timer;
+    internal ITimer? _timer;
 
     protected override void OnInitialized()
     {
