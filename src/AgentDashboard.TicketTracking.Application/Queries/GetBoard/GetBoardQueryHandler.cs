@@ -35,7 +35,18 @@ public sealed class GetBoardQueryHandler : IQueryHandler<GetBoardQuery, BoardDto
             .Select(column =>
             {
                 var tickets = ticketsByColumn.TryGetValue(column.Id, out var list)
-                    ? list.Select(t => new TicketDto(t.Title.Value, t.AgentId.Value, t.IsThinking)).ToList()
+                    ? list.Select(t => new TicketDto(
+                        t.Title.Value,
+                        t.AgentId.Value,
+                        t.IsThinking,
+                        t.Retry.Value,
+                        t.Id.Value,
+                        t.Age.Value,
+                        t.Freshness.ToString(),
+                        t.IsEscalated,
+                        t.EscalationTarget?.Value,
+                        t.IsInCrossReview,
+                        t.CoAgentId?.Value)).ToList()
                     : new List<TicketDto>();
                 return new BoardColumnDto(column.Label.Value, tickets);
             })
