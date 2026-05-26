@@ -1,0 +1,28 @@
+@using Microsoft.AspNetCore.Components
+
+<span class="age-badge @GetFreshnessClass()">
+    @if (Freshness == "Fresh")
+    {
+        <text>✦ </text>
+    }
+    <text>⏱ </text>
+    @FormatAge()
+    @if (Freshness == "Stale")
+    {
+        <text> · zZz</text>
+    }
+</span>
+
+@code {
+    [Parameter, EditorRequired] public TimeSpan Age { get; set; }
+    [Parameter, EditorRequired] public string Freshness { get; set; } = "Neutral";
+
+    private string GetFreshnessClass() =>
+        Freshness switch {
+            "Fresh" => "age-badge--fresh",
+            "Stale" => "age-badge--warn",
+            _ => ""
+        };
+
+    private string FormatAge() => Age.ToString(@"hh\:mm");
+}

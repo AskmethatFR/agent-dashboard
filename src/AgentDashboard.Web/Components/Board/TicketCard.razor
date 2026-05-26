@@ -2,22 +2,41 @@
 @using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos
 @using AgentDashboard.Web.Components.Shared
 
-<div class="card" @key="Ticket">
+<div class="card @GetCardStateClass()" @key="Ticket">
+    @if (Ticket.IsEscalated)
+    {
+        <span class="esc-badge"><span class="siren" aria-hidden="true">◆</span> esc → @Ticket.EscalationTargetId</span>
+    }
     <div class="card-head">
+        <span class="card-id mono">#@Ticket.Id</span>
         <span class="card-title">@Ticket.Title</span>
     </div>
     <div class="card-meta">
-        @if (GetAgentFromId(Ticket.AgentId) is { } agent)
+        @if (Ticket.IsInCrossReview && GetAgentFromId(Ticket.AgentId) is { } crossAgent)
+        {
+            <span class="cross">
+                <AgentChip
+                    Agent="crossAgent"
+                    IsThinking="Ticket.IsThinking"
+                    IsDense="true" />
+                <span class="x">⇄</span>
+                @if (GetAgentFromId(Ticket.CoAgentId) is { } coAgent)
+                {
+                    <AgentChip
+                        Agent="coAgent"
+                        IsDense="true" />
+                }
+            </span>
+        }
+        @if (!Ticket.IsInCrossReview && GetAgentFromId(Ticket.AgentId) is { } normalAgent)
         {
             <AgentChip
-                Agent="agent"
+                Agent="normalAgent"
                 IsThinking="Ticket.IsThinking"
-                IsDense="true" />
+                IsDense="false" />
         }
-        @if (Ticket.RetryCount > 0)
-        {
-            <RetryCounter Current="Ticket.RetryCount" />
-        }
+        <RetryCounter Current="Ticket.RetryCount" />
+        <AgeBadge Age="@Ticket.Age" Freshness="@Ticket.Freshness" />
     </div>
 </div>
 
@@ -25,8 +44,19 @@
     [Parameter, EditorRequired] public TicketDto Ticket { get; set; } = null!;
     [Parameter, EditorRequired] public IReadOnlyList<AgentDto> Agents { get; set; } = null!;
 
-    private AgentDto? GetAgentFromId(string agentId)
+    private AgentDto? GetAgentFromId(string? agentId)
     {
+        if (agentId == null) return null;
         return Agents.FirstOrDefault(a => a.Id == agentId);
+    }
+
+    private string GetCardStateClass()
+    {
+        if (Ticket.IsEscalated) return "escalated";
+        if (Ticket.RetryCount >= 3) return "danger";
+        if (Ticket.RetryCount == 2) return "warn";
+        if (Ticket.Freshness == "Fresh") return "fresh";
+        if (Ticket.Freshness == "Stale") return "stale";
+        return "";
     }
 }
