@@ -35,9 +35,9 @@ public class HomeShould
         using var ctx = BuildContext();
 
         var cut = ctx.Render<Home>();
-        cut.WaitForState(() => cut.FindAll("h2").Count >= ExpectedColumnLabels.Length, TimeSpan.FromSeconds(5));
+        cut.WaitForState(() => cut.FindAll(".column-title").Count >= ExpectedColumnLabels.Length, TimeSpan.FromSeconds(5));
 
-        var headings = cut.FindAll("h2")
+        var headings = cut.FindAll(".column-title")
             .Select(ExtractColumnLabel)
             .ToArray();
 
@@ -50,9 +50,9 @@ public class HomeShould
         using var ctx = BuildContext();
 
         var cut = ctx.Render<Home>();
-        cut.WaitForState(() => cut.FindAll("h2").Count >= ExpectedColumnLabels.Length, TimeSpan.FromSeconds(5));
+        cut.WaitForState(() => cut.FindAll(".column-title").Count >= ExpectedColumnLabels.Length, TimeSpan.FromSeconds(5));
 
-        var counts = cut.FindAll("h2")
+        var counts = cut.FindAll(".column-title")
             .Select(ExtractColumnCount)
             .ToArray();
 
@@ -84,19 +84,21 @@ public class HomeShould
 
     private static string ExtractColumnLabel(IElement heading)
     {
-        var raw = heading.TextContent.Trim();
-        var openParen = raw.LastIndexOf('(');
-        return openParen < 0 ? raw : raw[..openParen].TrimEnd();
+        return heading.TextContent.Trim();
     }
 
     private static int ExtractColumnCount(IElement heading)
     {
-        var raw = heading.TextContent;
-        var openParen = raw.LastIndexOf('(');
-        var closeParen = raw.LastIndexOf(')');
-        if (openParen < 0 || closeParen <= openParen)
+        // New structure: <span class="column-title">Label</span><span class="column-meta"><span class="column-count">N</span></span>
+        // heading is .column-title, we need to find the sibling .column-count
+        var columnHeader = heading.Parent as IParentNode;
+        if (columnHeader == null)
             return -1;
-        var inside = raw[(openParen + 1)..closeParen];
-        return int.Parse(inside, System.Globalization.CultureInfo.InvariantCulture);
+        
+        var countSpan = columnHeader.QuerySelector<IElement>(".column-count");
+        if (countSpan == null || !int.TryParse(countSpan.TextContent.Trim(), out var count))
+            return -1;
+        
+        return count;
     }
 }
