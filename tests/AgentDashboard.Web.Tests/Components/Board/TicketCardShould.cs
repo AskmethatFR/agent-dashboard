@@ -1,5 +1,6 @@
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos;
 using AgentDashboard.Web.Components.Board;
+using AgentDashboard.Web.Components.Shared;
 using Bunit;
 using FluentAssertions;
 using Xunit;
@@ -78,5 +79,31 @@ public class TicketCardShould
         // AgentChip renders nothing when Agent is null - verify no agent markup is present
         cut.Markup.Should().NotContain("agent-glyph");
         cut.Markup.Should().NotContain("agent-name");
+    }
+
+    [Fact]
+    public void Should_RenderRetryCounter_When_RetryCountGreaterThanZero()
+    {
+        using var ctx = new BunitContext();
+        var ticketWithRetry = new TicketDto("Fix the bug", "dev-a", false, RetryCount: 2);
+        var cut = ctx.Render<TicketCard>(p => p
+            .Add(c => c.Ticket, ticketWithRetry)
+            .Add(c => c.Agents, Agents));
+
+        var retryCounter = cut.FindComponent<RetryCounter>();
+        retryCounter.Should().NotBeNull();
+        retryCounter.Instance.Current.Should().Be(2);
+    }
+
+    [Fact]
+    public void Should_NotRenderRetryCounter_When_RetryCountIsZero()
+    {
+        using var ctx = new BunitContext();
+        var ticketNoRetry = new TicketDto("Fix the bug", "dev-a", false, RetryCount: 0);
+        var cut = ctx.Render<TicketCard>(p => p
+            .Add(c => c.Ticket, ticketNoRetry)
+            .Add(c => c.Agents, Agents));
+
+        cut.FindAll(".retry-counter").Should().BeEmpty();
     }
 }

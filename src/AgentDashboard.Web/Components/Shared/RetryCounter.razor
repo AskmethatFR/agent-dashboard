@@ -1,0 +1,28 @@
+@using AgentDashboard.TicketTracking.Domain.Tickets
+
+<span 
+    class="@GetRetryClass() retry-counter mono"
+    aria-label="@GetAriaLabel()">
+    <span class="retry-glyph" aria-hidden="true">⟳</span>
+    <span class="retry-value">@Current</span>
+    <span class="retry-max">/@Max</span>
+</span>
+
+@code {
+    [Parameter, EditorRequired] public int Current { get; set; }
+    [Parameter] public int Max { get; set; } = Retry.MaxBeforeEscalation;
+
+    private string GetRetryClass()
+    {
+        if (Current >= Max) return "retry-danger";
+        if (Current == Retry.WarnAt) return "retry-warn";
+        return "retry-safe";
+    }
+
+    private string GetAriaLabel()
+    {
+        if (Current >= Max) return $"Retry count at maximum: {Current} of {Max}";
+        if (Current == Retry.WarnAt) return $"Retry count warning: {Current} of {Max}";
+        return $"Retry count: {Current} of {Max}";
+    }
+}

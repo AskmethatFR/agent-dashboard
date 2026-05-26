@@ -1,5 +1,6 @@
 @using Microsoft.AspNetCore.Components
 @using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos
+@using AgentDashboard.Web.Components.Shared
 
 <div class="card" @key="Ticket">
     <div class="card-head">
@@ -12,6 +13,10 @@
                 Agent="agent"
                 IsThinking="Ticket.IsThinking"
                 IsDense="true" />
+        }
+        @if (Ticket.RetryCount > 0)
+        {
+            <RetryCounter Current="Ticket.RetryCount" />
         }
     </div>
 </div>
