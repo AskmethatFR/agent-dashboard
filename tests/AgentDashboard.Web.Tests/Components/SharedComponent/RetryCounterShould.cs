@@ -1,12 +1,17 @@
 using AgentDashboard.Web.Components.Shared;
+using AgentDashboard.Web.Tests.Infrastructure;
 using Bunit;
 using FluentAssertions;
 using Xunit;
 
 namespace AgentDashboard.Web.Tests.Components.SharedComponent;
 
-public sealed class RetryCounterShould
+public sealed class RetryCounterShould : IClassFixture<BunitFixture>
 {
+    private readonly BunitFixture _ctx;
+
+    public RetryCounterShould(BunitFixture ctx) => _ctx = ctx;
+
     [Theory]
     [InlineData(0, 3, "retry-safe")]  // Safe
     [InlineData(1, 3, "retry-safe")]  // Safe
@@ -15,8 +20,7 @@ public sealed class RetryCounterShould
     public void Should_RenderCorrectClass_When_RetryCountChanges(
         int current, int max, string expectedClass)
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<RetryCounter>(p => p
+        var cut = _ctx.Context.Render<RetryCounter>(p => p
             .Add(c => c.Current, current)
             .Add(c => c.Max, max));
 
@@ -31,8 +35,7 @@ public sealed class RetryCounterShould
     public void Should_RenderCorrectValues_When_RetryCountChanges(
         int current, int max, string expectedValue, string expectedMax)
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<RetryCounter>(p => p
+        var cut = _ctx.Context.Render<RetryCounter>(p => p
             .Add(c => c.Current, current)
             .Add(c => c.Max, max));
 
@@ -43,8 +46,7 @@ public sealed class RetryCounterShould
     [Fact]
     public void Should_UseDefaultMax_When_NotSpecified()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<RetryCounter>(p => p
+        var cut = _ctx.Context.Render<RetryCounter>(p => p
             .Add(c => c.Current, 1));
 
         cut.Find(".retry-max").TextContent.Should().Be("/3");
@@ -53,8 +55,7 @@ public sealed class RetryCounterShould
     [Fact]
     public void Should_HaveAriaLabel_ForAccessibility()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<RetryCounter>(p => p
+        var cut = _ctx.Context.Render<RetryCounter>(p => p
             .Add(c => c.Current, 2)
             .Add(c => c.Max, 3));
 
@@ -69,8 +70,7 @@ public sealed class RetryCounterShould
     [InlineData(3, "Retry count at maximum: 3 of 3")]
     public void Should_HaveCorrectAriaLabel_ForEachState(int current, string expectedLabel)
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<RetryCounter>(p => p
+        var cut = _ctx.Context.Render<RetryCounter>(p => p
             .Add(c => c.Current, current)
             .Add(c => c.Max, 3));
 

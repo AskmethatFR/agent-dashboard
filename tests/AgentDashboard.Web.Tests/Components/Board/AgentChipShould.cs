@@ -1,21 +1,25 @@
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos;
 using AgentDashboard.Web.Components.Board;
+using AgentDashboard.Web.Tests.Infrastructure;
 using Bunit;
 using FluentAssertions;
 using Xunit;
 
 namespace AgentDashboard.Web.Tests.Components.Board;
 
-public class AgentChipShould
+public class AgentChipShould : IClassFixture<BunitFixture>
 {
     private static readonly AgentDto DevA = new(
         "dev-a", "Developer A", "DA", "developer");
 
+    private readonly BunitFixture _ctx;
+
+    public AgentChipShould(BunitFixture ctx) => _ctx = ctx;
+
     [Fact]
     public void RenderNothing_WhenAgentIsNull()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<AgentChip>(p => p.Add(c => c.Agent, null));
+        var cut = _ctx.Context.Render<AgentChip>(p => p.Add(c => c.Agent, null));
 
         cut.Markup.Should().BeEmpty();
     }
@@ -23,8 +27,7 @@ public class AgentChipShould
     [Fact]
     public void RenderGlyphAndName_WhenNotDense()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<AgentChip>(p => p
+        var cut = _ctx.Context.Render<AgentChip>(p => p
             .Add(c => c.Agent, DevA)
             .Add(c => c.IsDense, false));
 
@@ -38,8 +41,7 @@ public class AgentChipShould
     [Fact]
     public void RenderOnlyGlyph_WhenDense()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<AgentChip>(p => p
+        var cut = _ctx.Context.Render<AgentChip>(p => p
             .Add(c => c.Agent, DevA)
             .Add(c => c.IsDense, true));
 
@@ -52,8 +54,7 @@ public class AgentChipShould
     [Fact]
     public void GetAgentClass_ReturnsAgentThinking_WhenIsThinkingIsTrue()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<AgentChip>(p => p
+        var cut = _ctx.Context.Render<AgentChip>(p => p
             .Add(c => c.Agent, DevA)
             .Add(c => c.IsThinking, true));
 
@@ -64,8 +65,7 @@ public class AgentChipShould
     [Fact]
     public void GetAgentClass_ReturnsAgentOnly_WhenIsThinkingIsFalse()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<AgentChip>(p => p
+        var cut = _ctx.Context.Render<AgentChip>(p => p
             .Add(c => c.Agent, DevA)
             .Add(c => c.IsThinking, false));
 
@@ -76,8 +76,7 @@ public class AgentChipShould
     [Fact]
     public void HaveAriaHidden_OnGlyph()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<AgentChip>(p => p.Add(c => c.Agent, DevA));
+        var cut = _ctx.Context.Render<AgentChip>(p => p.Add(c => c.Agent, DevA));
 
         cut.Markup.Should().Contain("aria-hidden=\"true\"");
     }
@@ -85,8 +84,7 @@ public class AgentChipShould
     [Fact]
     public void HaveTitle_WithRoleAndName()
     {
-        using var ctx = new BunitContext();
-        var cut = ctx.Render<AgentChip>(p => p.Add(c => c.Agent, DevA));
+        var cut = _ctx.Context.Render<AgentChip>(p => p.Add(c => c.Agent, DevA));
 
         cut.Markup.Should().Contain("title=\"developer — Developer A\"");
     }
