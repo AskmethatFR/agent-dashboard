@@ -19,6 +19,8 @@ internal sealed class FakeGitHubIssuesClient : IGitHubIssuesClient
         new GitHubIssueRecord(2, "second issue", ChoreLabels, DefaultCreatedAt.AddDays(1)),
     ];
 
+    private IReadOnlyList<GitHubIssueRecord> _customIssues = CannedResponse;
+
     public FakeGitHubIssuesClient(TimeProvider timeProvider)
     {
         ArgumentNullException.ThrowIfNull(timeProvider);
@@ -47,6 +49,12 @@ internal sealed class FakeGitHubIssuesClient : IGitHubIssuesClient
         }
     }
 
+    public void SetIssues(IReadOnlyList<GitHubIssueRecord> issues)
+    {
+        ArgumentNullException.ThrowIfNull(issues);
+        _customIssues = issues;
+    }
+
     public Task<IReadOnlyList<GitHubIssueRecord>> GetOpenIssuesAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -55,6 +63,6 @@ internal sealed class FakeGitHubIssuesClient : IGitHubIssuesClient
             _callTimestamps.Add(_timeProvider.GetUtcNow());
         }
 
-        return Task.FromResult(CannedResponse);
+        return Task.FromResult(_customIssues);
     }
 }

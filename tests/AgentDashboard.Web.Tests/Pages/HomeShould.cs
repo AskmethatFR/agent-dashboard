@@ -1,4 +1,6 @@
 using AgentDashboard.TicketTracking.Application;
+using AgentDashboard.TicketTracking.Application.Ports;
+using AgentDashboard.TicketTracking.Domain.Boards;
 using AgentDashboard.TicketTracking.Infrastructure;
 using AgentDashboard.Web.Components.Pages;
 using AgentDashboard.Web.Store;
@@ -59,6 +61,27 @@ public class HomeShould
         counts.Should().Equal(ExpectedTicketCounts);
     }
 
+    [Fact]
+    public void Should_NotThrow_NullReferenceException_WhenBoardIsNull()
+    {
+        using var ctx = BuildContext();
+
+        var cut = ctx.Render<Home>();
+
+        cut.Markup.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void Should_DisplayLoadingState_WhenBoardIsNull()
+    {
+        using var ctx = BuildContext();
+        ctx.Services.AddSingleton<IBoardReader>(new LoadingStateBoardReader());
+
+        var cut = ctx.Render<Home>();
+
+        cut.Markup.Should().Contain("Loading...");
+    }
+
     private static BunitContext BuildContext()
     {
         var ctx = new BunitContext();
@@ -94,11 +117,17 @@ public class HomeShould
         var columnHeader = heading.Parent as IParentNode;
         if (columnHeader == null)
             return -1;
-        
+
         var countSpan = columnHeader.QuerySelector<IElement>(".column-count");
         if (countSpan == null || !int.TryParse(countSpan.TextContent.Trim(), out var count))
             return -1;
-        
+
         return count;
+    }
+
+    private sealed class LoadingStateBoardReader : IBoardReader
+    {
+        public Task<BoardSnapshot> GetCurrentAsync(CancellationToken cancellationToken) =>
+            new TaskCompletionSource<BoardSnapshot>().Task;
     }
 }

@@ -56,8 +56,7 @@ public sealed class GitHubBoardReaderShould
         using var cache = new BoardSnapshotCache();
         var cachedSnapshot = BuildTestSnapshot(ticketId: 1);
         
-        // Set cache with recent data
-        cache.Update(cachedSnapshot);
+        cache.Update(cachedSnapshot, FixedNow);
         
         // Use a very large poll interval so cache is always fresh
         var largeIntervalOptions = new GitHubPollingOptions
@@ -125,18 +124,16 @@ public sealed class GitHubBoardReaderShould
         // Arrange
         using var cache = new BoardSnapshotCache();
         var oldSnapshot = BuildTestSnapshot(ticketId: 1);
-        cache.Update(oldSnapshot);
-        
-        // Use a short poll interval and advance time to make cache stale
+        cache.Update(oldSnapshot, FixedNow);
+
         var shortIntervalOptions = new GitHubPollingOptions
         {
             Token = "test-token",
             RepositoryOwner = "test-owner",
             RepositoryName = "test-repo",
-            PollInterval = TimeSpan.FromMilliseconds(100) // 100ms interval
+            PollInterval = TimeSpan.FromMilliseconds(100)
         };
-        
-        // Time is now 150ms after cache was created (older than PollInterval/2 = 50ms)
+
         var timeAfterCache = FixedNow.AddMilliseconds(150);
         var timeProvider = new ManualTimeProvider(timeAfterCache);
         
@@ -169,9 +166,8 @@ public sealed class GitHubBoardReaderShould
         // Arrange
         using var cache = new BoardSnapshotCache();
         var cachedSnapshot = BuildTestSnapshot(ticketId: 1);
-        cache.Update(cachedSnapshot);
-        
-        // Use a large poll interval so cache is always fresh
+        cache.Update(cachedSnapshot, FixedNow);
+
         var largeIntervalOptions = new GitHubPollingOptions
         {
             Token = "test-token",
@@ -230,8 +226,8 @@ public sealed class GitHubBoardReaderShould
         // Arrange
         using var cache = new BoardSnapshotCache();
         var cachedSnapshot = BuildTestSnapshot(ticketId: 1);
-        cache.Update(cachedSnapshot);
-        
+        cache.Update(cachedSnapshot, FixedNow);
+
         var zeroIntervalOptions = new GitHubPollingOptions
         {
             Token = "test-token",

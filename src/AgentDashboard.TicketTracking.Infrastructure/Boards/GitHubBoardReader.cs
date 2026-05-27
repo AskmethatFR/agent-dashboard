@@ -113,7 +113,7 @@ public sealed partial class GitHubBoardReader : IBoardReader
         var now = _timeProvider.GetUtcNow();
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(records, now);
 
-        _cache.Update(snapshot);
+        _cache.Update(snapshot, now);
         return snapshot;
     }
 
