@@ -75,7 +75,7 @@ public class HomeShould
     public void Should_DisplayLoadingState_WhenBoardIsNull()
     {
         using var ctx = BuildContext();
-        ctx.Services.AddSingleton<IBoardReader>(new NeverCompletingBoardReader());
+        ctx.Services.AddSingleton<IBoardReader>(new LoadingStateBoardReader());
 
         var cut = ctx.Render<Home>();
 
@@ -125,7 +125,7 @@ public class HomeShould
         return count;
     }
 
-    private sealed class NeverCompletingBoardReader : IBoardReader
+    private sealed class LoadingStateBoardReader : IBoardReader
     {
         public Task<BoardSnapshot> GetCurrentAsync(CancellationToken cancellationToken) =>
             new TaskCompletionSource<BoardSnapshot>().Task;
