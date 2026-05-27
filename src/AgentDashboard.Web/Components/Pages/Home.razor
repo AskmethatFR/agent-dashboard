@@ -11,37 +11,60 @@
 
 <PageTitle>team/ — Board</PageTitle>
 
-<div class="board-wrap">
-    <div class="board-header">
-        <div class="counts">
-            <span><strong>@_board!.Columns.Where(c => c.Label != "Done").Sum(c => c.Tickets.Count)</strong> active</span>
-            <span style="color: var(--tx-3)">· @_board!.Columns.Sum(c => c.Tickets.Count) total today</span>
-        </div>
-        <div class="board-actions">
-            <button class="filter-btn">Filter <span class="caret">▾</span></button>
-        </div>
-    </div>
-
-    <div class="columns">
-        @foreach (var column in _board!.Columns)
-        {
-            <div class="column">
-                <div class="column-header">
-                    <span class="column-title">@column.Label</span>
-                    <span class="column-meta">
-                        <span class="column-count">@column.Tickets.Count</span>
-                    </span>
-                </div>
-                <div class="cards">
-                    @foreach (var ticket in column.Tickets)
-                    {
-                        <TicketCard Ticket="ticket" Agents="_board.Agents" />
-                    }
-                </div>
+@if (_board is null && _isLoading)
+{
+    <div class="board-wrap">
+        <div class="board-header">
+            <div class="counts">
+                <span>Loading...</span>
             </div>
-        }
+        </div>
     </div>
-</div>
+}
+else if (_board is null)
+{
+    <div class="board-wrap">
+        <div class="board-header">
+            <div class="counts">
+                <span>No data available</span>
+            </div>
+        </div>
+    </div>
+}
+else
+{
+    <div class="board-wrap">
+        <div class="board-header">
+            <div class="counts">
+                <span><strong>@_board.Columns.Where(c => c.Label != "Done").Sum(c => c.Tickets.Count)</strong> active</span>
+                <span style="color: var(--tx-3)">· @_board.Columns.Sum(c => c.Tickets.Count) total today</span>
+            </div>
+            <div class="board-actions">
+                <button class="filter-btn">Filter <span class="caret">▾</span></button>
+            </div>
+        </div>
+
+        <div class="columns">
+            @foreach (var column in _board.Columns)
+            {
+                <div class="column">
+                    <div class="column-header">
+                        <span class="column-title">@column.Label</span>
+                        <span class="column-meta">
+                            <span class="column-count">@column.Tickets.Count</span>
+                        </span>
+                    </div>
+                    <div class="cards">
+                        @foreach (var ticket in column.Tickets)
+                        {
+                            <TicketCard Ticket="ticket" Agents="_board.Agents" />
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+}
 
 @code {
     private BoardDto? _board;

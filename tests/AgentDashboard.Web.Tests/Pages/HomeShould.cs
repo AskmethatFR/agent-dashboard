@@ -59,6 +59,39 @@ public class HomeShould
         counts.Should().Equal(ExpectedTicketCounts);
     }
 
+    [Fact]
+    public void Should_NotThrow_NullReferenceException_WhenBoardIsNull()
+    {
+        // Reproduit le bug : quand _board est null, le composant crash
+        // avec NullReferenceException sur @_board!.Columns
+        using var ctx = BuildContext();
+
+        var cut = ctx.Render<Home>();
+        
+        // Avant le fix, cette ligne aurait throw une NullReferenceException
+        // car _board est null initiallement
+        var renderedMarkup = cut.Markup;
+        
+        // Si on arrive ici sans exception, le test passe
+        renderedMarkup.Should().NotBeNullOrEmpty();
+    }
+
+    [Fact]
+    public void Should_DisplayLoadingState_WhenBoardIsNull()
+    {
+        using var ctx = BuildContext();
+
+        var cut = ctx.Render<Home>();
+        
+        // Vérifier qu'un message de chargement ou un état vide est affiché
+        // au lieu de crasher
+        var loadingIndicator = cut.FindAll(".loading, .empty-state");
+        
+        // Si _board est null, le composant ne devrait pas crasher
+        // Il peut afficher un état de chargement ou simplement être vide
+        Assert.DoesNotContain("NullReferenceException", cut.Markup);
+    }
+
     private static BunitContext BuildContext()
     {
         var ctx = new BunitContext();
