@@ -5,24 +5,17 @@ using AgentDashboard.TicketTracking.Infrastructure.Boards;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.Boards;
 
-// Test List for BoardSnapshotCache:
-//   1. GetLatest_WhenCacheEmpty_ReturnsNull
-//   2. GetLatest_AfterUpdate_ReturnsSnapshot
-//   3. LastUpdated_WhenCacheEmpty_ReturnsMinValue
-//   4. LastUpdated_AfterUpdate_ReturnsCurrentTime
-//   5. Update_WithNewSnapshot_ReplacesPrevious
-//   6. Update_WithNullSnapshot_ThrowsArgumentNullException
-//   7. GetLatest_WithConcurrentCalls_ReturnsConsistentState
-
 public sealed class BoardSnapshotCacheShould
 {
+    private static readonly DateTimeOffset FixedAsOf = new(2026, 05, 27, 12, 0, 0, TimeSpan.Zero);
+
     [Fact]
     public void GetLatest_WhenCacheEmpty_ReturnsNull()
     {
         var cache = new BoardSnapshotCache();
-        
+
         var result = cache.GetLatest();
-        
+
         result.Should().BeNull();
     }
 
@@ -30,9 +23,9 @@ public sealed class BoardSnapshotCacheShould
     public void LastUpdated_WhenCacheEmpty_ReturnsMinValue()
     {
         var cache = new BoardSnapshotCache();
-        
+
         var result = cache.LastUpdated;
-        
+
         result.Should().Be(DateTimeOffset.MinValue);
     }
 
@@ -41,27 +34,22 @@ public sealed class BoardSnapshotCacheShould
     {
         var cache = new BoardSnapshotCache();
         var snapshot = BuildTestSnapshot();
-        
-        cache.Update(snapshot);
-        
+
+        cache.Update(snapshot, FixedAsOf);
+
         var result = cache.GetLatest();
-        
+
         result.Should().BeSameAs(snapshot);
     }
 
     [Fact]
-    public void LastUpdated_AfterUpdate_ReturnsCurrentTime()
+    public void LastUpdated_AfterUpdate_ReturnsAsOfArgument()
     {
         var cache = new BoardSnapshotCache();
-        var beforeUpdate = DateTimeOffset.UtcNow;
-        
-        cache.Update(BuildTestSnapshot());
-        
-        var lastUpdated = cache.LastUpdated;
-        var afterUpdate = DateTimeOffset.UtcNow;
-        
-        lastUpdated.Should().BeOnOrAfter(beforeUpdate);
-        lastUpdated.Should().BeOnOrBefore(afterUpdate);
+
+        cache.Update(BuildTestSnapshot(), FixedAsOf);
+
+        cache.LastUpdated.Should().Be(FixedAsOf);
     }
 
     [Fact]
@@ -70,12 +58,12 @@ public sealed class BoardSnapshotCacheShould
         var cache = new BoardSnapshotCache();
         var firstSnapshot = BuildTestSnapshot(ticketId: 1);
         var secondSnapshot = BuildTestSnapshot(ticketId: 2);
-        
-        cache.Update(firstSnapshot);
-        cache.Update(secondSnapshot);
-        
+
+        cache.Update(firstSnapshot, FixedAsOf);
+        cache.Update(secondSnapshot, FixedAsOf.AddSeconds(1));
+
         var result = cache.GetLatest();
-        
+
         result.Should().BeSameAs(secondSnapshot);
         result.Should().NotBeSameAs(firstSnapshot);
     }
@@ -84,9 +72,9 @@ public sealed class BoardSnapshotCacheShould
     public void Update_WithNullSnapshot_ThrowsArgumentNullException()
     {
         var cache = new BoardSnapshotCache();
-        
-        var act = () => cache.Update(null!);
-        
+
+        var act = () => cache.Update(null!, FixedAsOf);
+
         act.Should().Throw<ArgumentNullException>();
     }
 
@@ -108,7 +96,7 @@ public sealed class BoardSnapshotCacheShould
             {
                 for (int i = 0; i < count; i++)
                 {
-                    cache.Update(i % 2 == 0 ? firstSnapshot : secondSnapshot);
+                    cache.Update(i % 2 == 0 ? firstSnapshot : secondSnapshot, FixedAsOf.AddMilliseconds(i));
                 }
             }
             catch (Exception ex)

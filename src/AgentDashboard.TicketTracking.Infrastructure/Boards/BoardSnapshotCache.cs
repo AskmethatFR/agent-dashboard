@@ -27,15 +27,15 @@ public sealed class BoardSnapshotCache : IDisposable
         }
     }
 
-    public void Update(BoardSnapshot snapshot)
+    public void Update(BoardSnapshot snapshot, DateTimeOffset asOf)
     {
         ArgumentNullException.ThrowIfNull(snapshot);
-        
+
         _lock.EnterWriteLock();
         try
         {
             _snapshot = snapshot;
-            _lastUpdated = DateTimeOffset.UtcNow;
+            _lastUpdated = asOf;
         }
         finally
         {

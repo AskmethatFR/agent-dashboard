@@ -90,7 +90,7 @@ public sealed class GitHubBoardReaderIntegrationShould : IAsyncLifetime
         // Arrange: Configure FakeGitHubIssuesClient to return controlled issues
         var issues = new List<GitHubIssueRecord>
         {
-            new GitHubIssueRecord(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, DateTimeOffset.UtcNow.AddHours(-1))
+            new GitHubIssueRecord(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, _timeProvider.GetUtcNow().AddHours(-1))
         };
         _fakeClient.SetIssues(issues);
 
@@ -113,7 +113,7 @@ public sealed class GitHubBoardReaderIntegrationShould : IAsyncLifetime
         // Arrange: First call fills the cache
         var issues = new List<GitHubIssueRecord>
         {
-            new GitHubIssueRecord(1, "First Issue", new List<string> { "status:created", "agent:pm" }, DateTimeOffset.UtcNow.AddHours(-1))
+            new GitHubIssueRecord(1, "First Issue", new List<string> { "status:created", "agent:pm" }, _timeProvider.GetUtcNow().AddHours(-1))
         };
         _fakeClient.SetIssues(issues);
         
@@ -154,7 +154,7 @@ public sealed class GitHubBoardReaderIntegrationShould : IAsyncLifetime
                     "escalation-target:pm",
                     "co-agent:dev-b"
                 },
-                DateTimeOffset.UtcNow.AddHours(-1))
+                _timeProvider.GetUtcNow().AddHours(-1))
         };
         _fakeClient.SetIssues(issues);
 
