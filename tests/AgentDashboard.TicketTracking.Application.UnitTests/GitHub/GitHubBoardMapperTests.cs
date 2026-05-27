@@ -424,7 +424,7 @@ public class GitHubBoardMapperTests
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
 
-        // Ticket done >24h is stale because age >= 3h threshold
+        // TicketSnapshot done >24h is stale because age >= 3h threshold
         ticket.Freshness.Should().Be(TicketFreshness.Stale);
     }
 

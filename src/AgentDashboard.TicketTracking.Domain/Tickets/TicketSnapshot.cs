@@ -3,7 +3,7 @@ using AgentDashboard.TicketTracking.Domain.Boards;
 
 namespace AgentDashboard.TicketTracking.Domain.Tickets;
 
-public sealed record Ticket
+public sealed record TicketSnapshot
 {
     public TicketId Id { get; }
     public BoardColumnId ColumnId { get; }
@@ -18,7 +18,7 @@ public sealed record Ticket
     public bool IsEscalated { get; }
     public AgentId? EscalationTarget { get; }
 
-    private Ticket(
+    private TicketSnapshot(
         TicketId id,
         BoardColumnId columnId,
         TicketTitle title,
@@ -46,7 +46,7 @@ public sealed record Ticket
         EscalationTarget = escalationTarget;
     }
 
-    public static Ticket Open(
+    public static TicketSnapshot Open(
         TicketId id,
         BoardColumnId columnId,
         TicketTitle title,
@@ -57,14 +57,14 @@ public sealed record Ticket
         TicketFreshness freshness)
     {
         GuardCommonInputs(id, columnId, title, agentId, retry, age);
-        return new Ticket(
+        return new TicketSnapshot(
             id, columnId, title, agentId,
             coAgentId: null, crossReview: false,
             retry, age, thinking, freshness,
             escalated: false, escalationTarget: null);
     }
 
-    public static Ticket InCrossReview(
+    public static TicketSnapshot InCrossReview(
         TicketId id,
         BoardColumnId columnId,
         TicketTitle title,
@@ -78,7 +78,7 @@ public sealed record Ticket
     {
         GuardCommonInputs(id, columnId, title, agentId, retry, age);
         ArgumentNullException.ThrowIfNull(coAgentId);
-        return new Ticket(
+        return new TicketSnapshot(
             id, columnId, title, agentId,
             coAgentId, crossReview: true,
             retry, age, thinking, freshness,
@@ -86,7 +86,7 @@ public sealed record Ticket
             escalationTarget);
     }
 
-    public static Ticket Escalated(
+    public static TicketSnapshot Escalated(
         TicketId id,
         BoardColumnId columnId,
         TicketTitle title,
@@ -100,7 +100,7 @@ public sealed record Ticket
     {
         GuardCommonInputs(id, columnId, title, agentId, retry, age);
         ArgumentNullException.ThrowIfNull(escalationTarget);
-        return new Ticket(
+        return new TicketSnapshot(
             id, columnId, title, agentId,
             coAgentId, crossReview: coAgentId is not null,
             retry, age, thinking, freshness,

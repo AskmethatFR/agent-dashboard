@@ -2,25 +2,25 @@
 @using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos
 @using AgentDashboard.Web.Components.Shared
 
-<div class="card @GetCardStateClass()" @key="Ticket">
-    @if (Ticket.IsEscalated)
+<div class="card @GetCardStateClass()" @key="TicketSnapshot">
+    @if (TicketSnapshot.IsEscalated)
     {
-        <span class="esc-badge"><span class="siren" aria-hidden="true">◆</span> esc → @Ticket.EscalationTargetId</span>
+        <span class="esc-badge"><span class="siren" aria-hidden="true">◆</span> esc → @TicketSnapshot.EscalationTargetId</span>
     }
     <div class="card-head">
-        <span class="card-id mono">#@Ticket.Id</span>
-        <span class="card-title">@Ticket.Title</span>
+        <span class="card-id mono">#@TicketSnapshot.Id</span>
+        <span class="card-title">@TicketSnapshot.Title</span>
     </div>
     <div class="card-meta">
-        @if (Ticket.IsInCrossReview && GetAgentFromId(Ticket.AgentId) is { } crossAgent)
+        @if (TicketSnapshot.IsInCrossReview && GetAgentFromId(TicketSnapshot.AgentId) is { } crossAgent)
         {
             <span class="cross">
                 <AgentChip
                     Agent="crossAgent"
-                    IsThinking="Ticket.IsThinking"
+                    IsThinking="TicketSnapshot.IsThinking"
                     IsDense="true" />
                 <span class="x">⇄</span>
-                @if (GetAgentFromId(Ticket.CoAgentId) is { } coAgent)
+                @if (GetAgentFromId(TicketSnapshot.CoAgentId) is { } coAgent)
                 {
                     <AgentChip
                         Agent="coAgent"
@@ -28,20 +28,20 @@
                 }
             </span>
         }
-        @if (!Ticket.IsInCrossReview && GetAgentFromId(Ticket.AgentId) is { } normalAgent)
+        @if (!TicketSnapshot.IsInCrossReview && GetAgentFromId(TicketSnapshot.AgentId) is { } normalAgent)
         {
             <AgentChip
                 Agent="normalAgent"
-                IsThinking="Ticket.IsThinking"
+                IsThinking="TicketSnapshot.IsThinking"
                 IsDense="false" />
         }
-        <RetryCounter Current="Ticket.RetryCount" />
-        <AgeBadge Age="@Ticket.Age" Freshness="@Ticket.Freshness" />
+        <RetryCounter Current="TicketSnapshot.RetryCount" />
+        <AgeBadge Age="@TicketSnapshot.Age" Freshness="@TicketSnapshot.Freshness" />
     </div>
 </div>
 
 @code {
-    [Parameter, EditorRequired] public TicketDto Ticket { get; set; } = null!;
+    [Parameter, EditorRequired] public TicketDto TicketSnapshot { get; set; } = null!;
     [Parameter, EditorRequired] public IReadOnlyList<AgentDto> Agents { get; set; } = null!;
 
     private AgentDto? GetAgentFromId(string? agentId)
@@ -52,11 +52,11 @@
 
     private string GetCardStateClass()
     {
-        if (Ticket.IsEscalated) return "escalated";
-        if (Ticket.RetryCount >= 3) return "danger";
-        if (Ticket.RetryCount == 2) return "warn";
-        if (Ticket.Freshness == "Fresh") return "fresh";
-        if (Ticket.Freshness == "Stale") return "stale";
+        if (TicketSnapshot.IsEscalated) return "escalated";
+        if (TicketSnapshot.RetryCount >= 3) return "danger";
+        if (TicketSnapshot.RetryCount == 2) return "warn";
+        if (TicketSnapshot.Freshness == "Fresh") return "fresh";
+        if (TicketSnapshot.Freshness == "Stale") return "stale";
         return "";
     }
 }

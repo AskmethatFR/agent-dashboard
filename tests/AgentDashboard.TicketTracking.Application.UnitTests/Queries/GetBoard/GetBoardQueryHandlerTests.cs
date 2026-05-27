@@ -52,7 +52,7 @@ public sealed class GetBoardQueryHandlerTests
     {
         var snapshot = BoardSnapshotFixtures.Build(
             columns: new[] { BoardColumnFixtures.Created, BoardColumnFixtures.InDevelopment },
-            tickets: new[] { TicketFixtures.Open(id: 1, columnId: "CREATED", title: "alpha") },
+            tickets: new[] { TicketSnapshotFixtures.Open(id: 1, columnId: "CREATED", title: "alpha") },
             agents: new[] { AgentFixtures.DevA });
         var handler = new GetBoardQueryHandler(new InMemoryBoardReader(snapshot));
 
@@ -70,9 +70,9 @@ public sealed class GetBoardQueryHandlerTests
             columns: new[] { BoardColumnFixtures.Created, BoardColumnFixtures.InDevelopment },
             tickets: new[]
             {
-                TicketFixtures.Open(id: 1, columnId: "CREATED", title: "alpha"),
-                TicketFixtures.Open(id: 2, columnId: "IN_DEVELOPMENT", title: "beta"),
-                TicketFixtures.Open(id: 3, columnId: "CREATED", title: "gamma"),
+                TicketSnapshotFixtures.Open(id: 1, columnId: "CREATED", title: "alpha"),
+                TicketSnapshotFixtures.Open(id: 2, columnId: "IN_DEVELOPMENT", title: "beta"),
+                TicketSnapshotFixtures.Open(id: 3, columnId: "CREATED", title: "gamma"),
             },
             agents: new[] { AgentFixtures.DevA });
         var handler = new GetBoardQueryHandler(new InMemoryBoardReader(snapshot));
@@ -90,7 +90,7 @@ public sealed class GetBoardQueryHandlerTests
     {
         var snapshot = BoardSnapshotFixtures.Build(
             columns: new[] { BoardColumnFixtures.Created },
-            tickets: new[] { TicketFixtures.Open(id: 1, columnId: "CREATED", title: "hello") },
+            tickets: new[] { TicketSnapshotFixtures.Open(id: 1, columnId: "CREATED", title: "hello") },
             agents: new[] { AgentFixtures.DevA });
         var handler = new GetBoardQueryHandler(new InMemoryBoardReader(snapshot));
 
@@ -111,7 +111,7 @@ public sealed class GetBoardQueryHandlerTests
         // Invalid: N/A for mapping
         var snapshot = BoardSnapshotFixtures.Build(
             columns: new[] { BoardColumnFixtures.Created },
-            tickets: new[] { TicketFixtures.Open(id: 42, columnId: "CREATED", title: "test ticket", agentId: "AGENT1", retry: 2, age: TimeSpan.FromHours(2), thinking: true, freshness: TicketFreshness.Fresh) },
+            tickets: new[] { TicketSnapshotFixtures.Open(id: 42, columnId: "CREATED", title: "test ticket", agentId: "AGENT1", retry: 2, age: TimeSpan.FromHours(2), thinking: true, freshness: TicketFreshness.Fresh) },
             agents: new[] { AgentFixtures.Build("AGENT1", "Agent 1", "A1", "Dev") });
         var handler = new GetBoardQueryHandler(new InMemoryBoardReader(snapshot));
 
@@ -139,7 +139,7 @@ public sealed class GetBoardQueryHandlerTests
         // Boundaries: non-null EscalationTarget, non-null CoAgentId
         var snapshot = BoardSnapshotFixtures.Build(
             columns: new[] { BoardColumnFixtures.Created },
-            tickets: new[] { TicketFixtures.Escalated(id: 99, columnId: "CREATED", title: "escalated", agentId: "DA", escalationTarget: "PM", retry: 3, age: TimeSpan.FromHours(4), thinking: false, freshness: TicketFreshness.Stale, coAgentId: "DB") },
+            tickets: new[] { TicketSnapshotFixtures.Escalated(id: 99, columnId: "CREATED", title: "escalated", agentId: "DA", escalationTarget: "PM", retry: 3, age: TimeSpan.FromHours(4), thinking: false, freshness: TicketFreshness.Stale, coAgentId: "DB") },
             agents: new[] { AgentFixtures.DevA, AgentFixtures.DevB, AgentFixtures.Pm });
         var handler = new GetBoardQueryHandler(new InMemoryBoardReader(snapshot));
 
@@ -166,7 +166,7 @@ public sealed class GetBoardQueryHandlerTests
         // Happy path: cross-review ticket without escalation
         var snapshot = BoardSnapshotFixtures.Build(
             columns: new[] { BoardColumnFixtures.Created },
-            tickets: new[] { TicketFixtures.InCrossReview(id: 77, columnId: "CREATED", title: "review me", agentId: "DA", coAgentId: "DB", retry: 1, age: TimeSpan.FromMinutes(30), thinking: true, freshness: TicketFreshness.Fresh) },
+            tickets: new[] { TicketSnapshotFixtures.InCrossReview(id: 77, columnId: "CREATED", title: "review me", agentId: "DA", coAgentId: "DB", retry: 1, age: TimeSpan.FromMinutes(30), thinking: true, freshness: TicketFreshness.Fresh) },
             agents: new[] { AgentFixtures.DevA, AgentFixtures.DevB });
         var handler = new GetBoardQueryHandler(new InMemoryBoardReader(snapshot));
 
@@ -191,7 +191,7 @@ public sealed class GetBoardQueryHandlerTests
     {
         var snapshot = BoardSnapshotFixtures.Build(
             columns: new[] { BoardColumnFixtures.Created },
-            tickets: Array.Empty<Ticket>(),
+            tickets: Array.Empty<TicketSnapshot>(),
             agents: new[] { AgentFixtures.DevA, AgentFixtures.DevB });
         var handler = new GetBoardQueryHandler(new InMemoryBoardReader(snapshot));
 

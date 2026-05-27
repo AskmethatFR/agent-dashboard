@@ -35,7 +35,7 @@ public static class GitHubBoardMapper
         return new BoardSnapshot(Columns, tickets, Agents);
     }
 
-    private static Ticket MapToTicket(GitHubIssueRecord record, DateTimeOffset now)
+    private static TicketSnapshot MapToTicket(GitHubIssueRecord record, DateTimeOffset now)
     {
         var columnId = MapStatusLabel(record.Labels);
         var agentId = MapAgentLabel(record.Labels);
@@ -52,7 +52,7 @@ public static class GitHubBoardMapper
         if (hasInReviewStatus)
         {
             // InCrossReview requires non-null coAgentId, so use agentId if coAgentId is null
-            return Ticket.InCrossReview(
+            return TicketSnapshot.InCrossReview(
                 id: new TicketId((int)record.Number),
                 columnId: columnId,
                 title: new TicketTitle(record.Title),
@@ -66,7 +66,7 @@ public static class GitHubBoardMapper
         }
         else if (isEscalated)
         {
-            return Ticket.Escalated(
+            return TicketSnapshot.Escalated(
                 id: new TicketId((int)record.Number),
                 columnId: columnId,
                 title: new TicketTitle(record.Title),
@@ -80,7 +80,7 @@ public static class GitHubBoardMapper
         }
         else
         {
-            return Ticket.Open(
+            return TicketSnapshot.Open(
                 id: new TicketId((int)record.Number),
                 columnId: columnId,
                 title: new TicketTitle(record.Title),

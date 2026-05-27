@@ -12,7 +12,7 @@ public sealed class BoardSnapshotTests
     [Fact]
     public void Should_Throw_ArgumentNullException_When_ColumnsIsNull()
     {
-        var act = () => new BoardSnapshot(null!, Array.Empty<Ticket>(), Array.Empty<Agent>());
+        var act = () => new BoardSnapshot(null!, Array.Empty<TicketSnapshot>(), Array.Empty<Agent>());
 
         act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("columns");
@@ -30,7 +30,7 @@ public sealed class BoardSnapshotTests
     [Fact]
     public void Should_Throw_ArgumentNullException_When_AgentsIsNull()
     {
-        var act = () => new BoardSnapshot(Array.Empty<BoardColumn>(), Array.Empty<Ticket>(), null!);
+        var act = () => new BoardSnapshot(Array.Empty<BoardColumn>(), Array.Empty<TicketSnapshot>(), null!);
 
         act.Should().ThrowExactly<ArgumentNullException>()
             .WithParameterName("agents");
@@ -49,7 +49,7 @@ public sealed class BoardSnapshotTests
     [Fact]
     public void Should_Throw_ArgumentException_When_TicketReferencesUnknownColumn()
     {
-        var ticket = TicketFixtures.Open(id: 1, columnId: "MISSING", agentId: "DA");
+        var ticket = TicketSnapshotFixtures.Open(id: 1, columnId: "MISSING", agentId: "DA");
 
         var act = () => BoardSnapshotFixtures.Build(
             columns: new[] { BoardColumnFixtures.Created },
@@ -64,7 +64,7 @@ public sealed class BoardSnapshotTests
     [Fact]
     public void Should_Throw_ArgumentException_When_TicketReferencesUnknownAgent()
     {
-        var ticket = TicketFixtures.Open(id: 1, columnId: "CREATED", agentId: "GHOST");
+        var ticket = TicketSnapshotFixtures.Open(id: 1, columnId: "CREATED", agentId: "GHOST");
 
         var act = () => BoardSnapshotFixtures.Build(
             columns: new[] { BoardColumnFixtures.Created },
@@ -79,7 +79,7 @@ public sealed class BoardSnapshotTests
     [Fact]
     public void Should_Throw_ArgumentException_When_TicketReferencesUnknownCoAgent()
     {
-        var ticket = TicketFixtures.InCrossReview(
+        var ticket = TicketSnapshotFixtures.InCrossReview(
             id: 1, columnId: "CREATED", agentId: "DA", coAgentId: "GHOST");
 
         var act = () => BoardSnapshotFixtures.Build(
@@ -95,7 +95,7 @@ public sealed class BoardSnapshotTests
     [Fact]
     public void Should_Throw_ArgumentException_When_TicketReferencesUnknownEscalationTarget()
     {
-        var ticket = TicketFixtures.Escalated(
+        var ticket = TicketSnapshotFixtures.Escalated(
             id: 1, columnId: "CREATED", agentId: "DA", escalationTarget: "GHOST", retry: 3);
 
         var act = () => BoardSnapshotFixtures.Build(
@@ -111,8 +111,8 @@ public sealed class BoardSnapshotTests
     [Fact]
     public void Should_Throw_ArgumentException_When_TwoTicketsShareSameId()
     {
-        var ticketOne = TicketFixtures.Open(id: 1, columnId: "CREATED", agentId: "DA");
-        var ticketTwo = TicketFixtures.Open(id: 1, columnId: "CREATED", agentId: "DA");
+        var ticketOne = TicketSnapshotFixtures.Open(id: 1, columnId: "CREATED", agentId: "DA");
+        var ticketTwo = TicketSnapshotFixtures.Open(id: 1, columnId: "CREATED", agentId: "DA");
 
         var act = () => BoardSnapshotFixtures.Build(
             columns: new[] { BoardColumnFixtures.Created },
@@ -127,7 +127,7 @@ public sealed class BoardSnapshotTests
     [Fact]
     public void Should_BuildSnapshot_When_AllReferencesAreCoherent()
     {
-        var ticket = TicketFixtures.InCrossReview(
+        var ticket = TicketSnapshotFixtures.InCrossReview(
             id: 1,
             columnId: "CREATED",
             agentId: "DA",
@@ -147,9 +147,9 @@ public sealed class BoardSnapshotTests
     [Fact]
     public void Should_BuildSnapshot_When_MultipleTicketsAcrossColumnsAndAgents()
     {
-        var ticketOne = TicketFixtures.Open(id: 1, columnId: "CREATED", agentId: "DA");
-        var ticketTwo = TicketFixtures.Open(id: 2, columnId: "IN_DEVELOPMENT", agentId: "DB");
-        var ticketThree = TicketFixtures.Open(id: 3, columnId: "IN_QA", agentId: "PM");
+        var ticketOne = TicketSnapshotFixtures.Open(id: 1, columnId: "CREATED", agentId: "DA");
+        var ticketTwo = TicketSnapshotFixtures.Open(id: 2, columnId: "IN_DEVELOPMENT", agentId: "DB");
+        var ticketThree = TicketSnapshotFixtures.Open(id: 3, columnId: "IN_QA", agentId: "PM");
 
         var snapshot = BoardSnapshotFixtures.Build(
             columns: new[]

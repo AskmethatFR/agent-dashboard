@@ -38,7 +38,7 @@ public sealed class StubBoardReader : IBoardReader
             new AgentGlyph("DB"),
             new AgentRole("developer"));
 
-        var tickets = new List<Ticket>
+        var tickets = new List<TicketSnapshot>
         {
             // Created (2)
             SeedTicket(1, created.Id, "wire github polling", pm.Id, retrySteps: 0, ageMinutes: 4),
@@ -70,14 +70,14 @@ public sealed class StubBoardReader : IBoardReader
             agents: [pm, devA, devB]);
     }
 
-    private static Ticket SeedTicket(
+    private static TicketSnapshot SeedTicket(
         int id,
         BoardColumnId columnId,
         string title,
         AgentId agentId,
         int retrySteps,
         int ageMinutes) =>
-        Ticket.Open(
+        TicketSnapshot.Open(
             new TicketId(id),
             columnId,
             new TicketTitle(title),

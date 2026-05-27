@@ -32,7 +32,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     public void RenderTicketTitle()
     {
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, SampleTicket)
+            .Add(c => c.TicketSnapshot, SampleTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("Fix the bug");
@@ -42,7 +42,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     public void RenderAgentChipWithGlyphAndName()
     {
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, SampleTicket)
+            .Add(c => c.TicketSnapshot, SampleTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("DA");
@@ -53,7 +53,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     public void PassIsThinkingTrueToAgentChip_WhenTicketIsThinking()
     {
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, ThinkingTicket)
+            .Add(c => c.TicketSnapshot, ThinkingTicket)
             .Add(c => c.Agents, Agents));
 
         var agentChip = cut.FindComponent<AgentChip>();
@@ -64,7 +64,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     public void PassIsThinkingFalseToAgentChip_WhenTicketIsNotThinking()
     {
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, SampleTicket)
+            .Add(c => c.TicketSnapshot, SampleTicket)
             .Add(c => c.Agents, Agents));
 
         var agentChip = cut.FindComponent<AgentChip>();
@@ -76,7 +76,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     {
         var unknownAgentTicket = new TicketDto("Orphan ticket", "unknown-id", false);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, unknownAgentTicket)
+            .Add(c => c.TicketSnapshot, unknownAgentTicket)
             .Add(c => c.Agents, Agents));
 
         // AgentChip renders nothing when Agent is null - verify no agent markup is present
@@ -89,7 +89,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     {
         var ticketWithRetry = new TicketDto("Fix the bug", "dev-a", false, RetryCount: 2);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, ticketWithRetry)
+            .Add(c => c.TicketSnapshot, ticketWithRetry)
             .Add(c => c.Agents, Agents));
 
         var retryCounter = cut.FindComponent<RetryCounter>();
@@ -102,7 +102,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     {
         var ticketNoRetry = new TicketDto("Fix the bug", "dev-a", false, RetryCount: 0);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, ticketNoRetry)
+            .Add(c => c.TicketSnapshot, ticketNoRetry)
             .Add(c => c.Agents, Agents));
 
         var retryCounter = cut.FindComponent<RetryCounter>();
@@ -121,7 +121,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     {
         var ticketWithId = new TicketDto("Fix the bug", "dev-a", false, Id: 42);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, ticketWithId)
+            .Add(c => c.TicketSnapshot, ticketWithId)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("#42");
@@ -138,7 +138,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             Age: TimeSpan.FromMinutes(30),
             Freshness: "Stale");
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, ticketWithAge)
+            .Add(c => c.TicketSnapshot, ticketWithAge)
             .Add(c => c.Agents, Agents));
 
         var ageBadge = cut.FindComponent<AgeBadge>();
@@ -157,7 +157,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             IsEscalated: true,
             EscalationTargetId: "dev-b");
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, escalatedTicket)
+            .Add(c => c.TicketSnapshot, escalatedTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("esc-badge");
@@ -171,7 +171,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     {
         var normalTicket = new TicketDto("Normal ticket", "dev-a", false);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, normalTicket)
+            .Add(c => c.TicketSnapshot, normalTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().NotContain("esc-badge");
@@ -188,7 +188,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             IsInCrossReview: true,
             CoAgentId: "dev-b");
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, crossReviewTicket)
+            .Add(c => c.TicketSnapshot, crossReviewTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("⇄");
@@ -199,7 +199,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     {
         var normalTicket = new TicketDto("Normal ticket", "dev-a", false);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, normalTicket)
+            .Add(c => c.TicketSnapshot, normalTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().NotContain("⇄");
@@ -215,7 +215,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             IsInCrossReview: true,
             CoAgentId: "dev-b");
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, crossReviewTicket)
+            .Add(c => c.TicketSnapshot, crossReviewTicket)
             .Add(c => c.Agents, Agents));
 
         var agentChips = cut.FindComponents<AgentChip>();
@@ -232,7 +232,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     {
         var normalTicket = new TicketDto("Normal ticket", "dev-a", false);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, normalTicket)
+            .Add(c => c.TicketSnapshot, normalTicket)
             .Add(c => c.Agents, Agents));
 
         var agentChips = cut.FindComponents<AgentChip>();
@@ -247,7 +247,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             IsInCrossReview: true,
             CoAgentId: "unknown-agent");
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, crossReviewTicket)
+            .Add(c => c.TicketSnapshot, crossReviewTicket)
             .Add(c => c.Agents, Agents));
 
         var agentChips = cut.FindComponents<AgentChip>();
@@ -265,7 +265,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             RetryCount: 5, // Even with high retry count, escalated takes priority
             Freshness: "Fresh");
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, escalatedTicket)
+            .Add(c => c.TicketSnapshot, escalatedTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("class=\"card escalated\"");
@@ -278,7 +278,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             "Danger ticket", "dev-a", false,
             RetryCount: 3);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, dangerTicket)
+            .Add(c => c.TicketSnapshot, dangerTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("class=\"card danger\"");
@@ -292,7 +292,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             "Warn ticket", "dev-a", false,
             RetryCount: 2);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, warnTicket)
+            .Add(c => c.TicketSnapshot, warnTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("class=\"card warn\"");
@@ -306,7 +306,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             "Fresh ticket", "dev-a", false,
             Freshness: "Fresh");
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, freshTicket)
+            .Add(c => c.TicketSnapshot, freshTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("class=\"card fresh\"");
@@ -320,7 +320,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             Freshness: "Neutral",
             RetryCount: 1);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, neutralTicket)
+            .Add(c => c.TicketSnapshot, neutralTicket)
             .Add(c => c.Agents, Agents));
 
         // Should have base "card" class (may have trailing space, so check for "card" followed by ">" or space)
@@ -340,7 +340,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             RetryCount: 5,
             Freshness: "Fresh");
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, bothTicket)
+            .Add(c => c.TicketSnapshot, bothTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("class=\"card escalated\"");
@@ -355,7 +355,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             "Both", "dev-a", false,
             RetryCount: 3); // >= 3 triggers danger, not warn
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, bothTicket)
+            .Add(c => c.TicketSnapshot, bothTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("class=\"card danger\"");
@@ -370,7 +370,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             Freshness: "Stale",
             RetryCount: 0);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, staleTicket)
+            .Add(c => c.TicketSnapshot, staleTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("class=\"card stale\"");
@@ -381,7 +381,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     {
         var normalTicket = new TicketDto("Normal ticket", "dev-a", false);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, normalTicket)
+            .Add(c => c.TicketSnapshot, normalTicket)
             .Add(c => c.Agents, Agents));
 
         var agentChip = cut.FindComponent<AgentChip>();
@@ -399,7 +399,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             IsInCrossReview: true,
             CoAgentId: "dev-b");
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, crossReviewTicket)
+            .Add(c => c.TicketSnapshot, crossReviewTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().Contain("class=\"cross\"");
@@ -413,7 +413,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
             IsInCrossReview: true,
             CoAgentId: "dev-b");
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, crossReviewTicket)
+            .Add(c => c.TicketSnapshot, crossReviewTicket)
             .Add(c => c.Agents, Agents));
 
         var agentChips = cut.FindComponents<AgentChip>();
@@ -426,7 +426,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     {
         var normalTicket = new TicketDto("Normal ticket", "dev-a", false);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, normalTicket)
+            .Add(c => c.TicketSnapshot, normalTicket)
             .Add(c => c.Agents, Agents));
 
         cut.Markup.Should().NotContain("class=\"cross\"");
@@ -437,7 +437,7 @@ public class TicketCardTests : IClassFixture<BunitFixture>
     {
         var normalTicket = new TicketDto("Normal ticket", "dev-a", false);
         var cut = _ctx.Context.Render<TicketCard>(p => p
-            .Add(c => c.Ticket, normalTicket)
+            .Add(c => c.TicketSnapshot, normalTicket)
             .Add(c => c.Agents, Agents));
 
         var agentChips = cut.FindComponents<AgentChip>();

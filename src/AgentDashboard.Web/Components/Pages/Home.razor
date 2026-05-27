@@ -57,7 +57,7 @@ else
                     <div class="cards">
                         @foreach (var ticket in column.Tickets)
                         {
-                            <TicketCard Ticket="ticket" Agents="_board.Agents" />
+                            <TicketCard TicketSnapshot="ticket" Agents="_board.Agents" />
                         }
                     </div>
                 </div>

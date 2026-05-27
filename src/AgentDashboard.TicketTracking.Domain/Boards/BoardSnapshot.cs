@@ -6,12 +6,12 @@ namespace AgentDashboard.TicketTracking.Domain.Boards;
 public sealed record BoardSnapshot
 {
     public IReadOnlyList<BoardColumn> Columns { get; }
-    public IReadOnlyList<Ticket> Tickets { get; }
+    public IReadOnlyList<TicketSnapshot> Tickets { get; }
     public IReadOnlyList<Agent> Agents { get; }
 
     public BoardSnapshot(
         IReadOnlyList<BoardColumn> columns,
-        IReadOnlyList<Ticket> tickets,
+        IReadOnlyList<TicketSnapshot> tickets,
         IReadOnlyList<Agent> agents)
     {
         ArgumentNullException.ThrowIfNull(columns);
@@ -30,19 +30,19 @@ public sealed record BoardSnapshot
                     nameof(tickets));
             if (!columnIds.Contains(ticket.ColumnId))
                 throw new ArgumentException(
-                    $"Ticket {ticket.Id} references unknown column {ticket.ColumnId}.",
+                    $"TicketSnapshot {ticket.Id} references unknown column {ticket.ColumnId}.",
                     nameof(tickets));
             if (!agentIds.Contains(ticket.AgentId))
                 throw new ArgumentException(
-                    $"Ticket {ticket.Id} references unknown agent {ticket.AgentId}.",
+                    $"TicketSnapshot {ticket.Id} references unknown agent {ticket.AgentId}.",
                     nameof(tickets));
             if (ticket.CoAgentId is not null && !agentIds.Contains(ticket.CoAgentId))
                 throw new ArgumentException(
-                    $"Ticket {ticket.Id} references unknown co-agent {ticket.CoAgentId}.",
+                    $"TicketSnapshot {ticket.Id} references unknown co-agent {ticket.CoAgentId}.",
                     nameof(tickets));
             if (ticket.EscalationTarget is not null && !agentIds.Contains(ticket.EscalationTarget))
                 throw new ArgumentException(
-                    $"Ticket {ticket.Id} references unknown escalation target {ticket.EscalationTarget}.",
+                    $"TicketSnapshot {ticket.Id} references unknown escalation target {ticket.EscalationTarget}.",
                     nameof(tickets));
         }
 

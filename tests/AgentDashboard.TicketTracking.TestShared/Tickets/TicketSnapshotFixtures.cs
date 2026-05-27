@@ -4,11 +4,11 @@ using AgentDashboard.TicketTracking.Domain.Tickets;
 
 namespace AgentDashboard.TicketTracking.TestShared.Tickets;
 
-public static class TicketFixtures
+public static class TicketSnapshotFixtures
 {
-    public static Ticket Default { get; } = Open();
+    public static TicketSnapshot Default { get; } = Open();
 
-    public static Ticket Open(
+    public static TicketSnapshot Open(
         int id = 1,
         string columnId = "CREATED",
         string title = "any title",
@@ -17,7 +17,7 @@ public static class TicketFixtures
         TimeSpan? age = null,
         bool thinking = false,
         TicketFreshness freshness = TicketFreshness.Neutral) =>
-        Ticket.Open(
+        TicketSnapshot.Open(
             new TicketId(id),
             new BoardColumnId(columnId),
             new TicketTitle(title),
@@ -27,7 +27,7 @@ public static class TicketFixtures
             thinking,
             freshness);
 
-    public static Ticket InCrossReview(
+    public static TicketSnapshot InCrossReview(
         int id = 1,
         string columnId = "CREATED",
         string title = "any title",
@@ -38,7 +38,7 @@ public static class TicketFixtures
         bool thinking = false,
         TicketFreshness freshness = TicketFreshness.Neutral,
         string? escalationTarget = null) =>
-        Ticket.InCrossReview(
+        TicketSnapshot.InCrossReview(
             new TicketId(id),
             new BoardColumnId(columnId),
             new TicketTitle(title),
@@ -50,7 +50,7 @@ public static class TicketFixtures
             freshness,
             escalationTarget is null ? null : new AgentId(escalationTarget));
 
-    public static Ticket Escalated(
+    public static TicketSnapshot Escalated(
         int id = 1,
         string columnId = "CREATED",
         string title = "any title",
@@ -61,7 +61,7 @@ public static class TicketFixtures
         bool thinking = false,
         TicketFreshness freshness = TicketFreshness.Neutral,
         string? coAgentId = null) =>
-        Ticket.Escalated(
+        TicketSnapshot.Escalated(
             new TicketId(id),
             new BoardColumnId(columnId),
             new TicketTitle(title),

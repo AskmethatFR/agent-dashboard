@@ -295,10 +295,10 @@ public sealed class GitHubBoardReaderTests
     {
         var column = new BoardColumn(new BoardColumnId("CREATED"), new BoardColumnLabel("Created"));
         var agent = new Agent(new AgentId("pm"), new AgentName("Project Manager"), new AgentGlyph("PM"), new AgentRole("project-manager"));
-        var ticket = Ticket.Open(
+        var ticket = TicketSnapshot.Open(
             new TicketId(ticketId),
             column.Id,
-            new TicketTitle("Test Ticket"),
+            new TicketTitle("Test TicketSnapshot"),
             agent.Id,
             new Retry(0),
             new Age(TimeSpan.Zero),

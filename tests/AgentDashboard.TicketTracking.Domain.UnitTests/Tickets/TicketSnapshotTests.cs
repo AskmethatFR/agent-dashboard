@@ -6,9 +6,9 @@ using AgentDashboard.TicketTracking.TestShared.Tickets;
 
 namespace AgentDashboard.TicketTracking.Domain.UnitTests.Tickets;
 
-public sealed class TicketTests : RecordEqualityContract<Ticket>
+public sealed class TicketSnapshotTests : RecordEqualityContract<TicketSnapshot>
 {
-    protected override Ticket NewInstance() => TicketFixtures.Open(
+    protected override TicketSnapshot NewInstance() => TicketSnapshotFixtures.Open(
         id: 7,
         columnId: "CREATED",
         title: "t",
@@ -21,7 +21,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_LeaveCoAgentNull_When_OpenedWithoutPair()
     {
-        var ticket = TicketFixtures.Default;
+        var ticket = TicketSnapshotFixtures.Default;
 
         ticket.CoAgentId.Should().BeNull();
         ticket.IsInCrossReview.Should().BeFalse();
@@ -30,7 +30,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_LeaveEscalationNull_When_OpenedWithoutEscalation()
     {
-        var ticket = TicketFixtures.Default;
+        var ticket = TicketSnapshotFixtures.Default;
 
         ticket.IsEscalated.Should().BeFalse();
         ticket.EscalationTarget.Should().BeNull();
@@ -39,7 +39,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_AssignAllProperties_When_Built()
     {
-        var ticket = TicketFixtures.Open(
+        var ticket = TicketSnapshotFixtures.Open(
             id: 42,
             columnId: "IN_DEVELOPMENT",
             title: "implement feature",
@@ -62,7 +62,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_Throw_ArgumentNullException_When_OpenedWithNullId()
     {
-        var act = () => Ticket.Open(
+        var act = () => TicketSnapshot.Open(
             null!, new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
@@ -72,7 +72,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_Throw_ArgumentNullException_When_OpenedWithNullColumnId()
     {
-        var act = () => Ticket.Open(
+        var act = () => TicketSnapshot.Open(
             new TicketId(1), null!, new TicketTitle("t"), new AgentId("DA"),
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
@@ -82,7 +82,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_Throw_ArgumentNullException_When_OpenedWithNullTitle()
     {
-        var act = () => Ticket.Open(
+        var act = () => TicketSnapshot.Open(
             new TicketId(1), new BoardColumnId("CREATED"), null!, new AgentId("DA"),
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
@@ -92,7 +92,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_Throw_ArgumentNullException_When_OpenedWithNullAgentId()
     {
-        var act = () => Ticket.Open(
+        var act = () => TicketSnapshot.Open(
             new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), null!,
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
@@ -102,7 +102,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_Throw_ArgumentNullException_When_OpenedWithNullRetry()
     {
-        var act = () => Ticket.Open(
+        var act = () => TicketSnapshot.Open(
             new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
             null!, new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
 
@@ -112,7 +112,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_Throw_ArgumentNullException_When_OpenedWithNullAge()
     {
-        var act = () => Ticket.Open(
+        var act = () => TicketSnapshot.Open(
             new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
             new Retry(0), null!, thinking: false, TicketFreshness.Neutral);
 
@@ -122,7 +122,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_Throw_ArgumentNullException_When_InCrossReviewWithoutCoAgent()
     {
-        var act = () => Ticket.InCrossReview(
+        var act = () => TicketSnapshot.InCrossReview(
             new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
             coAgentId: null!,
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
@@ -133,7 +133,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_SetCrossReviewFlag_When_BuiltInCrossReview()
     {
-        var ticket = TicketFixtures.InCrossReview(coAgentId: "DB");
+        var ticket = TicketSnapshotFixtures.InCrossReview(coAgentId: "DB");
 
         ticket.CoAgentId.Should().Be(new AgentId("DB"));
         ticket.IsInCrossReview.Should().BeTrue();
@@ -143,7 +143,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_Throw_ArgumentNullException_When_EscalatedWithoutEscalationTarget()
     {
-        var act = () => Ticket.Escalated(
+        var act = () => TicketSnapshot.Escalated(
             new TicketId(1), new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
             escalationTarget: null!,
             new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
@@ -154,7 +154,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_SetEscalatedFlag_When_BuiltEscalated()
     {
-        var ticket = TicketFixtures.Escalated(escalationTarget: "PM", retry: 3);
+        var ticket = TicketSnapshotFixtures.Escalated(escalationTarget: "PM", retry: 3);
 
         ticket.EscalationTarget.Should().Be(new AgentId("PM"));
         ticket.IsEscalated.Should().BeTrue();
@@ -164,7 +164,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_BeBothEscalatedAndInCrossReview_When_InCrossReviewWithEscalationTarget()
     {
-        var ticket = TicketFixtures.InCrossReview(
+        var ticket = TicketSnapshotFixtures.InCrossReview(
             coAgentId: "DB",
             escalationTarget: "PM",
             retry: 3);
@@ -178,7 +178,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_BeBothEscalatedAndInCrossReview_When_EscalatedWithCoAgent()
     {
-        var ticket = TicketFixtures.Escalated(
+        var ticket = TicketSnapshotFixtures.Escalated(
             coAgentId: "DB",
             escalationTarget: "PM",
             retry: 3);
@@ -192,7 +192,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_AcceptFreshFreshness_When_Open()
     {
-        var ticket = TicketFixtures.Open(freshness: TicketFreshness.Fresh);
+        var ticket = TicketSnapshotFixtures.Open(freshness: TicketFreshness.Fresh);
 
         ticket.Freshness.Should().Be(TicketFreshness.Fresh);
     }
@@ -200,7 +200,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_AcceptStaleFreshness_When_Open()
     {
-        var ticket = TicketFixtures.Open(freshness: TicketFreshness.Stale);
+        var ticket = TicketSnapshotFixtures.Open(freshness: TicketFreshness.Stale);
 
         ticket.Freshness.Should().Be(TicketFreshness.Stale);
     }
@@ -216,8 +216,8 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     public void Should_DeriveSeverity_When_RetryAndEscalationVary(int retry, bool escalated, TicketSeverity expected)
     {
         var ticket = escalated
-            ? TicketFixtures.Escalated(retry: retry, escalationTarget: "PM")
-            : TicketFixtures.Open(retry: retry);
+            ? TicketSnapshotFixtures.Escalated(retry: retry, escalationTarget: "PM")
+            : TicketSnapshotFixtures.Open(retry: retry);
 
         ticket.Severity.Should().Be(expected);
     }
@@ -228,7 +228,7 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [InlineData(false, TicketFreshness.Stale)]
     public void Should_KeepSeverityIndependentOfThinkingAndFreshness(bool thinking, TicketFreshness freshness)
     {
-        var ticket = TicketFixtures.Open(retry: 2, thinking: thinking, freshness: freshness);
+        var ticket = TicketSnapshotFixtures.Open(retry: 2, thinking: thinking, freshness: freshness);
 
         ticket.Severity.Should().Be(TicketSeverity.Warn);
     }
@@ -236,8 +236,8 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_KeepSeverityIndependentOfCrossReview()
     {
-        var solo = TicketFixtures.Open(retry: 2);
-        var paired = TicketFixtures.InCrossReview(retry: 2, coAgentId: "DB");
+        var solo = TicketSnapshotFixtures.Open(retry: 2);
+        var paired = TicketSnapshotFixtures.InCrossReview(retry: 2, coAgentId: "DB");
 
         solo.Severity.Should().Be(paired.Severity);
     }
@@ -260,32 +260,32 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [MemberData(nameof(NotEqualVariants))]
     public void Should_NotBeEqual_When_PropertyDiffers(string property)
     {
-        var baseTicket = TicketFixtures.Default;
+        var baseTicket = TicketSnapshotFixtures.Default;
         var modified = ApplyDivergence(property);
 
         modified.Should().NotBe(baseTicket, $"differing {property} should break equality");
     }
 
-    private static Ticket ApplyDivergence(string property) => property switch
+    private static TicketSnapshot ApplyDivergence(string property) => property switch
     {
-        "Id" => TicketFixtures.Open(id: 99),
-        "ColumnId" => TicketFixtures.Open(columnId: "DONE"),
-        "Title" => TicketFixtures.Open(title: "other"),
-        "AgentId" => TicketFixtures.Open(agentId: "DB"),
-        "Retry" => TicketFixtures.Open(retry: 3),
-        "Age" => TicketFixtures.Open(age: TimeSpan.FromHours(5)),
-        "IsThinking" => TicketFixtures.Open(thinking: true),
-        "Freshness" => TicketFixtures.Open(freshness: TicketFreshness.Fresh),
-        "CoAgentAndCrossReview" => TicketFixtures.InCrossReview(coAgentId: "DB"),
-        "EscalationTargetAndEscalated" => TicketFixtures.Escalated(escalationTarget: "PM"),
+        "Id" => TicketSnapshotFixtures.Open(id: 99),
+        "ColumnId" => TicketSnapshotFixtures.Open(columnId: "DONE"),
+        "Title" => TicketSnapshotFixtures.Open(title: "other"),
+        "AgentId" => TicketSnapshotFixtures.Open(agentId: "DB"),
+        "Retry" => TicketSnapshotFixtures.Open(retry: 3),
+        "Age" => TicketSnapshotFixtures.Open(age: TimeSpan.FromHours(5)),
+        "IsThinking" => TicketSnapshotFixtures.Open(thinking: true),
+        "Freshness" => TicketSnapshotFixtures.Open(freshness: TicketFreshness.Fresh),
+        "CoAgentAndCrossReview" => TicketSnapshotFixtures.InCrossReview(coAgentId: "DB"),
+        "EscalationTargetAndEscalated" => TicketSnapshotFixtures.Escalated(escalationTarget: "PM"),
         _ => throw new ArgumentOutOfRangeException(nameof(property), property, "Unknown divergence"),
     };
 
     [Fact]
     public void Should_NotBeEqual_When_OnlyEscalationFlagsDifferOnCrossReviewedTicket()
     {
-        var withoutEscalation = TicketFixtures.InCrossReview(coAgentId: "DB");
-        var withEscalation = TicketFixtures.InCrossReview(coAgentId: "DB", escalationTarget: "PM");
+        var withoutEscalation = TicketSnapshotFixtures.InCrossReview(coAgentId: "DB");
+        var withEscalation = TicketSnapshotFixtures.InCrossReview(coAgentId: "DB", escalationTarget: "PM");
 
         withEscalation.Should().NotBe(withoutEscalation);
     }
@@ -293,8 +293,8 @@ public sealed class TicketTests : RecordEqualityContract<Ticket>
     [Fact]
     public void Should_NotBeEqual_When_OnlyCrossReviewFlagsDifferOnEscalatedTicket()
     {
-        var withoutCoAgent = TicketFixtures.Escalated(escalationTarget: "PM");
-        var withCoAgent = TicketFixtures.Escalated(escalationTarget: "PM", coAgentId: "DB");
+        var withoutCoAgent = TicketSnapshotFixtures.Escalated(escalationTarget: "PM");
+        var withCoAgent = TicketSnapshotFixtures.Escalated(escalationTarget: "PM", coAgentId: "DB");
 
         withCoAgent.Should().NotBe(withoutCoAgent);
     }

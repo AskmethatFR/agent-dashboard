@@ -211,3 +211,28 @@ an entity with `Equals`/`GetHashCode` overridden on `Id` only.
   - `tests/AgentDashboard.TicketTracking.Domain.UnitTests/Agents/AgentBuilder.cs`
 - GitHub Issue: #10
 - Related ADRs: ADR-001 (BoardSnapshot as a read-only projection).
+
+## Amendment 2026-05-27 — `Ticket` renamed to `TicketSnapshot`
+
+The section "`Ticket` equality stays structural" (above) established
+that `Ticket` is a snapshot of a GitHub issue at polling time, not a
+mutable entity with identity-based lifecycle. The naming was
+inconsistent with this intent: `BoardSnapshot` carried the `*Snapshot`
+suffix, `Ticket` did not — making the snapshot nature invisible to a
+reader of the type alone.
+
+This amendment renames the type to align naming with the decision:
+
+- `Ticket` → `TicketSnapshot` (class rename, file rename, no semantic
+  change)
+- `TicketFixtures` → `TicketSnapshotFixtures` (test data builder)
+- `TicketTests` → `TicketSnapshotTests` (test class)
+
+Twelve consumer files (Application, Infrastructure, Web, tests) were
+updated mechanically. No ADR superseded. No equality semantics changed
+— `TicketSnapshot` remains a `sealed record` with structural equality,
+for the same reasons stated above (two snapshots of the same issue at
+different polling moments are intentionally not equal).
+
+`BoardSnapshot` aggregates many `TicketSnapshot`s — the vocabulary
+now reads consistently across the domain.
