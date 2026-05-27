@@ -14,7 +14,7 @@ namespace AgentDashboard.Web.Tests.Components.Layout.TopBar;
 //   4. Uses 24-hour format.
 //   5. Has live-clock class.
 //   6. Disposes timer on dispose.
-public sealed class LiveClockShould
+public sealed class LiveClockTests
 {
     private static readonly DateTimeOffset FixedStart =
         new(2026, 5, 22, 10, 30, 0, TimeSpan.Zero);

@@ -16,7 +16,7 @@ using Xunit;
 
 namespace AgentDashboard.Web.Tests.Components.Layout.TopBar;
 
-public sealed class RefreshButtonShould
+public sealed class RefreshButtonTests
 {
     private static readonly DateTimeOffset FixedStart =
         new(2026, 5, 22, 10, 30, 0, TimeSpan.Zero);

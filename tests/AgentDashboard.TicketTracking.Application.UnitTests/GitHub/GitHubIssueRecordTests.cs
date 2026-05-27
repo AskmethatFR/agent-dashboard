@@ -1,6 +1,6 @@
 namespace AgentDashboard.TicketTracking.Application.GitHub;
 
-public class GitHubIssueRecordShould
+public class GitHubIssueRecordTests
 {
     // Test List (Kent Beck's Test List technique)
     // ==========================================

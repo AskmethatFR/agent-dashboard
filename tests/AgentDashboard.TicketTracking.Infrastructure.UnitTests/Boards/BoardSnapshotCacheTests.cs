@@ -5,7 +5,7 @@ using AgentDashboard.TicketTracking.Infrastructure.Boards;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.Boards;
 
-public sealed class BoardSnapshotCacheShould
+public sealed class BoardSnapshotCacheTests
 {
     private static readonly DateTimeOffset FixedAsOf = new(2026, 05, 27, 12, 0, 0, TimeSpan.Zero);
 

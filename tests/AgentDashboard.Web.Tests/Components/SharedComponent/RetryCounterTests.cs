@@ -6,11 +6,11 @@ using Xunit;
 
 namespace AgentDashboard.Web.Tests.Components.SharedComponent;
 
-public sealed class RetryCounterShould : IClassFixture<BunitFixture>
+public sealed class RetryCounterTests : IClassFixture<BunitFixture>
 {
     private readonly BunitFixture _ctx;
 
-    public RetryCounterShould(BunitFixture ctx) => _ctx = ctx;
+    public RetryCounterTests(BunitFixture ctx) => _ctx = ctx;
 
     [Theory]
     [InlineData(0, 3, "retry-safe")]  // Safe

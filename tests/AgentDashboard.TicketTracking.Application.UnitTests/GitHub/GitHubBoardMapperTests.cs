@@ -10,7 +10,7 @@ using AgentDashboard.TicketTracking.Domain.Tickets;
 
 namespace AgentDashboard.TicketTracking.Application.UnitTests.GitHub;
 
-public class GitHubBoardMapperShould
+public class GitHubBoardMapperTests
 {
     private static readonly DateTimeOffset FixedNow = new(2026, 05, 27, 12, 0, 0, TimeSpan.Zero);
 

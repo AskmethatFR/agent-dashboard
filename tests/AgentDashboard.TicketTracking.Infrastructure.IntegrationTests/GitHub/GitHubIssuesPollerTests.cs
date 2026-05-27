@@ -22,7 +22,7 @@ namespace AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.GitHub;
 //  6. Each poll emits a single LogInformation containing the documented
 //     structured-log keys: repo, issue_count, duration_ms, next_poll_in_seconds.
 //  7. The GITHUB_TOKEN value never appears in any captured log entry.
-public sealed class GitHubIssuesPollerShould : IAsyncLifetime
+public sealed class GitHubIssuesPollerTests : IAsyncLifetime
 {
     private const string ValidToken = "ghp_examplePAT12345";
     private const string ExpectedRepoLabel = "AskmethatFR/agent-dashboard";

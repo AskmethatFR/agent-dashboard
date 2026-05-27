@@ -6,7 +6,7 @@ using Xunit;
 
 namespace AgentDashboard.TicketTracking.Application.UnitTests.Queries.GetBoard.Dtos;
 
-public sealed class TicketDtoShould
+public sealed class TicketDtoTests
 {
     [Fact]
     public void HaveAllRequiredFields()

@@ -16,7 +16,7 @@ using Xunit;
 
 namespace AgentDashboard.Web.Tests.Pages;
 
-public class HomeShould
+public class HomeTests
 {
     private static readonly string[] ExpectedColumnLabels =
     [

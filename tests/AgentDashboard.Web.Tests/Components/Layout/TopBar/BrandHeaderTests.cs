@@ -9,11 +9,11 @@ using AgentDashboard.Web.Tests.Infrastructure;
 
 // Test list for BrandHeader:
 //   1. Renders the .brand container with the team/ wordmark and a .brand-dot child.
-public sealed class BrandHeaderShould : IClassFixture<BunitFixture>
+public sealed class BrandHeaderTests : IClassFixture<BunitFixture>
 {
     private readonly BunitFixture _ctx;
 
-    public BrandHeaderShould(BunitFixture ctx) => _ctx = ctx;
+    public BrandHeaderTests(BunitFixture ctx) => _ctx = ctx;
 
     [Fact]
     public void Should_RenderBrandWordmark_WithSquareDot()

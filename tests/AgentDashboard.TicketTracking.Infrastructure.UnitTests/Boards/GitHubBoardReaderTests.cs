@@ -38,7 +38,7 @@ namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.Boards;
 //
 // ========================================================================
 
-public sealed class GitHubBoardReaderShould
+public sealed class GitHubBoardReaderTests
 {
     private static readonly DateTimeOffset FixedNow = new(2026, 05, 27, 12, 0, 0, TimeSpan.Zero);
     private static readonly TimeSpan DefaultPollInterval = TimeSpan.FromMinutes(10);

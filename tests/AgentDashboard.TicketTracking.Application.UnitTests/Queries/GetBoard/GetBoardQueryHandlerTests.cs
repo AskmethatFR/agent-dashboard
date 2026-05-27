@@ -8,7 +8,7 @@ using AgentDashboard.TicketTracking.TestShared.Tickets;
 
 namespace AgentDashboard.TicketTracking.Application.UnitTests.Queries.GetBoard;
 
-public sealed class GetBoardQueryHandlerShould
+public sealed class GetBoardQueryHandlerTests
 {
     [Fact]
     public void Should_Throw_ArgumentNullException_When_BoardReaderIsNull()

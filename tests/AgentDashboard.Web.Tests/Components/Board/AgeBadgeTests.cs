@@ -7,11 +7,11 @@ using Xunit;
 
 namespace AgentDashboard.Web.Tests.Components.Board;
 
-public sealed class AgeBadgeShould : IClassFixture<BunitFixture>
+public sealed class AgeBadgeTests : IClassFixture<BunitFixture>
 {
     private readonly BunitFixture _ctx;
 
-    public AgeBadgeShould(BunitFixture ctx) => _ctx = ctx;
+    public AgeBadgeTests(BunitFixture ctx) => _ctx = ctx;
 
     // Test List (TDD by Example - Kent Beck's Test List technique)
     // ============================================================

@@ -14,7 +14,7 @@ using Xunit;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.Boards;
 
-public sealed class GitHubBoardReaderIntegrationShould : IAsyncLifetime
+public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
 {
     private const string ValidToken = "ghp_examplePAT12345";
     private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(100); // Short interval for tests
@@ -78,7 +78,7 @@ public sealed class GitHubBoardReaderIntegrationShould : IAsyncLifetime
         }
     }
 
-    // Test list for GitHubBoardReaderIntegrationShould:
+    // Test list for GitHubBoardReaderIntegrationTests:
     //  1. GetBoardQuery with GitHub data returns mapped board with 7 columns and tickets
     //  2. GetBoardQuery called twice returns cached data on second call
     //  3. GetBoardQuery after refresh trigger updates board with new data

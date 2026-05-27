@@ -7,14 +7,14 @@ using Xunit;
 
 namespace AgentDashboard.Web.Tests.Components.Board;
 
-public class AgentChipShould : IClassFixture<BunitFixture>
+public class AgentChipTests : IClassFixture<BunitFixture>
 {
     private static readonly AgentDto DevA = new(
         "dev-a", "Developer A", "DA", "developer");
 
     private readonly BunitFixture _ctx;
 
-    public AgentChipShould(BunitFixture ctx) => _ctx = ctx;
+    public AgentChipTests(BunitFixture ctx) => _ctx = ctx;
 
     [Fact]
     public void RenderNothing_WhenAgentIsNull()

@@ -12,7 +12,7 @@ using AgentDashboard.Web.Tests.Infrastructure;
 //      (Home, Team Board, Sessions, Replay, Agent, Flow, Escalations).
 //   2. Exactly one entry has aria-current="page" and it is "Team Board".
 //   3. The six placeholder entries are disabled and carry aria-disabled="true".
-public sealed class NavMenuShould : IClassFixture<BunitFixture>
+public sealed class NavMenuTests : IClassFixture<BunitFixture>
 {
     private static readonly string[] CanonicalEntries =
     [
@@ -27,7 +27,7 @@ public sealed class NavMenuShould : IClassFixture<BunitFixture>
 
     private readonly BunitFixture _ctx;
 
-    public NavMenuShould(BunitFixture ctx) => _ctx = ctx;
+    public NavMenuTests(BunitFixture ctx) => _ctx = ctx;
 
     [Fact]
     public void Should_RenderSevenEntries_InCanonicalOrder()

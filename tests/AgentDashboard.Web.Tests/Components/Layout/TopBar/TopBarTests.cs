@@ -14,7 +14,7 @@ using TopBarComponent = AgentDashboard.Web.Components.Layout.TopBar.TopBar;
 
 namespace AgentDashboard.Web.Tests.Components.Layout.TopBar;
 
-public sealed class TopBarShould
+public sealed class TopBarTests
 {
     [Fact]
     public void Should_RenderAllFourRegions()

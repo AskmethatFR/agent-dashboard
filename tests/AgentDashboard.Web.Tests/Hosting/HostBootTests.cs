@@ -7,7 +7,7 @@ namespace AgentDashboard.Web.Tests.Hosting;
 
 // Test list for host fail-fast on missing GitHub ingestion env vars:
 //   1. GITHUB_TOKEN missing -> boot throws InvalidOperationException mentioning GITHUB_TOKEN
-public sealed class HostBootShould
+public sealed class HostBootTests
 {
     [Fact]
     public void FailFast_WhenGitHubTokenIsMissing()

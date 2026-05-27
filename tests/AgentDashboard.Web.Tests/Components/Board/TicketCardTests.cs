@@ -8,7 +8,7 @@ using Xunit;
 
 namespace AgentDashboard.Web.Tests.Components.Board;
 
-public class TicketCardShould : IClassFixture<BunitFixture>
+public class TicketCardTests : IClassFixture<BunitFixture>
 {
     private static readonly AgentDto DevADto = new(
         "dev-a", "Developer A", "DA", "developer");
@@ -26,7 +26,7 @@ public class TicketCardShould : IClassFixture<BunitFixture>
 
     private readonly BunitFixture _ctx;
 
-    public TicketCardShould(BunitFixture ctx) => _ctx = ctx;
+    public TicketCardTests(BunitFixture ctx) => _ctx = ctx;
 
     [Fact]
     public void RenderTicketTitle()
