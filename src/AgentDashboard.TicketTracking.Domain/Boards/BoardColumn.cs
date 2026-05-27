@@ -1,6 +1,8 @@
+using AgentDashboard.TicketTracking.Domain.Abstractions;
+
 namespace AgentDashboard.TicketTracking.Domain.Boards;
 
-public sealed record BoardColumn
+public sealed record BoardColumn : IEntity<BoardColumnId>
 {
     public BoardColumnId Id { get; }
     public BoardColumnLabel Label { get; }

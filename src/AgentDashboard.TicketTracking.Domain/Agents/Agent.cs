@@ -1,6 +1,8 @@
+using AgentDashboard.TicketTracking.Domain.Abstractions;
+
 namespace AgentDashboard.TicketTracking.Domain.Agents;
 
-public sealed record Agent
+public sealed record Agent : IEntity<AgentId>
 {
     public AgentId Id { get; }
     public AgentName Name { get; }
