@@ -1,4 +1,6 @@
 using AgentDashboard.TicketTracking.Application;
+using AgentDashboard.TicketTracking.Application.Ports;
+using AgentDashboard.TicketTracking.Domain.Boards;
 using AgentDashboard.TicketTracking.Infrastructure;
 using AgentDashboard.Web.Components.Pages;
 using AgentDashboard.Web.Store;
@@ -62,34 +64,22 @@ public class HomeShould
     [Fact]
     public void Should_NotThrow_NullReferenceException_WhenBoardIsNull()
     {
-        // Reproduit le bug : quand _board est null, le composant crash
-        // avec NullReferenceException sur @_board!.Columns
         using var ctx = BuildContext();
 
         var cut = ctx.Render<Home>();
-        
-        // Avant le fix, cette ligne aurait throw une NullReferenceException
-        // car _board est null initiallement
-        var renderedMarkup = cut.Markup;
-        
-        // Si on arrive ici sans exception, le test passe
-        renderedMarkup.Should().NotBeNullOrEmpty();
+
+        cut.Markup.Should().NotBeNullOrEmpty();
     }
 
     [Fact]
     public void Should_DisplayLoadingState_WhenBoardIsNull()
     {
         using var ctx = BuildContext();
+        ctx.Services.AddSingleton<IBoardReader>(new NeverCompletingBoardReader());
 
         var cut = ctx.Render<Home>();
-        
-        // Vérifier qu'un message de chargement ou un état vide est affiché
-        // au lieu de crasher
-        var loadingIndicator = cut.FindAll(".loading, .empty-state");
-        
-        // Si _board est null, le composant ne devrait pas crasher
-        // Il peut afficher un état de chargement ou simplement être vide
-        Assert.DoesNotContain("NullReferenceException", cut.Markup);
+
+        cut.Markup.Should().Contain("Loading...");
     }
 
     private static BunitContext BuildContext()
@@ -127,11 +117,17 @@ public class HomeShould
         var columnHeader = heading.Parent as IParentNode;
         if (columnHeader == null)
             return -1;
-        
+
         var countSpan = columnHeader.QuerySelector<IElement>(".column-count");
         if (countSpan == null || !int.TryParse(countSpan.TextContent.Trim(), out var count))
             return -1;
-        
+
         return count;
+    }
+
+    private sealed class NeverCompletingBoardReader : IBoardReader
+    {
+        public Task<BoardSnapshot> GetCurrentAsync(CancellationToken cancellationToken) =>
+            new TaskCompletionSource<BoardSnapshot>().Task;
     }
 }
