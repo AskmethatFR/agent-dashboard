@@ -13,6 +13,7 @@ public static class DependencyInjection
     public static IServiceCollection AddTicketTrackingInfrastructure(this IServiceCollection services)
     {
         ArgumentNullException.ThrowIfNull(services);
+        services.AddSingleton<BoardSnapshotCache>();
         services.AddSingleton<IBoardReader, StubBoardReader>();
         return services;
     }
@@ -39,6 +40,9 @@ public static class DependencyInjection
         services.AddSingleton<IBoardRefreshTrigger>(sp => sp.GetRequiredService<BoardRefreshTrigger>());
         services.TryAddSingleton(TimeProvider.System);
         services.AddHostedService<GitHubIssuesPoller>();
+        
+        // Override IBoardReader with GitHubBoardReader when GitHub ingestion is enabled
+        services.AddSingleton<IBoardReader, GitHubBoardReader>();
 
         return services;
     }
