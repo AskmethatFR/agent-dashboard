@@ -11,11 +11,12 @@ internal sealed class FakeGitHubIssuesClient : IGitHubIssuesClient
 
     private static readonly IReadOnlyList<string> FeatureLabels = new[] { "type:feat" };
     private static readonly IReadOnlyList<string> ChoreLabels = new[] { "type:chore" };
+    private static readonly DateTimeOffset DefaultCreatedAt = new(2024, 1, 15, 10, 30, 0, TimeSpan.Zero);
 
     private static readonly IReadOnlyList<GitHubIssueRecord> CannedResponse =
     [
-        new GitHubIssueRecord(1, "first issue", FeatureLabels),
-        new GitHubIssueRecord(2, "second issue", ChoreLabels),
+        new GitHubIssueRecord(1, "first issue", FeatureLabels, DefaultCreatedAt),
+        new GitHubIssueRecord(2, "second issue", ChoreLabels, DefaultCreatedAt.AddDays(1)),
     ];
 
     public FakeGitHubIssuesClient(TimeProvider timeProvider)
