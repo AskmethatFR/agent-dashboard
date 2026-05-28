@@ -2,6 +2,7 @@ using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard;
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos;
+using AgentDashboard.TicketTracking.Infrastructure.Boards;
 using AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.GitHub.Fakes;
 using Cortex.Mediator;
 using FluentAssertions;
