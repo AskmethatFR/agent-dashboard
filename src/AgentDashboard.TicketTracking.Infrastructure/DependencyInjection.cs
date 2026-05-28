@@ -39,10 +39,10 @@ public static class DependencyInjection
         services.AddSingleton<BoardRefreshTrigger>();
         services.AddSingleton<IBoardRefreshTrigger>(sp => sp.GetRequiredService<BoardRefreshTrigger>());
         services.TryAddSingleton(TimeProvider.System);
-        services.AddHostedService<GitHubIssuesPoller>();
         
         // Override IBoardReader with GitHubBoardReader when GitHub ingestion is enabled
         services.AddSingleton<IBoardReader, GitHubBoardReader>();
+        services.AddHostedService<GitHubIssuesPoller>();
 
         return services;
     }
