@@ -30,6 +30,8 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
     {
         _timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 5, 27, 9, 0, 0, TimeSpan.Zero));
         _fakeClient = new FakeGitHubIssuesClient(_timeProvider);
+        // Clear default issues BEFORE factory creation so poller gets empty list
+        _fakeClient.SetIssues([]);
 
         _factory = new WebApplicationFactory<Program>()
             .WithWebHostBuilder(builder =>
@@ -94,6 +96,11 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
         };
         _fakeClient.SetIssues(issues);
 
+        // Trigger a refresh to update the cache with new issues
+        await _refreshTrigger.TriggerNowAsync(CancellationToken.None);
+        // Small delay to allow poller to process
+        await Task.Delay(20);
+
         // Act: Execute GetBoardQuery via Mediator
         var result = await _mediator.SendQueryAsync<GetBoardQuery, BoardDto>(new GetBoardQuery());
 
@@ -157,6 +164,11 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
                 _timeProvider.GetUtcNow().AddHours(-1))
         };
         _fakeClient.SetIssues(issues);
+
+        // Trigger a refresh to update the cache with new issues
+        await _refreshTrigger.TriggerNowAsync(CancellationToken.None);
+        // Small delay to allow poller to process
+        await Task.Delay(20);
 
         // Act
         var result = await _mediator.SendQueryAsync<GetBoardQuery, BoardDto>(new GetBoardQuery());
