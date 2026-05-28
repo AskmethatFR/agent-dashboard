@@ -14,7 +14,7 @@ public static class DependencyInjection
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddSingleton<BoardSnapshotCache>();
-        services.AddSingleton<IBoardReader, StubBoardReader>();
+        services.AddSingleton<IBoardReader, CachedBoardReader>();
         return services;
     }
 
