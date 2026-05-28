@@ -44,7 +44,7 @@ public static class GitHubPollingOptionsFactory
         if (match.Prefix is null)
         {
             throw new InvalidOperationException(
-                $"{TokenKey} must be a valid GitHub Personal Access Token. Accepted prefixes: 'ghp_' (classic) or 'github_pat_' (fine-grained). Found: {token[..Math.Min(10, token.Length)]}...");
+                $"{TokenKey} must be a valid GitHub Personal Access Token. Accepted prefixes: 'ghp_' (classic) or 'github_pat_' (fine-grained). Found a token of length {token.Length} with an unrecognized prefix.");
         }
 
         if (token.Length < match.MinLength)

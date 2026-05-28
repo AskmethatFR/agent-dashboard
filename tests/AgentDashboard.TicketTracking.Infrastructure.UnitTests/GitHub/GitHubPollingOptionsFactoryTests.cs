@@ -25,6 +25,14 @@ namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.GitHub;
 //   10. An arbitrary GITHUB_REPO entry in configuration is silently ignored
 //       and the dogfooding constants are still exposed — pins the v1.0
 //       decision that GITHUB_REPO has no effect (ADR-005, anti-regression).
+//   11. ghp_ at exactly 14 chars (min) -> accepted, Token preserved (pins < vs <= mutant).
+//   12. ghp_ at 13 chars (one below min) -> InvalidOperationException mentioning malformed.
+//   13. github_pat_ at exactly 21 chars (min) -> accepted, Token preserved (pins < vs <= mutant).
+//   14. github_pat_ at 20 chars (one below min) -> InvalidOperationException mentioning malformed.
+//   15. Unknown-prefix message NEVER echoes raw token bytes — only the token length
+//       (Security F1, CWE-532/CWE-209).
+//   16. Prefix match is case-sensitive (StringComparison.Ordinal): an uppercased prefix
+//       is treated as unknown (pins the Ordinal decision).
 
 public sealed class GitHubPollingOptionsFactoryTests
 {
@@ -119,6 +127,80 @@ public sealed class GitHubPollingOptionsFactoryTests
     public void Throw_WhenTokenHasUnknownPrefix()
     {
         var configuration = BuildConfiguration(token: "gho_someoauthtoken123");
+        var logger = new RecordingLogger();
+
+        var act = () => GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*ghp_*")
+            .WithMessage("*github_pat_*");
+    }
+
+    [Fact]
+    public void Accept_WhenClassicPatIsExactlyMinimumLength()
+    {
+        const string token = "ghp_0123456789";
+        var configuration = BuildConfiguration(token: token);
+        var logger = new RecordingLogger();
+
+        var options = GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
+
+        options.Token.Should().Be(token);
+    }
+
+    [Fact]
+    public void Throw_WhenClassicPatIsOneCharBelowMinimum()
+    {
+        var configuration = BuildConfiguration(token: "ghp_012345678");
+        var logger = new RecordingLogger();
+
+        var act = () => GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*malformed*");
+    }
+
+    [Fact]
+    public void Accept_WhenFineGrainedPatIsExactlyMinimumLength()
+    {
+        const string token = "github_pat_0123456789";
+        var configuration = BuildConfiguration(token: token);
+        var logger = new RecordingLogger();
+
+        var options = GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
+
+        options.Token.Should().Be(token);
+    }
+
+    [Fact]
+    public void Throw_WhenFineGrainedPatIsOneCharBelowMinimum()
+    {
+        var configuration = BuildConfiguration(token: "github_pat_012345678");
+        var logger = new RecordingLogger();
+
+        var act = () => GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*malformed*");
+    }
+
+    [Fact]
+    public void NotLeakTokenBytes_InUnknownPrefixMessage()
+    {
+        const string token = "secretTokenValue1234567890";
+        var configuration = BuildConfiguration(token: token);
+        var logger = new RecordingLogger();
+
+        var act = () => GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
+
+        act.Should().Throw<InvalidOperationException>()
+            .Which.Message.Should().NotContain("secret");
+    }
+
+    [Fact]
+    public void Throw_WhenPrefixCasingDiffers_TreatingItAsUnknownPrefix()
+    {
+        var configuration = BuildConfiguration(token: "GHP_examplePAT12345");
         var logger = new RecordingLogger();
 
         var act = () => GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
