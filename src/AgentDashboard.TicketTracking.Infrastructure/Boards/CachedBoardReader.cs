@@ -39,6 +39,7 @@ public sealed class CachedBoardReader : IBoardReader
         if (cached is null)
         {
             CachedBoardReaderLog.CacheMiss(_logger);
+            CachedBoardReaderLog.LogErrorCacheEmpty(_logger);
             throw new InvalidOperationException(
                 "Board snapshot cache is empty. The cache has not been populated yet.");
         }
@@ -61,4 +62,10 @@ internal static partial class CachedBoardReaderLog
         Level = LogLevel.Warning,
         Message = "CachedBoardReader: Cache miss - cache is empty.")]
     public static partial void CacheMiss(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 402,
+        Level = LogLevel.Error,
+        Message = "Board cache is empty, cannot return snapshot")]
+    public static partial void LogErrorCacheEmpty(ILogger logger);
 }

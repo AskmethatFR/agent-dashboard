@@ -11,6 +11,8 @@ public sealed class BoardSnapshotCache : IDisposable
     private BoardSnapshot? _snapshot;
     private DateTimeOffset _lastUpdated;
 
+    public event Action? OnUpdated;
+
     public BoardSnapshotCache(ILogger<BoardSnapshotCache>? logger = null)
     {
         _logger = logger ?? NullLogger<BoardSnapshotCache>.Instance;
@@ -42,6 +44,7 @@ public sealed class BoardSnapshotCache : IDisposable
             _snapshot = snapshot;
             _lastUpdated = asOf;
             BoardSnapshotCacheLog.UpdateCalled(_logger, asOf);
+            OnUpdated?.Invoke();
         }
         finally
         {

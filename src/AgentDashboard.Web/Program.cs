@@ -34,7 +34,17 @@ builder.Services.AddScoped<IReducer<BoardSlice, LoadBoardFailureAction>, LoadBoa
 // Register async reducer
 builder.Services.AddScoped<IAsyncReducer<BoardSlice, LoadBoardAction>, LoadBoardAsyncReducer>();
 
+// Register BoardCacheMonitor for live refresh
+builder.Services.AddSingleton<BoardCacheMonitor>();
+
 var app = builder.Build();
+
+// Initialize BoardCacheMonitor to start listening to cache updates
+using (var scope = app.Services.CreateScope())
+{
+    // This ensures BoardCacheMonitor is instantiated and subscribes to the cache event
+    _ = scope.ServiceProvider.GetRequiredService<BoardCacheMonitor>();
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
@@ -42,7 +52,7 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
-app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
+app.UseStatusCodePagesWithReExecute("/not-found");
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();
