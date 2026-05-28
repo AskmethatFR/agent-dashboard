@@ -27,12 +27,139 @@ public static class GitHubBoardMapper
         new Agent(new AgentId("security"), new AgentName("Security"), new AgentGlyph("SC"), new AgentRole("security"))
     };
 
+    private static readonly HashSet<string> ValidLabelPrefixes = new(
+        StringComparer.Ordinal)
+    {
+        "status:",
+        "agent:",
+        "retry:",
+        "co-agent:",
+        "escalation-target:"
+    };
+
+    private static readonly HashSet<string> ValidStatusValues = new(
+        StringComparer.Ordinal)
+    {
+        "created",
+        "specified",
+        "in-development",
+        "in-review",
+        "in-qa",
+        "awaiting-validation",
+        "done",
+        "escalated"
+    };
+
+    private static readonly HashSet<string> ValidAgentValues = new(
+        StringComparer.Ordinal)
+    {
+        "pm",
+        "architect",
+        "dev-a",
+        "dev-b",
+        "qa",
+        "security"
+    };
+
     public static BoardSnapshot MapToBoardSnapshot(
         IReadOnlyList<GitHubIssueRecord> records,
         DateTimeOffset now)
     {
+        // Validate all labels in all records before processing
+        foreach (var record in records)
+        {
+            ValidateLabels(record.Labels);
+        }
+
         var tickets = records.Select(r => MapToTicket(r, now)).ToList();
         return new BoardSnapshot(Columns, tickets, Agents);
+    }
+
+    private static void ValidateLabels(IReadOnlyList<string> labels)
+    {
+        foreach (var label in labels)
+        {
+            ValidateLabelFormat(label);
+        }
+    }
+
+    private static void ValidateLabelFormat(string label)
+    {
+        if (string.IsNullOrWhiteSpace(label))
+        {
+            throw new InvalidOperationException(
+                $"GitHub label is null, empty, or whitespace. All labels must have a valid format.");
+        }
+
+        // Check if the label has a valid prefix
+        var hasValidPrefix = false;
+        foreach (var prefix in ValidLabelPrefixes)
+        {
+            if (label.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                hasValidPrefix = true;
+                var value = label[prefix.Length..];
+                
+                // Validate the value based on the prefix
+                ValidateLabelValue(prefix, value);
+                break;
+            }
+        }
+
+        if (!hasValidPrefix)
+        {
+            // Label doesn't have a recognized prefix - this might be okay (e.g., "status:in-review")
+            // but we should at least check it's not malicious
+            if (label.Contains(':'))
+            {
+                // Has a colon but not a recognized prefix - validate the format
+                var parts = label.Split(':', 2);
+                if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[0]) || string.IsNullOrWhiteSpace(parts[1]))
+                {
+                    throw new InvalidOperationException(
+                        $"GitHub label '{label}' has invalid format. Labels must be in the format 'prefix:value'.");
+                }
+            }
+        }
+    }
+
+    private static void ValidateLabelValue(string prefix, string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new InvalidOperationException(
+                $"GitHub label with prefix '{prefix}' has empty or whitespace value.");
+        }
+
+        // Validate based on prefix
+        switch (prefix)
+        {
+            case "status:":
+                if (!ValidStatusValues.Contains(value))
+                {
+                    throw new InvalidOperationException(
+                        $"Invalid status value '{value}'. Valid values are: {string.Join(", ", ValidStatusValues)}.");
+                }
+                break;
+
+            case "agent:":
+            case "co-agent:":
+            case "escalation-target:":
+                if (!ValidAgentValues.Contains(value))
+                {
+                    throw new InvalidOperationException(
+                        $"Invalid agent value '{value}'. Valid values are: {string.Join(", ", ValidAgentValues)}.");
+                }
+                break;
+
+            case "retry:":
+                if (!int.TryParse(value, out _))
+                {
+                    throw new InvalidOperationException(
+                        $"Invalid retry value '{value}'. Retry must be a valid integer.");
+                }
+                break;
+        }
     }
 
     private static TicketSnapshot MapToTicket(GitHubIssueRecord record, DateTimeOffset now)
