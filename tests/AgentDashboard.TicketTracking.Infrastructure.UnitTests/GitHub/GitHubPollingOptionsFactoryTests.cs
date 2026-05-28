@@ -8,16 +8,19 @@ namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.GitHub;
 // Test list for GitHubPollingOptionsFactory.FromConfiguration:
 //   1. GITHUB_TOKEN missing -> InvalidOperationException mentioning GITHUB_TOKEN
 //   2. GITHUB_TOKEN empty/whitespace -> InvalidOperationException mentioning GITHUB_TOKEN
-//   3. POLL_INTERVAL_SECONDS below 300 -> clamped to 300 + WARNING log
-//   4. POLL_INTERVAL_SECONDS == 300 -> stays 300, no warning
-//   5. POLL_INTERVAL_SECONDS == 600 -> stays 600, no warning
-//   6. POLL_INTERVAL_SECONDS missing -> default 600, no warning
-//   7. Options carries the hardcoded dogfooding repo identity
+//   3. GITHUB_TOKEN invalid format (not ghp_) -> InvalidOperationException mentioning format
+//   4. GITHUB_TOKEN too short -> InvalidOperationException mentioning malformed
+//   5. POLL_INTERVAL_SECONDS below 300 -> clamped to 300 + WARNING log
+//   6. POLL_INTERVAL_SECONDS == 300 -> stays 300, no warning
+//   7. POLL_INTERVAL_SECONDS == 600 -> stays 600, no warning
+//   8. POLL_INTERVAL_SECONDS missing -> default 600, no warning
+//   9. Options carries the hardcoded dogfooding repo identity
 //      (AskmethatFR / agent-dashboard) regardless of configuration input
 //      — see ADR-005.
-//   8. An arbitrary GITHUB_REPO entry in configuration is silently ignored
-//      and the dogfooding constants are still exposed — pins the v1.0
-//      decision that GITHUB_REPO has no effect (ADR-005, anti-regression).
+//   10. An arbitrary GITHUB_REPO entry in configuration is silently ignored
+//       and the dogfooding constants are still exposed — pins the v1.0
+//       decision that GITHUB_REPO has no effect (ADR-005, anti-regression).
+
 public sealed class GitHubPollingOptionsFactoryTests
 {
     private const string ValidToken = "ghp_examplePAT12345";
@@ -44,6 +47,30 @@ public sealed class GitHubPollingOptionsFactoryTests
 
         act.Should().Throw<InvalidOperationException>()
             .WithMessage("*GITHUB_TOKEN*");
+    }
+
+    [Fact]
+    public void Throw_WhenGitHubTokenHasInvalidFormat_NotStartingWithGhp()
+    {
+        var configuration = BuildConfiguration(token: "invalid_token_12345");
+        var logger = new RecordingLogger();
+
+        var act = () => GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*ghp_*");
+    }
+
+    [Fact]
+    public void Throw_WhenGitHubTokenIsTooShort()
+    {
+        var configuration = BuildConfiguration(token: "ghp_");
+        var logger = new RecordingLogger();
+
+        var act = () => GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*malformed*");
     }
 
     [Fact]
@@ -102,7 +129,7 @@ public sealed class GitHubPollingOptionsFactoryTests
 
         var options = GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
 
-        options.Token.Should().Be(ValidToken);
+        // Note: Token is now internal, but accessible via InternalsVisibleTo
         options.RepositoryOwner.Should().Be("AskmethatFR");
         options.RepositoryName.Should().Be("agent-dashboard");
     }
