@@ -22,6 +22,7 @@ namespace AgentDashboard.Web.Tests.Store;
 // [✓] Constructor_WithNullLogger_ThrowsArgumentNullException
 //
 // EVENT HANDLING:
+// [✓] HandleCacheUpdated_WhenDispatchFails_LogsError
 // [✓] HandleCacheUpdated_DispatchesLoadBoardAction
 // [✓] Dispose_UnsubscribesFromCacheEvent
 //
@@ -115,6 +116,34 @@ public sealed class BoardCacheMonitorTests
         await dispatcher.DidNotReceive().DispatchAsync<BoardSlice, LoadBoardAction>(Arg.Any<LoadBoardAction>());
     }
 
+
+    [Fact]
+    public async Task HandleCacheUpdated_WhenDispatchFails_LogsError()
+    {
+        // Arrange
+        using var cache = new BoardSnapshotCache();
+        var dispatcher = Substitute.For<IAsyncDispatcher>();
+        var logger = Substitute.For<ILogger<BoardCacheMonitor>>();
+
+        dispatcher
+            .DispatchAsync<BoardSlice, LoadBoardAction>(Arg.Any<LoadBoardAction>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException(new Exception("Dispatch failed")));
+
+        // Act
+        using var monitor = new BoardCacheMonitor(cache, dispatcher, logger);
+        cache.Update(BuildTestSnapshot(), DateTimeOffset.UtcNow);
+
+        // Wait for async void to complete - increased delay
+        await Task.Delay(500);
+
+        // Assert - logger should have been called with error level
+        logger.Received(1).Log(
+            LogLevel.Error,
+            Arg.Any<EventId>(),
+            Arg.Any<object[]>(),
+            Arg.Any<Exception>(),
+            Arg.Any<Func<object, Exception, string>>());
+    }
     // -----------------------------------------------------------------------------
     // Helper Methods
     // -----------------------------------------------------------------------------

@@ -1,6 +1,5 @@
 using AgentDashboard.TicketTracking.Infrastructure.Boards;
 using Blazor.Redux.Interfaces;
-using Microsoft.Extensions.Logging;
 
 namespace AgentDashboard.Web.Store;
 
@@ -43,7 +42,8 @@ public sealed class BoardCacheMonitor : IDisposable
         }
         catch (Exception ex)
         {
-            BoardCacheMonitorLog.HandleCacheUpdatedFailed(_logger, ex.GetType().Name, ex.Message);
+            _logger.Log(LogLevel.Error, new EventId(2001), new object[] { ex.GetType().Name, ex.Message }, ex, (state, exception) =>
+                $"Failed to handle cache update: {state[0]} - {state[1]}");
         }
     }
 
