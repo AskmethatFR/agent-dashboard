@@ -102,7 +102,8 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
         catch (Exception ex)
 #pragma warning restore CA1031
         {
-            GitHubIssuesPollerLog.PollFailed(_logger, ex);
+            // Log only the exception type and message, not the full details which may contain sensitive information
+            GitHubIssuesPollerLog.PollFailed(_logger, ex.GetType().Name, ex.Message);
         }
     }
 }
@@ -118,6 +119,6 @@ internal static partial class GitHubIssuesPollerLog
     [LoggerMessage(
         EventId = 201,
         Level = LogLevel.Error,
-        Message = "GitHub poll failed.")]
-    public static partial void PollFailed(ILogger logger, Exception exception);
+        Message = "GitHub poll failed: {exception_type} - {exception_message}")]
+    public static partial void PollFailed(ILogger logger, string exception_type, string exception_message);
 }
