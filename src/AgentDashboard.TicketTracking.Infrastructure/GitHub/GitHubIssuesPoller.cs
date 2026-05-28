@@ -1,6 +1,4 @@
-using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Application.Ports;
-using AgentDashboard.TicketTracking.Infrastructure.Boards;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -9,7 +7,7 @@ namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 internal sealed partial class GitHubIssuesPoller : BackgroundService
 {
     private readonly IGitHubIssuesClient _client;
-    private readonly BoardSnapshotCache _cache;
+    private readonly IBoardSnapshotUpdater _snapshotUpdater;
     private readonly BoardRefreshTrigger _trigger;
     private readonly GitHubPollingOptions _options;
     private readonly TimeProvider _timeProvider;
@@ -18,20 +16,20 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
 
     public GitHubIssuesPoller(
         IGitHubIssuesClient client,
-        BoardSnapshotCache cache,
+        IBoardSnapshotUpdater snapshotUpdater,
         BoardRefreshTrigger trigger,
         GitHubPollingOptions options,
         TimeProvider timeProvider,
         ILogger<GitHubIssuesPoller> logger)
     {
         ArgumentNullException.ThrowIfNull(client);
-        ArgumentNullException.ThrowIfNull(cache);
+        ArgumentNullException.ThrowIfNull(snapshotUpdater);
         ArgumentNullException.ThrowIfNull(trigger);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(logger);
         _client = client;
-        _cache = cache;
+        _snapshotUpdater = snapshotUpdater;
         _trigger = trigger;
         _options = options;
         _timeProvider = timeProvider;
@@ -83,9 +81,8 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
             var records = await _client.GetOpenIssuesAsync(cancellationToken).ConfigureAwait(false);
             var now = _timeProvider.GetUtcNow();
             
-            // Map the GitHub issues to a board snapshot and update the cache
-            var snapshot = GitHubBoardMapper.MapToBoardSnapshot(records, now);
-            _cache.Update(snapshot, now);
+            // Update the board snapshot via the port
+            _snapshotUpdater.Update(records, now);
 
             var elapsed = _timeProvider.GetElapsedTime(startTimestamp);
             var nextPollInSeconds = (int)Math.Max(0, (nextScheduledDeadline - now).TotalSeconds);

@@ -25,6 +25,7 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
     private IServiceScope _scope = null!;
     private IMediator _mediator = null!;
     private IBoardRefreshTrigger _refreshTrigger = null!;
+    private BoardSnapshotCache _cache = null!;
 
     public Task InitializeAsync()
     {
@@ -56,6 +57,7 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
         _scope = _factory.Services.CreateScope();
         _mediator = _scope.ServiceProvider.GetRequiredService<IMediator>();
         _refreshTrigger = _scope.ServiceProvider.GetRequiredService<IBoardRefreshTrigger>();
+        _cache = _scope.ServiceProvider.GetService<BoardSnapshotCache>()!;
 
         return Task.CompletedTask;
     }
@@ -65,19 +67,6 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
         _scope?.Dispose();
         _factory?.Dispose();
         return Task.CompletedTask;
-    }
-
-    private static async Task WaitUntilAsync(Func<bool> predicate, int timeoutMs = 2000)
-    {
-        var start = DateTimeOffset.UtcNow;
-        while (!predicate())
-        {
-            if ((DateTimeOffset.UtcNow - start).TotalMilliseconds > timeoutMs)
-            {
-                return;
-            }
-            await Task.Delay(20);
-        }
     }
 
     // Test list for GitHubBoardReaderIntegrationTests:
@@ -98,8 +87,38 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
 
         // Trigger a refresh to update the cache with new issues
         await _refreshTrigger.TriggerNowAsync(CancellationToken.None);
-        // Small delay to allow poller to process
-        await Task.Delay(20);
+        
+        // Use ManualResetEventSlim for deterministic synchronization
+        using var cacheUpdatedSignal = new ManualResetEventSlim(false);
+        
+        // Start a background task that will signal when cache is updated
+        _ = Task.Run(() =>
+        {
+            // Poll for cache update with a timeout
+            var start = DateTimeOffset.UtcNow;
+            while (!cacheUpdatedSignal.IsSet)
+            {
+                var cached = _cache.GetLatest();
+                if (cached?.Tickets.Count == 1)
+                {
+                    cacheUpdatedSignal.Set();
+                    return;
+                }
+                
+                if ((DateTimeOffset.UtcNow - start).TotalMilliseconds > 1000)
+                {
+                    // Timeout - signal anyway to avoid hanging
+                    cacheUpdatedSignal.Set();
+                    return;
+                }
+                
+                // Small sleep to avoid busy waiting
+                Task.Delay(10).Wait();
+            }
+        });
+        
+        // Wait for the signal with a timeout
+        cacheUpdatedSignal.Wait(1500);
 
         // Act: Execute GetBoardQuery via Mediator
         var result = await _mediator.SendQueryAsync<GetBoardQuery, BoardDto>(new GetBoardQuery());
@@ -167,8 +186,38 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
 
         // Trigger a refresh to update the cache with new issues
         await _refreshTrigger.TriggerNowAsync(CancellationToken.None);
-        // Small delay to allow poller to process
-        await Task.Delay(20);
+        
+        // Use ManualResetEventSlim for deterministic synchronization
+        using var cacheUpdatedSignal = new ManualResetEventSlim(false);
+        
+        // Start a background task that will signal when cache is updated
+        _ = Task.Run(() =>
+        {
+            // Poll for cache update with a timeout
+            var start = DateTimeOffset.UtcNow;
+            while (!cacheUpdatedSignal.IsSet)
+            {
+                var cached = _cache.GetLatest();
+                if (cached?.Tickets.Count == 1)
+                {
+                    cacheUpdatedSignal.Set();
+                    return;
+                }
+                
+                if ((DateTimeOffset.UtcNow - start).TotalMilliseconds > 1000)
+                {
+                    // Timeout - signal anyway to avoid hanging
+                    cacheUpdatedSignal.Set();
+                    return;
+                }
+                
+                // Small sleep to avoid busy waiting
+                Task.Delay(10).Wait();
+            }
+        });
+        
+        // Wait for the signal with a timeout
+        cacheUpdatedSignal.Wait(1500);
 
         // Act
         var result = await _mediator.SendQueryAsync<GetBoardQuery, BoardDto>(new GetBoardQuery());

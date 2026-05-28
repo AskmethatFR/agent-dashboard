@@ -14,6 +14,7 @@ public sealed partial class GitHubBoardReader : IBoardReader
 {
     private readonly BoardSnapshotCache _cache;
     private readonly IGitHubIssuesClient _client;
+    private readonly IBoardSnapshotUpdater _snapshotUpdater;
     private readonly GitHubPollingOptions _options;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<GitHubBoardReader> _logger;
@@ -23,18 +24,21 @@ public sealed partial class GitHubBoardReader : IBoardReader
     /// </summary>
     /// <param name="cache">The cache for storing board snapshots.</param>
     /// <param name="client">The GitHub issues client for fetching data.</param>
+    /// <param name="snapshotUpdater">The updater for board snapshots.</param>
     /// <param name="options">The polling options containing PollInterval.</param>
     /// <param name="timeProvider">The time provider for getting current time.</param>
     /// <param name="logger">The logger for error logging.</param>
     public GitHubBoardReader(
         BoardSnapshotCache cache,
         IGitHubIssuesClient client,
+        IBoardSnapshotUpdater snapshotUpdater,
         GitHubPollingOptions options,
         TimeProvider timeProvider,
         ILogger<GitHubBoardReader> logger)
     {
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _client = client ?? throw new ArgumentNullException(nameof(client));
+        _snapshotUpdater = snapshotUpdater ?? throw new ArgumentNullException(nameof(snapshotUpdater));
         _options = options ?? throw new ArgumentNullException(nameof(options));
         _timeProvider = timeProvider ?? throw new ArgumentNullException(nameof(timeProvider));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -111,10 +115,17 @@ public sealed partial class GitHubBoardReader : IBoardReader
 
         var records = await _client.GetOpenIssuesAsync(cancellationToken).ConfigureAwait(false);
         var now = _timeProvider.GetUtcNow();
-        var snapshot = GitHubBoardMapper.MapToBoardSnapshot(records, now);
-
-        _cache.Update(snapshot, now);
-        return snapshot;
+        
+        // Use the updater to map and cache the snapshot
+        _snapshotUpdater.Update(records, now);
+        
+        // Return the cached snapshot
+        var cached = _cache.GetLatest();
+        if (cached is null)
+        {
+            throw new InvalidOperationException("Snapshot was not updated in cache");
+        }
+        return cached;
     }
 
     [LoggerMessage(
