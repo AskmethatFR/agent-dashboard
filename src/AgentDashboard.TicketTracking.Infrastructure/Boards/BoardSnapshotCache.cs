@@ -1,15 +1,19 @@
 using AgentDashboard.TicketTracking.Domain.Boards;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.Logging.Abstractions;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.Boards;
 
 public sealed class BoardSnapshotCache : IDisposable
 {
     private readonly ReaderWriterLockSlim _lock = new();
+    private readonly ILogger<BoardSnapshotCache> _logger;
     private BoardSnapshot? _snapshot;
     private DateTimeOffset _lastUpdated;
 
-    public BoardSnapshotCache()
+    public BoardSnapshotCache(ILogger<BoardSnapshotCache>? logger = null)
     {
+        _logger = logger ?? NullLogger<BoardSnapshotCache>.Instance;
         _snapshot = null;
         _lastUpdated = DateTimeOffset.MinValue;
     }
@@ -19,6 +23,7 @@ public sealed class BoardSnapshotCache : IDisposable
         _lock.EnterReadLock();
         try
         {
+            BoardSnapshotCacheLog.GetLatestCalled(_logger);
             return _snapshot;
         }
         finally
@@ -36,6 +41,7 @@ public sealed class BoardSnapshotCache : IDisposable
         {
             _snapshot = snapshot;
             _lastUpdated = asOf;
+            BoardSnapshotCacheLog.UpdateCalled(_logger, asOf);
         }
         finally
         {
@@ -63,4 +69,19 @@ public sealed class BoardSnapshotCache : IDisposable
     {
         _lock.Dispose();
     }
+}
+
+internal static partial class BoardSnapshotCacheLog
+{
+    [LoggerMessage(
+        EventId = 300,
+        Level = LogLevel.Debug,
+        Message = "BoardSnapshotCache.GetLatest() called.")]
+    public static partial void GetLatestCalled(ILogger logger);
+
+    [LoggerMessage(
+        EventId = 301,
+        Level = LogLevel.Debug,
+        Message = "BoardSnapshotCache.Update() called with asOf={asOf}.")]
+    public static partial void UpdateCalled(ILogger logger, DateTimeOffset asOf);
 }
