@@ -7,6 +7,7 @@ using AgentDashboard.TicketTracking.Domain.Tickets;
 using AgentDashboard.TicketTracking.Infrastructure.Boards;
 using AgentDashboard.Web.Store;
 using Blazor.Redux.Interfaces;
+using Microsoft.Extensions.Logging;
 using NSubstitute;
 using Xunit;
 
@@ -18,6 +19,7 @@ namespace AgentDashboard.Web.Tests.Store;
 // CONSTRUCTOR & DISPOSAL:
 // [✓] Constructor_WithNullCache_ThrowsArgumentNullException
 // [✓] Constructor_WithNullDispatcher_ThrowsArgumentNullException
+// [✓] Constructor_WithNullLogger_ThrowsArgumentNullException
 //
 // EVENT HANDLING:
 // [✓] HandleCacheUpdated_DispatchesLoadBoardAction
@@ -27,6 +29,8 @@ namespace AgentDashboard.Web.Tests.Store;
 
 public sealed class BoardCacheMonitorTests
 {
+    private readonly ILogger<BoardCacheMonitor> _logger = Substitute.For<ILogger<BoardCacheMonitor>>();
+
     // -----------------------------------------------------------------------------
     // Constructor & Disposal
     // -----------------------------------------------------------------------------
@@ -39,7 +43,7 @@ public sealed class BoardCacheMonitorTests
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new BoardCacheMonitor(null!, dispatcher));
+            new BoardCacheMonitor(null!, dispatcher, _logger));
     }
 
     [Fact]
@@ -50,7 +54,19 @@ public sealed class BoardCacheMonitorTests
 
         // Act & Assert
         Assert.Throws<ArgumentNullException>(() =>
-            new BoardCacheMonitor(cache, null!));
+            new BoardCacheMonitor(cache, null!, _logger));
+    }
+
+    [Fact]
+    public void Constructor_WithNullLogger_ThrowsArgumentNullException()
+    {
+        // Arrange
+        using var cache = new BoardSnapshotCache();
+        var dispatcher = Substitute.For<IAsyncDispatcher>();
+
+        // Act & Assert
+        Assert.Throws<ArgumentNullException>(() =>
+            new BoardCacheMonitor(cache, dispatcher, null!));
     }
 
     // -----------------------------------------------------------------------------
@@ -65,7 +81,7 @@ public sealed class BoardCacheMonitorTests
         var dispatcher = Substitute.For<IAsyncDispatcher>();
 
         // Create the monitor - it will subscribe to cache.OnUpdated
-        using var monitor = new BoardCacheMonitor(cache, dispatcher);
+        using var monitor = new BoardCacheMonitor(cache, dispatcher, _logger);
 
         // Act - trigger the cache update which should trigger the event
         cache.Update(BuildTestSnapshot(), DateTimeOffset.UtcNow);
@@ -85,7 +101,7 @@ public sealed class BoardCacheMonitorTests
         var dispatcher = Substitute.For<IAsyncDispatcher>();
 
         // Create the monitor
-        var monitor = new BoardCacheMonitor(cache, dispatcher);
+        var monitor = new BoardCacheMonitor(cache, dispatcher, _logger);
 
         // Act - dispose the monitor
         monitor.Dispose();

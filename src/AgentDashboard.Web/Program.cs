@@ -35,16 +35,10 @@ builder.Services.AddScoped<IReducer<BoardSlice, LoadBoardFailureAction>, LoadBoa
 builder.Services.AddScoped<IAsyncReducer<BoardSlice, LoadBoardAction>, LoadBoardAsyncReducer>();
 
 // Register BoardCacheMonitor for live refresh
-builder.Services.AddSingleton<BoardCacheMonitor>();
+builder.Services.AddScoped<BoardCacheMonitor>();
+builder.Services.AddHostedService<BoardCacheMonitorHostService>();
 
 var app = builder.Build();
-
-// Initialize BoardCacheMonitor to start listening to cache updates
-using (var scope = app.Services.CreateScope())
-{
-    // This ensures BoardCacheMonitor is instantiated and subscribes to the cache event
-    _ = scope.ServiceProvider.GetRequiredService<BoardCacheMonitor>();
-}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
