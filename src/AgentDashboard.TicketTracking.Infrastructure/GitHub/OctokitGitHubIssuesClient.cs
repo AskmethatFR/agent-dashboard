@@ -7,6 +7,7 @@ namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 internal sealed class OctokitGitHubIssuesClient : IGitHubIssuesClient
 {
     private const string ProductHeader = "agent-dashboard";
+    private static readonly TimeSpan GitHubApiTimeout = TimeSpan.FromSeconds(30);
 
     private readonly GitHubPollingOptions _options;
     private readonly GitHubClient _client;
@@ -25,21 +26,32 @@ internal sealed class OctokitGitHubIssuesClient : IGitHubIssuesClient
     {
         cancellationToken.ThrowIfCancellationRequested();
 
+        using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+        timeoutCts.CancelAfter(GitHubApiTimeout);
+        
         var request = new RepositoryIssueRequest { State = ItemStateFilter.Open };
-        var issues = await _client.Issue
-            .GetAllForRepository(_options.RepositoryOwner, _options.RepositoryName, request)
-            .ConfigureAwait(false);
-
-        var result = new List<GitHubIssueRecord>(issues.Count);
-        foreach (var issue in issues)
+        
+        try
         {
-            var labels = new List<string>(issue.Labels.Count);
-            foreach (var label in issue.Labels)
+            var issues = await _client.Issue
+                .GetAllForRepository(_options.RepositoryOwner, _options.RepositoryName, request)
+                .ConfigureAwait(false);
+
+            var result = new List<GitHubIssueRecord>(issues.Count);
+            foreach (var issue in issues)
             {
-                labels.Add(label.Name);
+                var labels = new List<string>(issue.Labels.Count);
+                foreach (var label in issue.Labels)
+                {
+                    labels.Add(label.Name);
+                }
+                result.Add(new GitHubIssueRecord(issue.Number, issue.Title, labels, issue.CreatedAt));
             }
-            result.Add(new GitHubIssueRecord(issue.Number, issue.Title, labels, issue.CreatedAt));
+            return result;
         }
-        return result;
+        catch (TaskCanceledException) when (timeoutCts.IsCancellationRequested)
+        {
+            throw new TimeoutException("GitHub API request timed out after 30 seconds");
+        }
     }
 }
