@@ -13,10 +13,9 @@ using AgentDashboard.TicketTracking.Domain.Tickets;
 using AgentDashboard.TicketTracking.Infrastructure.Boards;
 using AgentDashboard.TicketTracking.Infrastructure.GitHub;
 using AgentDashboard.TicketTracking.Infrastructure.UnitTests.GitHub.Fakes;
+using AgentDashboard.TicketTracking.Infrastructure.UnitTests.Boards.Fakes;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Logging.Abstractions;
-
-namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.Boards;
 
 // Test List for GitHubBoardReader:
 // ========================================================================
@@ -35,6 +34,28 @@ namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.Boards;
 // EDGE CASES:
 // [✓] GetCurrentAsync_WhenPollIntervalIsZero_AlwaysPoll
 // [✓] GetCurrentAsync_WhenCacheLastUpdatedIsMinValue_PollGitHub
+// [✓] GetCurrentAsync_WhenSnapshotUpdaterFailsToUpdateCache_ThrowsInvalidOperationException
+//
+// CONSTRUCTOR NULL CHECKS:
+// [✓] Constructor_WithNullCache_ThrowsArgumentNullException
+// [✓] Constructor_WithNullClient_ThrowsArgumentNullException
+// [✓] Constructor_WithNullSnapshotUpdater_ThrowsArgumentNullException
+// [✓] Constructor_WithNullOptions_ThrowsArgumentNullException
+// [✓] Constructor_WithNullTimeProvider_ThrowsArgumentNullException
+// [✓] Constructor_WithNullLogger_ThrowsArgumentNullException
+//
+// ========================================================================
+// [✓] GetCurrentAsync_WhenCacheIsEmpty_PollGitHubAndReturnsSnapshot
+// [✓] GetCurrentAsync_WhenCacheIsStale_PollGitHubAndUpdatesCache
+//
+// ERROR HANDLING SCENARIOS:
+// [✓] GetCurrentAsync_WhenPollingFailsAndCacheHasData_ReturnsCachedSnapshot
+// [✓] GetCurrentAsync_WhenPollingFailsAndCacheIsEmpty_ThrowsException
+//
+// EDGE CASES:
+// [✓] GetCurrentAsync_WhenPollIntervalIsZero_AlwaysPoll
+// [✓] GetCurrentAsync_WhenCacheLastUpdatedIsMinValue_PollGitHub
+// [✓] GetCurrentAsync_WhenSnapshotUpdaterFailsToUpdateCache_ThrowsInvalidOperationException
 //
 // ========================================================================
 
@@ -57,20 +78,9 @@ public sealed class GitHubBoardReaderTests
         var cachedSnapshot = BuildTestSnapshot(ticketId: 1);
         
         cache.Update(cachedSnapshot, FixedNow);
-        
-        // Use a very large poll interval so cache is always fresh
-        var largeIntervalOptions = new GitHubPollingOptions
-        {
-            Token = "test-token",
-            RepositoryOwner = "test-owner",
-            RepositoryName = "test-repo",
-            PollInterval = TimeSpan.FromDays(365) // 1 year - cache will always be fresh
-        };
-        
+
         var client = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>());
-        var timeProvider = new ManualTimeProvider(FixedNow);
-        
-        var reader = new GitHubBoardReader(cache, client, largeIntervalOptions, timeProvider, NullLogger);
+        var reader = BuildReader(cache, client, BuildOptions(pollInterval: TimeSpan.FromDays(365)), FixedNow);
 
         // Act
         var result = await reader.GetCurrentAsync(CancellationToken.None);
@@ -96,17 +106,7 @@ public sealed class GitHubBoardReaderTests
             new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow.AddHours(-1))
         };
         var client = new FakeGitHubIssuesClient(records);
-        var timeProvider = new ManualTimeProvider(FixedNow);
-        
-        var options = new GitHubPollingOptions
-        {
-            Token = "test-token",
-            RepositoryOwner = "test-owner",
-            RepositoryName = "test-repo",
-            PollInterval = DefaultPollInterval
-        };
-        
-        var reader = new GitHubBoardReader(cache, client, options, timeProvider, NullLogger);
+        var reader = BuildReader(cache, client, BuildOptions(), FixedNow);
 
         // Act
         var result = await reader.GetCurrentAsync(CancellationToken.None);
@@ -126,24 +126,14 @@ public sealed class GitHubBoardReaderTests
         var oldSnapshot = BuildTestSnapshot(ticketId: 1);
         cache.Update(oldSnapshot, FixedNow);
 
-        var shortIntervalOptions = new GitHubPollingOptions
-        {
-            Token = "test-token",
-            RepositoryOwner = "test-owner",
-            RepositoryName = "test-repo",
-            PollInterval = TimeSpan.FromMilliseconds(100)
-        };
-
         var timeAfterCache = FixedNow.AddMilliseconds(150);
-        var timeProvider = new ManualTimeProvider(timeAfterCache);
-        
+
         var records = new List<GitHubIssueRecord>
         {
             new(2, "New Issue", new List<string> { "status:created", "agent:pm" }, FixedNow)
         };
         var client = new FakeGitHubIssuesClient(records);
-        
-        var reader = new GitHubBoardReader(cache, client, shortIntervalOptions, timeProvider, NullLogger);
+        var reader = BuildReader(cache, client, BuildOptions(pollInterval: TimeSpan.FromMilliseconds(100)), timeAfterCache);
 
         // Act
         var result = await reader.GetCurrentAsync(CancellationToken.None);
@@ -168,18 +158,8 @@ public sealed class GitHubBoardReaderTests
         var cachedSnapshot = BuildTestSnapshot(ticketId: 1);
         cache.Update(cachedSnapshot, FixedNow);
 
-        var largeIntervalOptions = new GitHubPollingOptions
-        {
-            Token = "test-token",
-            RepositoryOwner = "test-owner",
-            RepositoryName = "test-repo",
-            PollInterval = TimeSpan.FromDays(365)
-        };
-        
         var failingClient = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>(), shouldFail: true);
-        var timeProvider = new ManualTimeProvider(FixedNow);
-        
-        var reader = new GitHubBoardReader(cache, failingClient, largeIntervalOptions, timeProvider, NullLogger);
+        var reader = BuildReader(cache, failingClient, BuildOptions(pollInterval: TimeSpan.FromDays(365)), FixedNow);
 
         // Act
         var result = await reader.GetCurrentAsync(CancellationToken.None);
@@ -197,17 +177,7 @@ public sealed class GitHubBoardReaderTests
         // Cache is empty
         
         var failingClient = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>(), shouldFail: true);
-        var timeProvider = new ManualTimeProvider(FixedNow);
-        
-        var options = new GitHubPollingOptions
-        {
-            Token = "test-token",
-            RepositoryOwner = "test-owner",
-            RepositoryName = "test-repo",
-            PollInterval = DefaultPollInterval
-        };
-        
-        var reader = new GitHubBoardReader(cache, failingClient, options, timeProvider, NullLogger);
+        var reader = BuildReader(cache, failingClient, BuildOptions(), FixedNow);
 
         // Act
         Func<Task> act = async () => await reader.GetCurrentAsync(CancellationToken.None);
@@ -228,22 +198,12 @@ public sealed class GitHubBoardReaderTests
         var cachedSnapshot = BuildTestSnapshot(ticketId: 1);
         cache.Update(cachedSnapshot, FixedNow);
 
-        var zeroIntervalOptions = new GitHubPollingOptions
-        {
-            Token = "test-token",
-            RepositoryOwner = "test-owner",
-            RepositoryName = "test-repo",
-            PollInterval = TimeSpan.Zero
-        };
-        
         var records = new List<GitHubIssueRecord>
         {
             new(2, "New Issue", new List<string> { "status:created", "agent:pm" }, FixedNow)
         };
         var client = new FakeGitHubIssuesClient(records);
-        var timeProvider = new ManualTimeProvider(FixedNow);
-        
-        var reader = new GitHubBoardReader(cache, client, zeroIntervalOptions, timeProvider, NullLogger);
+        var reader = BuildReader(cache, client, BuildOptions(pollInterval: TimeSpan.Zero), FixedNow);
 
         // Act
         var result = await reader.GetCurrentAsync(CancellationToken.None);
@@ -267,17 +227,7 @@ public sealed class GitHubBoardReaderTests
             new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow)
         };
         var client = new FakeGitHubIssuesClient(records);
-        var timeProvider = new ManualTimeProvider(FixedNow);
-        
-        var options = new GitHubPollingOptions
-        {
-            Token = "test-token",
-            RepositoryOwner = "test-owner",
-            RepositoryName = "test-repo",
-            PollInterval = DefaultPollInterval
-        };
-        
-        var reader = new GitHubBoardReader(cache, client, options, timeProvider, NullLogger);
+        var reader = BuildReader(cache, client, BuildOptions(), FixedNow);
 
         // Act
         var result = await reader.GetCurrentAsync(CancellationToken.None);
@@ -287,9 +237,152 @@ public sealed class GitHubBoardReaderTests
         result.Should().NotBeNull();
     }
 
+    [Fact]
+    public async Task GetCurrentAsync_WhenSnapshotUpdaterFailsToUpdateCache_ThrowsInvalidOperationException()
+    {
+        // Arrange
+        using var cache = new BoardSnapshotCache();
+        // Cache is empty
+
+        var records = new List<GitHubIssueRecord>
+        {
+            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow.AddHours(-1))
+        };
+        var client = new FakeGitHubIssuesClient(records);
+
+        // Use a fake updater that doesn't update the cache
+        var fakeUpdater = new FakeBoardSnapshotUpdater(cache, shouldUpdateCache: false);
+        var reader = BuildReader(cache, client, BuildOptions(), FixedNow, snapshotUpdater: fakeUpdater);
+
+        // Act
+        Func<Task> act = async () => await reader.GetCurrentAsync(CancellationToken.None);
+
+        // Assert
+        await act.Should().ThrowAsync<InvalidOperationException>()
+            .WithMessage("*Snapshot was not updated in cache*");
+    }
+
     // -----------------------------------------------------------------------------
+
+    // -----------------------------------------------------------------------------
+    // Constructor Null Check Scenarios
+    // -----------------------------------------------------------------------------
+
+    [Fact]
+    public void Constructor_WithNullCache_ThrowsArgumentNullException()
+    {
+        // Arrange
+        var client = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>());
+        var updater = new BoardSnapshotUpdater(new BoardSnapshotCache());
+        var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
+        var timeProvider = new ManualTimeProvider(FixedNow);
+
+        // Act & Assert
+        var act = () => new GitHubBoardReader(null!, client, updater, options, timeProvider, NullLogger);
+        act.Should().Throw<ArgumentNullException>(
+            "because the cache parameter cannot be null");
+    }
+
+    [Fact]
+    public void Constructor_WithNullClient_ThrowsArgumentNullException()
+    {
+        // Arrange
+        using var cache = new BoardSnapshotCache();
+        var updater = new BoardSnapshotUpdater(cache);
+        var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
+        var timeProvider = new ManualTimeProvider(FixedNow);
+
+        // Act & Assert
+        var act = () => new GitHubBoardReader(cache, null!, updater, options, timeProvider, NullLogger);
+        act.Should().Throw<ArgumentNullException>(
+            "because the client parameter cannot be null");
+    }
+
+    [Fact]
+    public void Constructor_WithNullSnapshotUpdater_ThrowsArgumentNullException()
+    {
+        // Arrange
+        using var cache = new BoardSnapshotCache();
+        var client = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>());
+        var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
+        var timeProvider = new ManualTimeProvider(FixedNow);
+
+        // Act & Assert
+        var act = () => new GitHubBoardReader(cache, client, null!, options, timeProvider, NullLogger);
+        act.Should().Throw<ArgumentNullException>(
+            "because the snapshotUpdater parameter cannot be null");
+    }
+
+    [Fact]
+    public void Constructor_WithNullOptions_ThrowsArgumentNullException()
+    {
+        // Arrange
+        using var cache = new BoardSnapshotCache();
+        var client = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>());
+        var updater = new BoardSnapshotUpdater(cache);
+        var timeProvider = new ManualTimeProvider(FixedNow);
+
+        // Act & Assert
+        var act = () => new GitHubBoardReader(cache, client, updater, null!, timeProvider, NullLogger);
+        act.Should().Throw<ArgumentNullException>(
+            "because the options parameter cannot be null");
+    }
+
+    [Fact]
+    public void Constructor_WithNullTimeProvider_ThrowsArgumentNullException()
+    {
+        // Arrange
+        using var cache = new BoardSnapshotCache();
+        var client = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>());
+        var updater = new BoardSnapshotUpdater(cache);
+        var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
+
+        // Act & Assert
+        var act = () => new GitHubBoardReader(cache, client, updater, options, null!, NullLogger);
+        act.Should().Throw<ArgumentNullException>(
+            "because the timeProvider parameter cannot be null");
+    }
+
+    [Fact]
+    public void Constructor_WithNullLogger_ThrowsArgumentNullException()
+    {
+        // Arrange
+        using var cache = new BoardSnapshotCache();
+        var client = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>());
+        var updater = new BoardSnapshotUpdater(cache);
+        var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
+        var timeProvider = new ManualTimeProvider(FixedNow);
+
+        // Act & Assert
+        var act = () => new GitHubBoardReader(cache, client, updater, options, timeProvider, null!);
+        act.Should().Throw<ArgumentNullException>(
+            "because the logger parameter cannot be null");
+    }
     // Helper Methods
     // -----------------------------------------------------------------------------
+
+    private static GitHubPollingOptions BuildOptions(TimeSpan? pollInterval = null)
+    {
+        return new GitHubPollingOptions
+        {
+            Token = "test-token",
+            RepositoryOwner = "test-owner",
+            RepositoryName = "test-repo",
+            PollInterval = pollInterval ?? DefaultPollInterval
+        };
+    }
+
+    private static GitHubBoardReader BuildReader(
+        BoardSnapshotCache cache,
+        IGitHubIssuesClient client,
+        GitHubPollingOptions options,
+        DateTimeOffset now,
+        IBoardSnapshotUpdater snapshotUpdater = null)
+    {
+        var timeProvider = new ManualTimeProvider(now);
+        var updater = snapshotUpdater ?? new BoardSnapshotUpdater(cache);
+        return new GitHubBoardReader(cache, client, updater, options, timeProvider, NullLogger);
+    }
 
     private static BoardSnapshot BuildTestSnapshot(int ticketId = 1)
     {

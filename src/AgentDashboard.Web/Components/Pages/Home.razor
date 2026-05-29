@@ -86,10 +86,5 @@ else
         await Dispatcher.DispatchAsync<BoardSlice, LoadBoardAction>(new LoadBoardAction());
     }
 
-    private async Task LoadBoard()
-    {
-        await Dispatcher.DispatchAsync<BoardSlice, LoadBoardAction>(new LoadBoardAction());
-    }
-
     public void Dispose() => _subscription?.Dispose();
 }

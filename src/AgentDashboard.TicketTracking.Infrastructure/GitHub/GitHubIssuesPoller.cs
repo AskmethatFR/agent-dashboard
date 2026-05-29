@@ -6,7 +6,10 @@ namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 
 internal sealed partial class GitHubIssuesPoller : BackgroundService
 {
+    private const int MinimumNextPollSeconds = 0;
+
     private readonly IGitHubIssuesClient _client;
+    private readonly IBoardSnapshotUpdater _snapshotUpdater;
     private readonly BoardRefreshTrigger _trigger;
     private readonly GitHubPollingOptions _options;
     private readonly TimeProvider _timeProvider;
@@ -15,17 +18,20 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
 
     public GitHubIssuesPoller(
         IGitHubIssuesClient client,
+        IBoardSnapshotUpdater snapshotUpdater,
         BoardRefreshTrigger trigger,
         GitHubPollingOptions options,
         TimeProvider timeProvider,
         ILogger<GitHubIssuesPoller> logger)
     {
         ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(snapshotUpdater);
         ArgumentNullException.ThrowIfNull(trigger);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(logger);
         _client = client;
+        _snapshotUpdater = snapshotUpdater;
         _trigger = trigger;
         _options = options;
         _timeProvider = timeProvider;
@@ -74,14 +80,19 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
         var startTimestamp = _timeProvider.GetTimestamp();
         try
         {
-            var issues = await _client.GetOpenIssuesAsync(cancellationToken).ConfigureAwait(false);
+            var records = await _client.GetOpenIssuesAsync(cancellationToken).ConfigureAwait(false);
+            var now = _timeProvider.GetUtcNow();
+            
+            // Update the board snapshot via the port
+            _snapshotUpdater.Update(records, now);
+
             var elapsed = _timeProvider.GetElapsedTime(startTimestamp);
-            var nextPollInSeconds = (int)Math.Max(0, (nextScheduledDeadline - _timeProvider.GetUtcNow()).TotalSeconds);
+            var nextPollInSeconds = (int)Math.Max(MinimumNextPollSeconds, (nextScheduledDeadline - now).TotalSeconds);
 
             GitHubIssuesPollerLog.PollSucceeded(
                 _logger,
                 _repoLabel,
-                issues.Count,
+                records.Count,
                 (long)elapsed.TotalMilliseconds,
                 nextPollInSeconds);
         }
@@ -93,22 +104,26 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
         catch (Exception ex)
 #pragma warning restore CA1031
         {
-            GitHubIssuesPollerLog.PollFailed(_logger, ex);
+            // Log only the exception type and message, not the full details which may contain sensitive information
+            GitHubIssuesPollerLog.PollFailed(_logger, ex.GetType().Name, ex.Message);
         }
     }
 }
 
 internal static partial class GitHubIssuesPollerLog
 {
+    private const int PollSucceededEventId = 200;
+    private const int PollFailedEventId = 201;
+
     [LoggerMessage(
-        EventId = 200,
+        EventId = PollSucceededEventId,
         Level = LogLevel.Information,
         Message = "GitHub poll completed for {repo} - {issue_count} open issue(s) in {duration_ms} ms; next poll in {next_poll_in_seconds}s.")]
     public static partial void PollSucceeded(ILogger logger, string repo, int issue_count, long duration_ms, int next_poll_in_seconds);
 
     [LoggerMessage(
-        EventId = 201,
+        EventId = PollFailedEventId,
         Level = LogLevel.Error,
-        Message = "GitHub poll failed.")]
-    public static partial void PollFailed(ILogger logger, Exception exception);
+        Message = "GitHub poll failed: {exception_type} - {exception_message}")]
+    public static partial void PollFailed(ILogger logger, string exception_type, string exception_message);
 }

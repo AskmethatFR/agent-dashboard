@@ -9,6 +9,12 @@ public static class GitHubPollingOptionsFactory
     private const string TokenKey = "GITHUB_TOKEN";
     private const string IntervalKey = "POLL_INTERVAL_SECONDS";
 
+    private static readonly (string Prefix, int MinLength)[] AcceptedTokenPrefixes =
+    {
+        ("ghp_", 14),          // ghp_ + at least 10 chars  (preserves existing behavior)
+        ("github_pat_", 21),   // github_pat_ + at least 10 chars
+    };
+
     private static readonly TimeSpan DefaultInterval = TimeSpan.FromSeconds(600);
     private static readonly TimeSpan MinimumInterval = TimeSpan.FromSeconds(300);
 
@@ -24,9 +30,28 @@ public static class GitHubPollingOptionsFactory
                 $"{TokenKey} environment variable is missing or empty. Set {TokenKey} to a GitHub personal access token before starting the host.");
         }
 
+        ValidateTokenFormat(token);
+
         var interval = ResolveInterval(configuration, logger);
 
         return GitHubPollingOptions.ForDogfooding(token, interval);
+    }
+
+    private static void ValidateTokenFormat(string token)
+    {
+        var match = AcceptedTokenPrefixes.FirstOrDefault(p => token.StartsWith(p.Prefix, StringComparison.Ordinal));
+
+        if (match.Prefix is null)
+        {
+            throw new InvalidOperationException(
+                $"{TokenKey} must be a valid GitHub Personal Access Token. Accepted prefixes: 'ghp_' (classic) or 'github_pat_' (fine-grained). Found a token of length {token.Length} with an unrecognized prefix.");
+        }
+
+        if (token.Length < match.MinLength)
+        {
+            throw new InvalidOperationException(
+                $"{TokenKey} appears to be malformed. A valid GitHub PAT should be longer.");
+        }
     }
 
     private static TimeSpan ResolveInterval(IConfiguration configuration, ILogger logger)

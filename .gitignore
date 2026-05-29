@@ -1,6 +1,9 @@
 # --- Tool symlinks injected by agentic CLIs (never commit) ---
 .antigravitycli/
 
+# --- Local merge notes (working artifacts, not for the repo) ---
+docs/merges/
+
 # --- .NET ---
 [Bb]in/
 [Oo]bj/
