@@ -45,7 +45,14 @@ internal sealed class OctokitGitHubIssuesClient : IGitHubIssuesClient
                 {
                     labels.Add(label.Name);
                 }
-                result.Add(new GitHubIssueRecord(issue.Number, issue.Title, labels, issue.CreatedAt));
+                result.Add(new GitHubIssueRecord(
+                    issue.Number,
+                    issue.Title,
+                    labels,
+                    issue.CreatedAt,
+                    issue.HtmlUrl,
+                    issue.UpdatedAt ?? issue.CreatedAt,
+                    issue.ClosedAt));
             }
             return result;
         }

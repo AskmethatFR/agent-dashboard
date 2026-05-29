@@ -1,4 +1,6 @@
+using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Application.Ports;
+using AgentDashboard.TicketTracking.Domain.Tickets;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -7,10 +9,12 @@ namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 internal sealed partial class GitHubIssuesPoller : BackgroundService
 {
     private const int MinimumNextPollSeconds = 0;
+    private readonly static RepositorySource HardcodedRepositorySource = new("AskmethatFR/agent-dashboard");
 
     private readonly IGitHubIssuesClient _client;
     private readonly IBoardSnapshotUpdater _snapshotUpdater;
     private readonly BoardRefreshTrigger _trigger;
+    private readonly ITicketWriteRepository _ticketWriteRepository;
     private readonly GitHubPollingOptions _options;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<GitHubIssuesPoller> _logger;
@@ -20,6 +24,7 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
         IGitHubIssuesClient client,
         IBoardSnapshotUpdater snapshotUpdater,
         BoardRefreshTrigger trigger,
+        ITicketWriteRepository ticketWriteRepository,
         GitHubPollingOptions options,
         TimeProvider timeProvider,
         ILogger<GitHubIssuesPoller> logger)
@@ -27,12 +32,14 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(snapshotUpdater);
         ArgumentNullException.ThrowIfNull(trigger);
+        ArgumentNullException.ThrowIfNull(ticketWriteRepository);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(logger);
         _client = client;
         _snapshotUpdater = snapshotUpdater;
         _trigger = trigger;
+        _ticketWriteRepository = ticketWriteRepository;
         _options = options;
         _timeProvider = timeProvider;
         _logger = logger;
@@ -83,6 +90,13 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
             var records = await _client.GetOpenIssuesAsync(cancellationToken).ConfigureAwait(false);
             var now = _timeProvider.GetUtcNow();
             
+            // Save tickets to SQLite
+            foreach (var record in records)
+            {
+                var ticket = GitHubIssueToTicketMapper.Map(record, HardcodedRepositorySource);
+                await _ticketWriteRepository.SaveAsync(ticket, cancellationToken).ConfigureAwait(false);
+            }
+
             // Update the board snapshot via the port
             _snapshotUpdater.Update(records, now);
 
@@ -100,11 +114,10 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
         {
             throw;
         }
-#pragma warning disable CA1031 // intentional: a single failing poll must not crash the host
+#pragma warning disable CA1031
         catch (Exception ex)
 #pragma warning restore CA1031
         {
-            // Log only the exception type and message, not the full details which may contain sensitive information
             GitHubIssuesPollerLog.PollFailed(_logger, ex.GetType().Name, ex.Message);
         }
     }
