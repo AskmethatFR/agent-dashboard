@@ -1,4 +1,5 @@
 using AgentDashboard.TicketTracking.Application.GitHub;
+using AgentDashboard.TicketTracking.TestShared.Factories;
 using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard;
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos;
@@ -43,7 +44,7 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
                     configuration.AddInMemoryCollection(new Dictionary<string, string?>
                     {
                         ["GITHUB_TOKEN"] = ValidToken,
-                        ["POLL_INTERVAL_SECONDS"] = ((int)PollInterval.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["POLL_INTERVAL_SECONDS"] = ((int)PollInterval.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture)
                     });
                 });
 
@@ -82,7 +83,15 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
         // Arrange: Configure FakeGitHubIssuesClient to return controlled issues
         var issues = new List<GitHubIssueRecord>
         {
-            new GitHubIssueRecord(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, _timeProvider.GetUtcNow().AddHours(-1))
+            new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test Issue")
+            .WithLabels("status:created", "agent:pm")
+            .WithCreatedAt(_timeProvider.GetUtcNow().AddHours(-1))
+            .WithHtmlUrl("https://github.com/AskmethatFR/agent-dashboard/issues/1")
+            .WithUpdatedAt(_timeProvider.GetUtcNow().AddHours(-1))
+            .AsOpen()
+            .Build()
         };
         _fakeClient.SetIssues(issues);
 
@@ -140,7 +149,15 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
         // Arrange: First call fills the cache
         var issues = new List<GitHubIssueRecord>
         {
-            new GitHubIssueRecord(1, "First Issue", new List<string> { "status:created", "agent:pm" }, _timeProvider.GetUtcNow().AddHours(-1))
+            new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("First Issue")
+            .WithLabels("status:created", "agent:pm")
+            .WithCreatedAt(_timeProvider.GetUtcNow().AddHours(-1))
+            .WithHtmlUrl("https://github.com/AskmethatFR/agent-dashboard/issues/1")
+            .WithUpdatedAt(_timeProvider.GetUtcNow().AddHours(-1))
+            .AsOpen()
+            .Build()
         };
         _fakeClient.SetIssues(issues);
         
@@ -170,18 +187,15 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
         // Arrange: Issue with all labels
         var issues = new List<GitHubIssueRecord>
         {
-            new GitHubIssueRecord(
-                42,
-                "Feature",
-                new List<string> 
-                {
-                    "status:in-review", 
-                    "agent:dev-a", 
-                    "retry:2",
-                    "escalation-target:pm",
-                    "co-agent:dev-b"
-                },
-                _timeProvider.GetUtcNow().AddHours(-1))
+            new GitHubIssueRecordBuilder()
+            .WithNumber(42)
+            .WithTitle("Feature")
+            .WithLabels("status:in-review", "agent:dev-a", "retry:2", "escalation-target:pm", "co-agent:dev-b")
+            .WithCreatedAt(_timeProvider.GetUtcNow().AddHours(-1))
+            .WithHtmlUrl("https://github.com/AskmethatFR/agent-dashboard/issues/42")
+            .WithUpdatedAt(_timeProvider.GetUtcNow().AddHours(-1))
+            .AsOpen()
+            .Build()
         };
         _fakeClient.SetIssues(issues);
 
