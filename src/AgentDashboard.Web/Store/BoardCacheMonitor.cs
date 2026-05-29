@@ -42,8 +42,7 @@ public sealed class BoardCacheMonitor : IDisposable
         }
         catch (Exception ex)
         {
-            _logger.Log(LogLevel.Error, new EventId(2001), new object[] { ex.GetType().Name, ex.Message }, ex, (state, exception) =>
-                $"Failed to handle cache update: {state[0]} - {state[1]}");
+            BoardCacheMonitorLog.HandleCacheUpdatedFailed(_logger, ex.GetType().Name, ex.Message, ex);
         }
     }
 
@@ -68,5 +67,5 @@ internal static partial class BoardCacheMonitorLog
         EventId = 2001,
         Level = LogLevel.Error,
         Message = "Failed to handle cache update: {exception_type} - {exception_message}")]
-    public static partial void HandleCacheUpdatedFailed(ILogger logger, string exception_type, string exception_message);
+    public static partial void HandleCacheUpdatedFailed(ILogger logger, string exception_type, string exception_message, Exception exception);
 }

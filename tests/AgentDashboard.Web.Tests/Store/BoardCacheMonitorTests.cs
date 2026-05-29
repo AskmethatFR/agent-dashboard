@@ -124,6 +124,7 @@ public sealed class BoardCacheMonitorTests
         using var cache = new BoardSnapshotCache();
         var dispatcher = Substitute.For<IAsyncDispatcher>();
         var logger = Substitute.For<ILogger<BoardCacheMonitor>>();
+        logger.IsEnabled(LogLevel.Error).Returns(true);
 
         dispatcher
             .DispatchAsync<BoardSlice, LoadBoardAction>(Arg.Any<LoadBoardAction>(), Arg.Any<CancellationToken>())
@@ -140,9 +141,9 @@ public sealed class BoardCacheMonitorTests
         logger.Received(1).Log(
             LogLevel.Error,
             Arg.Any<EventId>(),
-            Arg.Any<object[]>(),
+            Arg.Any<Arg.AnyType>(),
             Arg.Any<Exception>(),
-            Arg.Any<Func<object, Exception, string>>());
+            Arg.Any<Func<Arg.AnyType, Exception, string>>());
     }
     // -----------------------------------------------------------------------------
     // Helper Methods
