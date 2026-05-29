@@ -8,6 +8,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AgentDashboard.TicketTracking.Domain\AgentDashboard.TicketTracking.Domain.csproj" />
+    <ProjectReference Include="..\..\src\AgentDashboard.TicketTracking.Application\AgentDashboard.TicketTracking.Application.csproj" />
   </ItemGroup>
 
 </Project>
