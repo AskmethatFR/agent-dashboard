@@ -6,15 +6,40 @@ namespace AgentDashboard.TicketTracking.Application.GitHub;
 
 public static class GitHubBoardMapper
 {
+    private const string StatusPrefix = "status:";
+    private const string AgentPrefix = "agent:";
+    private const string RetryPrefix = "retry:";
+    private const string CoAgentPrefix = "co-agent:";
+    private const string EscalationTargetPrefix = "escalation-target:";
+
+    private const string ColumnCreated = "CREATED";
+    private const string ColumnSpecified = "SPECIFIED";
+    private const string ColumnInDevelopment = "IN_DEVELOPMENT";
+    private const string ColumnInReview = "IN_REVIEW";
+    private const string ColumnInQa = "IN_QA";
+    private const string ColumnAwaitingValidation = "AWAITING_VALIDATION";
+    private const string ColumnDone = "DONE";
+
+    private const string StatusCreated = "status:created";
+    private const string StatusSpecified = "status:specified";
+    private const string StatusInDevelopment = "status:in-development";
+    private const string StatusInReview = "status:in-review";
+    private const string StatusInQa = "status:in-qa";
+    private const string StatusAwaitingValidation = "status:awaiting-validation";
+    private const string StatusDone = "status:done";
+    private const string StatusEscalated = "status:escalated";
+
+    private const string DefaultAgentId = "pm";
+
     private static readonly IReadOnlyList<BoardColumn> Columns = new List<BoardColumn>
     {
-        new BoardColumn(new BoardColumnId("CREATED"), new BoardColumnLabel("Created")),
-        new BoardColumn(new BoardColumnId("SPECIFIED"), new BoardColumnLabel("Specified")),
-        new BoardColumn(new BoardColumnId("IN_DEVELOPMENT"), new BoardColumnLabel("In Development")),
-        new BoardColumn(new BoardColumnId("IN_REVIEW"), new BoardColumnLabel("In Review")),
-        new BoardColumn(new BoardColumnId("IN_QA"), new BoardColumnLabel("In Qa")),
-        new BoardColumn(new BoardColumnId("AWAITING_VALIDATION"), new BoardColumnLabel("Awaiting Validation")),
-        new BoardColumn(new BoardColumnId("DONE"), new BoardColumnLabel("Done"))
+        new BoardColumn(new BoardColumnId(ColumnCreated), new BoardColumnLabel("Created")),
+        new BoardColumn(new BoardColumnId(ColumnSpecified), new BoardColumnLabel("Specified")),
+        new BoardColumn(new BoardColumnId(ColumnInDevelopment), new BoardColumnLabel("In Development")),
+        new BoardColumn(new BoardColumnId(ColumnInReview), new BoardColumnLabel("In Review")),
+        new BoardColumn(new BoardColumnId(ColumnInQa), new BoardColumnLabel("In Qa")),
+        new BoardColumn(new BoardColumnId(ColumnAwaitingValidation), new BoardColumnLabel("Awaiting Validation")),
+        new BoardColumn(new BoardColumnId(ColumnDone), new BoardColumnLabel("Done"))
     };
 
     private static readonly IReadOnlyList<Agent> Agents = new List<Agent>
@@ -30,11 +55,11 @@ public static class GitHubBoardMapper
     private static readonly HashSet<string> ValidLabelPrefixes = new(
         StringComparer.Ordinal)
     {
-        "status:",
-        "agent:",
-        "retry:",
-        "co-agent:",
-        "escalation-target:"
+        StatusPrefix,
+        AgentPrefix,
+        RetryPrefix,
+        CoAgentPrefix,
+        EscalationTargetPrefix
     };
 
     private static readonly HashSet<string> ValidStatusValues = new(
@@ -134,7 +159,7 @@ public static class GitHubBoardMapper
         // Validate based on prefix
         switch (prefix)
         {
-            case "status:":
+            case StatusPrefix:
                 if (!ValidStatusValues.Contains(value))
                 {
                     throw new InvalidOperationException(
@@ -142,9 +167,9 @@ public static class GitHubBoardMapper
                 }
                 break;
 
-            case "agent:":
-            case "co-agent:":
-            case "escalation-target:":
+            case AgentPrefix:
+            case CoAgentPrefix:
+            case EscalationTargetPrefix:
                 if (!ValidAgentValues.Contains(value))
                 {
                     throw new InvalidOperationException(
@@ -152,7 +177,7 @@ public static class GitHubBoardMapper
                 }
                 break;
 
-            case "retry:":
+            case RetryPrefix:
                 if (!int.TryParse(value, out _))
                 {
                     throw new InvalidOperationException(
@@ -169,8 +194,8 @@ public static class GitHubBoardMapper
         var retry = MapRetryLabel(record.Labels);
         var coAgentId = MapCoAgentLabel(record.Labels);
         var escalationTarget = MapEscalationTargetLabel(record.Labels);
-        var hasInReviewStatus = record.Labels.Contains("status:in-review");
-        var hasEscalatedStatus = record.Labels.Contains("status:escalated");
+        var hasInReviewStatus = record.Labels.Contains(StatusInReview);
+        var hasEscalatedStatus = record.Labels.Contains(StatusEscalated);
         var isEscalated = hasEscalatedStatus && retry.Value >= 3;
 
         var age = new Age(now - record.CreatedAt);
@@ -223,45 +248,45 @@ public static class GitHubBoardMapper
     {
         foreach (var label in labels)
         {
-            if (label.StartsWith("status:", StringComparison.Ordinal))
+            if (label.StartsWith(StatusPrefix, StringComparison.Ordinal))
             {
                 return label switch
                 {
-                    "status:created" => new BoardColumnId("CREATED"),
-                    "status:specified" => new BoardColumnId("SPECIFIED"),
-                    "status:in-development" => new BoardColumnId("IN_DEVELOPMENT"),
-                    "status:in-review" => new BoardColumnId("IN_REVIEW"),
-                    "status:in-qa" => new BoardColumnId("IN_QA"),
-                    "status:awaiting-validation" => new BoardColumnId("AWAITING_VALIDATION"),
-                    "status:done" => new BoardColumnId("DONE"),
-                    "status:escalated" => new BoardColumnId("CREATED"),
-                    _ => new BoardColumnId("CREATED")
+                    StatusCreated => new BoardColumnId(ColumnCreated),
+                    StatusSpecified => new BoardColumnId(ColumnSpecified),
+                    StatusInDevelopment => new BoardColumnId(ColumnInDevelopment),
+                    StatusInReview => new BoardColumnId(ColumnInReview),
+                    StatusInQa => new BoardColumnId(ColumnInQa),
+                    StatusAwaitingValidation => new BoardColumnId(ColumnAwaitingValidation),
+                    StatusDone => new BoardColumnId(ColumnDone),
+                    StatusEscalated => new BoardColumnId(ColumnCreated),
+                    _ => new BoardColumnId(ColumnCreated)
                 };
             }
         }
-        return new BoardColumnId("CREATED");
+        return new BoardColumnId(ColumnCreated);
     }
 
     private static AgentId MapAgentLabel(IReadOnlyList<string> labels)
     {
         foreach (var label in labels)
         {
-            if (label.StartsWith("agent:", StringComparison.Ordinal))
+            if (label.StartsWith(AgentPrefix, StringComparison.Ordinal))
             {
-                var agentValue = label["agent:".Length..];
+                var agentValue = label[AgentPrefix.Length..];
                 return new AgentId(agentValue);
             }
         }
-        return new AgentId("pm");
+        return new AgentId(DefaultAgentId);
     }
 
     private static Retry MapRetryLabel(IReadOnlyList<string> labels)
     {
         foreach (var label in labels)
         {
-            if (label.StartsWith("retry:", StringComparison.Ordinal))
+            if (label.StartsWith(RetryPrefix, StringComparison.Ordinal))
             {
-                var retryValue = label["retry:".Length..];
+                var retryValue = label[RetryPrefix.Length..];
                 if (int.TryParse(retryValue, out var value))
                 {
                     return new Retry(value);
@@ -275,9 +300,9 @@ public static class GitHubBoardMapper
     {
         foreach (var label in labels)
         {
-            if (label.StartsWith("co-agent:", StringComparison.Ordinal))
+            if (label.StartsWith(CoAgentPrefix, StringComparison.Ordinal))
             {
-                var coAgentValue = label["co-agent:".Length..];
+                var coAgentValue = label[CoAgentPrefix.Length..];
                 return new AgentId(coAgentValue);
             }
         }
@@ -288,9 +313,9 @@ public static class GitHubBoardMapper
     {
         foreach (var label in labels)
         {
-            if (label.StartsWith("escalation-target:", StringComparison.Ordinal))
+            if (label.StartsWith(EscalationTargetPrefix, StringComparison.Ordinal))
             {
-                var targetValue = label["escalation-target:".Length..];
+                var targetValue = label[EscalationTargetPrefix.Length..];
                 return new AgentId(targetValue);
             }
         }
@@ -302,7 +327,7 @@ public static class GitHubBoardMapper
         string columnIdValue,
         Age age)
     {
-        if (labels.Contains("status:done") || columnIdValue == "DONE")
+        if (labels.Contains(StatusDone) || columnIdValue == ColumnDone)
         {
             if (age.Value < TimeSpan.FromHours(24))
             {
