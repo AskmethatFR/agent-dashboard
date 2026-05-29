@@ -103,7 +103,8 @@ public sealed class GitHubBoardReaderTests
         
         var records = new List<GitHubIssueRecord>
         {
-            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow.AddHours(-1))
+            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow.AddHours(-1),
+                "https://github.com/AskmethatFR/agent-dashboard/issues/1", FixedNow.AddHours(-1), null)
         };
         var client = new FakeGitHubIssuesClient(records);
         var reader = BuildReader(cache, client, BuildOptions(), FixedNow);
@@ -130,7 +131,8 @@ public sealed class GitHubBoardReaderTests
 
         var records = new List<GitHubIssueRecord>
         {
-            new(2, "New Issue", new List<string> { "status:created", "agent:pm" }, FixedNow)
+            new(2, "New Issue", new List<string> { "status:created", "agent:pm" }, FixedNow,
+                "https://github.com/AskmethatFR/agent-dashboard/issues/2", FixedNow, null)
         };
         var client = new FakeGitHubIssuesClient(records);
         var reader = BuildReader(cache, client, BuildOptions(pollInterval: TimeSpan.FromMilliseconds(100)), timeAfterCache);
@@ -200,7 +202,8 @@ public sealed class GitHubBoardReaderTests
 
         var records = new List<GitHubIssueRecord>
         {
-            new(2, "New Issue", new List<string> { "status:created", "agent:pm" }, FixedNow)
+            new(2, "New Issue", new List<string> { "status:created", "agent:pm" }, FixedNow,
+                "https://github.com/AskmethatFR/agent-dashboard/issues/2", FixedNow, null)
         };
         var client = new FakeGitHubIssuesClient(records);
         var reader = BuildReader(cache, client, BuildOptions(pollInterval: TimeSpan.Zero), FixedNow);
@@ -224,7 +227,8 @@ public sealed class GitHubBoardReaderTests
         
         var records = new List<GitHubIssueRecord>
         {
-            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow)
+            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow,
+                "https://github.com/AskmethatFR/agent-dashboard/issues/1", FixedNow, null)
         };
         var client = new FakeGitHubIssuesClient(records);
         var reader = BuildReader(cache, client, BuildOptions(), FixedNow);
@@ -246,7 +250,8 @@ public sealed class GitHubBoardReaderTests
 
         var records = new List<GitHubIssueRecord>
         {
-            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow.AddHours(-1))
+            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow.AddHours(-1),
+                "https://github.com/AskmethatFR/agent-dashboard/issues/1", FixedNow.AddHours(-1), null)
         };
         var client = new FakeGitHubIssuesClient(records);
 

@@ -126,7 +126,7 @@ public sealed class GitHubPollingOptionsFactoryTests
     [Fact]
     public void Throw_WhenTokenHasUnknownPrefix()
     {
-        var configuration = BuildConfiguration(token: "gho_someoauthtoken123");
+        var configuration = BuildConfiguration(token: "xyz_someunknowntoken123");
         var logger = new RecordingLogger();
 
         var act = () => GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
@@ -164,6 +164,18 @@ public sealed class GitHubPollingOptionsFactoryTests
     public void Accept_WhenFineGrainedPatIsExactlyMinimumLength()
     {
         const string token = "github_pat_0123456789";
+        var configuration = BuildConfiguration(token: token);
+        var logger = new RecordingLogger();
+
+        var options = GitHubPollingOptionsFactory.FromConfiguration(configuration, logger);
+
+        options.Token.Should().Be(token);
+    }
+
+    [Fact]
+    public void Accept_WhenGhCliTokenIsProvided()
+    {
+        const string token = "gho_0123456789012345";
         var configuration = BuildConfiguration(token: token);
         var logger = new RecordingLogger();
 
