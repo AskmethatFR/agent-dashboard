@@ -6,6 +6,8 @@ namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 
 internal sealed partial class GitHubIssuesPoller : BackgroundService
 {
+    private const int MinimumNextPollSeconds = 0;
+
     private readonly IGitHubIssuesClient _client;
     private readonly IBoardSnapshotUpdater _snapshotUpdater;
     private readonly BoardRefreshTrigger _trigger;
@@ -85,7 +87,7 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
             _snapshotUpdater.Update(records, now);
 
             var elapsed = _timeProvider.GetElapsedTime(startTimestamp);
-            var nextPollInSeconds = (int)Math.Max(0, (nextScheduledDeadline - now).TotalSeconds);
+            var nextPollInSeconds = (int)Math.Max(MinimumNextPollSeconds, (nextScheduledDeadline - now).TotalSeconds);
 
             GitHubIssuesPollerLog.PollSucceeded(
                 _logger,
@@ -110,14 +112,17 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
 
 internal static partial class GitHubIssuesPollerLog
 {
+    private const int PollSucceededEventId = 200;
+    private const int PollFailedEventId = 201;
+
     [LoggerMessage(
-        EventId = 200,
+        EventId = PollSucceededEventId,
         Level = LogLevel.Information,
         Message = "GitHub poll completed for {repo} - {issue_count} open issue(s) in {duration_ms} ms; next poll in {next_poll_in_seconds}s.")]
     public static partial void PollSucceeded(ILogger logger, string repo, int issue_count, long duration_ms, int next_poll_in_seconds);
 
     [LoggerMessage(
-        EventId = 201,
+        EventId = PollFailedEventId,
         Level = LogLevel.Error,
         Message = "GitHub poll failed: {exception_type} - {exception_message}")]
     public static partial void PollFailed(ILogger logger, string exception_type, string exception_message);
