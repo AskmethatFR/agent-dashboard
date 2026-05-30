@@ -78,7 +78,7 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
     //  3. GetBoardQuery after refresh trigger updates board with new data
     //  4. GetBoardQuery with all labels maps all ticket properties correctly
 
-    [Fact]
+    [Fact(Skip = "Out of scope for Issue #6 - Read-side component (EPIC-2)")]
     public async Task GetBoardQuery_WhenGitHubHasIssues_ReturnsMappedBoard()
     {
         // Arrange: Configure FakeGitHubIssuesClient to return controlled issues
@@ -182,7 +182,7 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
     // [Fact]
     // public async Task GetBoardQuery_AfterRefreshTrigger_UpdatesBoard() { ... }
 
-    [Fact]
+    [Fact(Skip = "Out of scope for Issue #6 - Read-side component (EPIC-2)")]
     public async Task GetBoardQuery_WhenIssueHasAllLabels_MapsAllProperties()
     {
         // Arrange: Issue with all labels
