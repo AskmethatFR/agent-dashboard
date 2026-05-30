@@ -1,7 +1,7 @@
 # ADR-009: Database Migration Strategy — Hand-Rolled SQL for SQLite
 
 ## Status
-Accepted
+Superseded by ADR-010
 
 ## Context
 

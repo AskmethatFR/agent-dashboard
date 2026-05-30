@@ -27,7 +27,8 @@ the human only acts on the Escalation Inbox.
 | i18n | `AspNetCore.Localizer.Json` 1.0.4 | Owner's own library, EN + FR from MVP |
 | CQRS | `Cortex.Mediator` 3.1.2 | MIT, explicit `IQuery`/`ICommand` split, no broker (see ADR-003) |
 | Persistence | **SQLite** (single file) | Zero external service, OSS-friendly |
-| Read-side | `Dapper` | Lightweight, paired with EF Core for writes |
+| Read-side | `Dapper` | Lightweight, read-model queries |
+| Write-side | EF Core (code-first) | Owner stack contract; see ADR-010 |
 | GitHub API | `Octokit` | Standard .NET client |
 | Tests | xUnit + FluentAssertions + NSubstitute | Per `csharp/testing.md` |
 
