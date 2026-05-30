@@ -38,7 +38,10 @@ public static class DependencyInjection
             return GitHubPollingOptionsFactory.FromConfiguration(finalConfiguration, logger);
         });
 
-        services.AddSingleton<IGitHubIssuesClient, OctokitGitHubIssuesClient>();
+        services.AddSingleton<IGitHubIssuesClient>(sp =>
+            new OctokitGitHubIssuesClient(
+                sp.GetRequiredService<GitHubPollingOptions>(),
+                sp.GetRequiredService<ILogger<OctokitGitHubIssuesClient>>()));
         services.AddSingleton<BoardRefreshTrigger>();
         services.AddSingleton<IBoardRefreshTrigger>(sp => sp.GetRequiredService<BoardRefreshTrigger>());
         services.TryAddSingleton(TimeProvider.System);
