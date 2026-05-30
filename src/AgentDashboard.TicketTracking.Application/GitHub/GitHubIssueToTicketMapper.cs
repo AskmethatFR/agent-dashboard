@@ -27,23 +27,33 @@ public static class GitHubIssueToTicketMapper
     /// </summary>
     /// <param name="record">The GitHub issue record.</param>
     /// <param name="repositorySource">The repository source.</param>
-    /// <returns>A Ticket entity.</returns>
-    public static Ticket Map(GitHubIssueRecord record, GitHubRepository repositorySource)
+    /// <returns>The mapped ticket plus any label-mapping warnings.</returns>
+    public static MappingResult Map(GitHubIssueRecord record, GitHubRepository repositorySource)
     {
         ArgumentNullException.ThrowIfNull(record);
         ArgumentNullException.ThrowIfNull(repositorySource);
 
-        // Extract labels
-        var statusLabel = FindLatestStatusLabel(record.Labels);
+        var recognizedStatusLabels = FindRecognizedStatusLabels(record.Labels);
+        var selectedStatusLabel = SelectLatestStatusLabel(recognizedStatusLabels);
         var agentLabel = FindFirstAgentLabel(record.Labels);
         var retryCount = FindHighestRetryCount(record.Labels);
 
-        // Map to domain types
+        var warnings = new List<MappingWarning>();
+        if (recognizedStatusLabels.Count > 1)
+        {
+            warnings.Add(MappingWarning.MultipleStatusLabels(
+                record.Number, recognizedStatusLabels, selectedStatusLabel!));
+        }
+        else if (recognizedStatusLabels.Count == 0)
+        {
+            warnings.Add(MappingWarning.MissingStatusLabel(record.Number));
+        }
+
         var ticketTitle = new TicketTitle(record.Title);
-        var ticketStatus = statusLabel is not null 
-            ? TicketStatus.Parse(statusLabel)
+        var ticketStatus = selectedStatusLabel is not null && TryParseStatusValue(selectedStatusLabel, out var selectedValue)
+            ? new TicketStatus(selectedValue)
             : new TicketStatus(TicketStatusValue.Created);
-        
+
         var agentId = agentLabel is not null ? new AgentId(agentLabel) : null;
         var retry = new Retry(retryCount);
         var gitHubUrl = new GitHubUrl(record.HtmlUrl);
@@ -51,7 +61,7 @@ public static class GitHubIssueToTicketMapper
         var updatedAt = new TimestampUtc(record.UpdatedAt);
         var closedAt = record.ClosedAt is not null ? new TimestampUtc(record.ClosedAt.Value) : null;
 
-        return new Ticket(
+        var ticket = new Ticket(
             repositorySource,
             new GitHubIssueNumber(record.Number),
             ticketTitle,
@@ -62,25 +72,35 @@ public static class GitHubIssueToTicketMapper
             createdAt,
             updatedAt,
             closedAt);
+
+        return new MappingResult(ticket, warnings);
     }
 
-    private static string? FindLatestStatusLabel(IReadOnlyList<string> labels)
-    {
-        var statusLabels = labels.Where(l => l.StartsWith("status:", StringComparison.OrdinalIgnoreCase)).ToList();
-        
-        if (statusLabels.Count == 0)
-        {
-            return null;
-        }
+    private static List<string> FindRecognizedStatusLabels(IReadOnlyList<string> labels) =>
+        labels
+            .Where(l => l.StartsWith("status:", StringComparison.OrdinalIgnoreCase))
+            .Where(IsRecognizedStatusLabel)
+            .ToList();
 
-        // Return the label with the highest state machine order
+    private static bool IsRecognizedStatusLabel(string label) =>
+        TryParseStatusValue(label, out _);
+
+    private static bool TryParseStatusValue(string label, out TicketStatusValue value)
+    {
+        var cleanValue = label
+            .Replace("status:", string.Empty, StringComparison.OrdinalIgnoreCase)
+            .Replace("-", string.Empty, StringComparison.Ordinal);
+        return Enum.TryParse(cleanValue, true, out value);
+    }
+
+    private static string? SelectLatestStatusLabel(IReadOnlyList<string> recognizedStatusLabels)
+    {
         string? latest = null;
         int latestIndex = -1;
-        
-        foreach (var label in statusLabels)
+
+        foreach (var label in recognizedStatusLabels)
         {
-            var cleanValue = label.Replace("status:", string.Empty, StringComparison.OrdinalIgnoreCase);
-            if (Enum.TryParse<TicketStatusValue>(cleanValue, true, out var statusValue))
+            if (TryParseStatusValue(label, out var statusValue))
             {
                 var index = Array.IndexOf(StateMachineOrder, statusValue);
                 if (index > latestIndex)

@@ -94,8 +94,13 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
             // Save tickets to SQLite
             foreach (var record in records)
             {
-                var ticket = GitHubIssueToTicketMapper.Map(record, HardcodedGitHubRepository);
-                await _ticketWriteRepository.SaveAsync(ticket, cancellationToken).ConfigureAwait(false);
+                var mappingResult = GitHubIssueToTicketMapper.Map(record, HardcodedGitHubRepository);
+                await _ticketWriteRepository.SaveAsync(mappingResult.Ticket, cancellationToken).ConfigureAwait(false);
+
+                foreach (var warning in mappingResult.Warnings)
+                {
+                    GitHubIssuesPollerLog.LabelMappingWarning(_logger, Sanitize(FormatWarning(warning)));
+                }
             }
 
             // Update the board snapshot via the port
@@ -123,21 +128,31 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
         }
     }
 
-    private static string SanitizeExceptionMessage(Exception ex)
+    private static string SanitizeExceptionMessage(Exception ex) => Sanitize(ex.ToString());
+
+    private static string Sanitize(string message)
     {
-        var message = ex.ToString();
-        // Remove GitHub token patterns
         message = Regex.Replace(message, "ghp_[A-Za-z0-9]{36}", "[REDACTED_TOKEN]");
         message = Regex.Replace(message, "github_pat_[A-Za-z0-9]{22}", "[REDACTED_TOKEN]");
         message = Regex.Replace(message, "Authorization:.*", "Authorization: [REDACTED]");
         return message;
     }
+
+    private static string FormatWarning(MappingWarning warning) => warning.Kind switch
+    {
+        MappingWarningKind.MultipleStatusLabels =>
+            $"Issue #{warning.IssueNumber}: multiple status labels {string.Join(", ", warning.ConflictingStatusLabels)} — selected '{warning.SelectedStatusLabel}' (latest in state machine).",
+        MappingWarningKind.MissingStatusLabel =>
+            $"Issue #{warning.IssueNumber}: no status label — defaulted to 'status:created'.",
+        _ => $"Issue #{warning.IssueNumber}: label mapping anomaly."
+    };
 }
 
 public static partial class GitHubIssuesPollerLog
 {
     private const int PollSucceededEventId = 200;
     private const int PollFailedEventId = 201;
+    private const int LabelMappingWarningEventId = 202;
 
     [LoggerMessage(
         EventId = PollSucceededEventId,
@@ -150,4 +165,10 @@ public static partial class GitHubIssuesPollerLog
         Level = LogLevel.Error,
         Message = "GitHub poll failed: {exception_type} - {exception_message}")]
     public static partial void PollFailed(ILogger logger, string exception_type, string exception_message);
+
+    [LoggerMessage(
+        EventId = LabelMappingWarningEventId,
+        Level = LogLevel.Warning,
+        Message = "{label_mapping_warning}")]
+    public static partial void LabelMappingWarning(ILogger logger, string label_mapping_warning);
 }

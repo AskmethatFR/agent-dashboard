@@ -1,5 +1,6 @@
 using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Infrastructure.GitHub;
+using AgentDashboard.TicketTracking.TestShared.Factories;
 using AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.GitHub.Fakes;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
@@ -174,6 +175,30 @@ public sealed class GitHubIssuesPollerTests : IAsyncLifetime
                 }
             }
         }
+    }
+
+    [Fact]
+    public async Task LogWarning_WhenIssueHasMultipleStatusLabels()
+    {
+        _fakeClient.SetIssues(new[]
+        {
+            new GitHubIssueRecordBuilder()
+                .WithNumber(42)
+                .WithTitle("conflicting issue")
+                .WithLabels("status:in-qa", "status:done")
+                .AsOpen()
+                .Build(),
+        });
+
+        _ = _factory.Server;
+        await WaitUntilAsync(() => _fakeClient.CallCount >= 1);
+        await WaitUntilAsync(() => _pollerLogger.Entries.Any(e => e.Level == LogLevel.Warning));
+
+        var warning = _pollerLogger.Entries.Should().ContainSingle(e => e.Level == LogLevel.Warning).Subject;
+        warning.Message.Should().Contain("Issue #42");
+        warning.Message.Should().Contain("status:in-qa");
+        warning.Message.Should().Contain("status:done");
+        warning.Message.Should().Contain("selected 'status:done'");
     }
 
     private static async Task WaitUntilAsync(Func<bool> predicate, int timeoutMs = 2000)
