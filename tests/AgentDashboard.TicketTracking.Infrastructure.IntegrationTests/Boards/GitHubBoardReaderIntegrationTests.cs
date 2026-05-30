@@ -19,7 +19,8 @@ namespace AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.Boards;
 public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
 {
     private const string ValidToken = "ghp_examplePAT12345";
-    private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(100); // Short interval for tests
+    private const int ShortPollIntervalMs = 100; // Short interval for tests
+    private static readonly TimeSpan PollInterval = TimeSpan.FromMilliseconds(ShortPollIntervalMs);
 
     private FakeTimeProvider _timeProvider = null!;
     private FakeGitHubIssuesClient _fakeClient = null!;

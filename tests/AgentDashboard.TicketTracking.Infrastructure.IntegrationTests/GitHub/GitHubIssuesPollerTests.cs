@@ -12,6 +12,11 @@ using Xunit;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.GitHub;
 
+/// <summary>
+/// Integration tests for GitHubIssuesPoller background service.
+/// Verifies polling behavior, cadence management, and logging compliance.
+/// Uses FakeTimeProvider for deterministic time-based testing.
+/// </summary>
 // Test list for GitHubIssuesPoller:
 //  1. First poll fires shortly after host start (CallCount == 1).
 //  2. Advancing virtual time below the interval does NOT add a scheduled call.
