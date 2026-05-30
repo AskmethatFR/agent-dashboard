@@ -44,7 +44,8 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
                     configuration.AddInMemoryCollection(new Dictionary<string, string?>
                     {
                         ["GITHUB_TOKEN"] = ValidToken,
-                        ["POLL_INTERVAL_SECONDS"] = ((int)PollInterval.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture)
+                        ["POLL_INTERVAL_SECONDS"] = ((int)PollInterval.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["DATA_PATH"] = Path.GetTempPath(),
                     });
                 });
 

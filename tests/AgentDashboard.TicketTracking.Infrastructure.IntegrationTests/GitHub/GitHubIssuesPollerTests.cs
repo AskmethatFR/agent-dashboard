@@ -48,6 +48,7 @@ public sealed class GitHubIssuesPollerTests : IAsyncLifetime
                     {
                         ["GITHUB_TOKEN"] = ValidToken,
                         ["POLL_INTERVAL_SECONDS"] = ((int)PollInterval.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                        ["DATA_PATH"] = Path.GetTempPath(),
                     });
                 });
 
