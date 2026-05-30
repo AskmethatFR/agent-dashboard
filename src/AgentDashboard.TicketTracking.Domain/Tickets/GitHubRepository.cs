@@ -3,7 +3,7 @@ namespace AgentDashboard.TicketTracking.Domain.Tickets;
 /// <summary>
 /// A value object representing a GitHub repository in the format "owner/name".
 /// </summary>
-public sealed record RepositorySource
+public sealed record GitHubRepository
 {
     /// <summary>
     /// The format string for repository source (e.g., "owner/name").
@@ -26,12 +26,12 @@ public sealed record RepositorySource
     public string Name { get; }
 
     /// <summary>
-    /// Creates a new <see cref="RepositorySource"/> with the specified repository string.
+    /// Creates a new <see cref="GitHubRepository"/> with the specified repository string.
     /// </summary>
     /// <param name="value">The repository in format "owner/name".</param>
     /// <exception cref="ArgumentNullException">Thrown if the value is null.</exception>
     /// <exception cref="ArgumentException">Thrown if the value is empty, has wrong format, or parts are invalid.</exception>
-    public RepositorySource(string value)
+    public GitHubRepository(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
 
@@ -69,16 +69,16 @@ public sealed record RepositorySource
     }
 
     /// <summary>
-    /// Implicit conversion from <see cref="string"/> to <see cref="RepositorySource"/>
+    /// Implicit conversion from <see cref="string"/> to <see cref="GitHubRepository"/>
     /// for convenient construction.
     /// </summary>
-    public static implicit operator RepositorySource(string value) => new(value);
+    public static implicit operator GitHubRepository(string value) => new(value);
 
     /// <summary>
-    /// Implicit conversion from <see cref="RepositorySource"/> to <see cref="string"/>
+    /// Implicit conversion from <see cref="GitHubRepository"/> to <see cref="string"/>
     /// for convenient usage in APIs that expect string.
     /// </summary>
-    public static implicit operator string(RepositorySource repositorySource) => repositorySource.Value;
+    public static implicit operator string(GitHubRepository repositorySource) => repositorySource.Value;
 
     /// <summary>
     /// Returns the repository source string.

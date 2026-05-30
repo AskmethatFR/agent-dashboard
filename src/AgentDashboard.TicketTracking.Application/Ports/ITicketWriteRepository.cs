@@ -10,7 +10,7 @@ public interface ITicketWriteRepository
 {
     /// <summary>
     /// Saves a ticket to the repository.
-    /// This operation is idempotent - if a ticket with the same (RepositorySource, GitHubIssueNumber) 
+    /// This operation is idempotent - if a ticket with the same (GitHubRepository, GitHubIssueNumber) 
     /// already exists, it will be updated.
     /// </summary>
     /// <param name="ticket">The ticket to save.</param>

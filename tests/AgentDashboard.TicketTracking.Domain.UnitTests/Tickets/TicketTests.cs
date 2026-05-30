@@ -17,7 +17,7 @@ public sealed class TicketTests
         int retryCount = 0,
         string githubUrl = "https://github.com/AskmethatFR/agent-dashboard/issues/6")
     {
-        var repositorySource = new RepositorySource(repo);
+        var repositorySource = new GitHubRepository(repo);
         var gitHubIssueNumber = new GitHubIssueNumber(issueNumber);
         var ticketTitle = new TicketTitle(title);
         var ticketStatus = new TicketStatus(status);
@@ -42,7 +42,7 @@ public sealed class TicketTests
         string repo = "AskmethatFR/agent-dashboard",
         long issueNumber = 6)
     {
-        var repositorySource = new RepositorySource(repo);
+        var repositorySource = new GitHubRepository(repo);
         var gitHubIssueNumber = new GitHubIssueNumber(issueNumber);
         var ticketTitle = new TicketTitle("Test Issue");
         var ticketStatus = new TicketStatus(TicketStatusValue.Created);
@@ -67,7 +67,7 @@ public sealed class TicketTests
     {
         var ticket = CreateTestTicket();
         Assert.NotNull(ticket);
-        Assert.Equal("AskmethatFR/agent-dashboard", ticket.RepositorySource.Value);
+        Assert.Equal("AskmethatFR/agent-dashboard", ticket.GitHubRepository.Value);
         Assert.Equal(6L, ticket.GitHubIssueNumber.Value);
         Assert.Equal("Test Issue", ticket.TicketTitle.Value);
         Assert.Equal(TicketStatusValue.Created, ticket.TicketStatus.Value);
@@ -84,7 +84,7 @@ public sealed class TicketTests
     }
 
     [Fact]
-    public void Ctor_WithNullRepositorySource_ThrowsArgumentNullException()
+    public void Ctor_WithNullGitHubRepository_ThrowsArgumentNullException()
     {
         var ex = Assert.Throws<ArgumentNullException>(() => new Ticket(
             null!,
@@ -156,7 +156,7 @@ public sealed class TicketTests
     public void ToString_ReturnsFormattedString()
     {
         var ticket = new Ticket(
-            new RepositorySource("Owner/Repo"),
+            new GitHubRepository("Owner/Repo"),
             new GitHubIssueNumber(42),
             new TicketTitle("Test"),
             new TicketStatus(TicketStatusValue.Created),

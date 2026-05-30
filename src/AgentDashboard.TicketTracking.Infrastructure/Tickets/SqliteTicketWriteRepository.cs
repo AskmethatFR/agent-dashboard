@@ -95,7 +95,7 @@ public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
         ";
 
         await using var command = new SqliteCommand(commandText, connection);
-        command.Parameters.AddWithValue("@repo", ticket.RepositorySource.Value);
+        command.Parameters.AddWithValue("@repo", ticket.GitHubRepository.Value);
         command.Parameters.AddWithValue("@github_issue_number", ticket.GitHubIssueNumber.Value);
         command.Parameters.AddWithValue("@title", ticket.TicketTitle.Value);
         command.Parameters.AddWithValue("@status", ticket.TicketStatus.Value.ToString());

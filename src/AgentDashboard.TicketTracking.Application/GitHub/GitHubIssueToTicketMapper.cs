@@ -28,7 +28,7 @@ public static class GitHubIssueToTicketMapper
     /// <param name="record">The GitHub issue record.</param>
     /// <param name="repositorySource">The repository source.</param>
     /// <returns>A Ticket entity.</returns>
-    public static Ticket Map(GitHubIssueRecord record, RepositorySource repositorySource)
+    public static Ticket Map(GitHubIssueRecord record, GitHubRepository repositorySource)
     {
         ArgumentNullException.ThrowIfNull(record);
         ArgumentNullException.ThrowIfNull(repositorySource);

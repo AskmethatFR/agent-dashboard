@@ -10,7 +10,7 @@ namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 public sealed partial class GitHubIssuesPoller : BackgroundService
 {
     private const int MinimumNextPollSeconds = 0;
-    private readonly static RepositorySource HardcodedRepositorySource = new("AskmethatFR/agent-dashboard");
+    private readonly static GitHubRepository HardcodedGitHubRepository = new("AskmethatFR/agent-dashboard");
 
     private readonly IGitHubIssuesClient _client;
     private readonly IBoardSnapshotUpdater _snapshotUpdater;
@@ -94,7 +94,7 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
             // Save tickets to SQLite
             foreach (var record in records)
             {
-                var ticket = GitHubIssueToTicketMapper.Map(record, HardcodedRepositorySource);
+                var ticket = GitHubIssueToTicketMapper.Map(record, HardcodedGitHubRepository);
                 await _ticketWriteRepository.SaveAsync(ticket, cancellationToken).ConfigureAwait(false);
             }
 

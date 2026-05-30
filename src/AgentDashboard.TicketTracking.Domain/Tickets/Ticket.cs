@@ -5,14 +5,14 @@ using AgentDashboard.TicketTracking.Domain.Agents;
 /// <summary>
 /// A projection entity representing a Ticket in the TicketTracking bounded context.
 /// This is a downstream Conformist read model of GitHub Issues.
-/// Identity is the composite key (RepositorySource, GitHubIssueNumber).
+/// Identity is the composite key (GitHubRepository, GitHubIssueNumber).
 /// </summary>
 public sealed class Ticket
 {
     /// <summary>
     /// The repository source where this ticket originates from.
     /// </summary>
-    public RepositorySource RepositorySource { get; }
+    public GitHubRepository GitHubRepository { get; }
 
     /// <summary>
     /// The GitHub issue number.
@@ -63,7 +63,7 @@ public sealed class Ticket
     /// Creates a new <see cref="Ticket"/> with the specified properties.
     /// </summary>
     public Ticket(
-        RepositorySource repositorySource,
+        GitHubRepository repositorySource,
         GitHubIssueNumber gitHubIssueNumber,
         TicketTitle ticketTitle,
         TicketStatus ticketStatus,
@@ -83,7 +83,7 @@ public sealed class Ticket
         ArgumentNullException.ThrowIfNull(createdAtUtc);
         ArgumentNullException.ThrowIfNull(updatedAtUtc);
 
-        RepositorySource = repositorySource;
+        GitHubRepository = repositorySource;
         GitHubIssueNumber = gitHubIssueNumber;
         TicketTitle = ticketTitle;
         TicketStatus = ticketStatus;
@@ -97,12 +97,12 @@ public sealed class Ticket
 
     /// <summary>
     /// Determines whether the specified object is equal to the current object.
-    /// Equality is based on the composite key (RepositorySource, GitHubIssueNumber).
+    /// Equality is based on the composite key (GitHubRepository, GitHubIssueNumber).
     /// </summary>
     public override bool Equals(object? obj)
     {
         return obj is Ticket other &&
-               EqualityComparer<RepositorySource>.Default.Equals(RepositorySource, other.RepositorySource) &&
+               EqualityComparer<GitHubRepository>.Default.Equals(GitHubRepository, other.GitHubRepository) &&
                EqualityComparer<GitHubIssueNumber>.Default.Equals(GitHubIssueNumber, other.GitHubIssueNumber);
     }
 
@@ -124,7 +124,7 @@ public sealed class Ticket
     {
         unchecked
         {
-            return (EqualityComparer<RepositorySource>.Default.GetHashCode(RepositorySource) * 397) ^
+            return (EqualityComparer<GitHubRepository>.Default.GetHashCode(GitHubRepository) * 397) ^
                    EqualityComparer<GitHubIssueNumber>.Default.GetHashCode(GitHubIssueNumber);
         }
     }
@@ -132,5 +132,5 @@ public sealed class Ticket
     /// <summary>
     /// Returns a string that represents the current object.
     /// </summary>
-    public override string ToString() => $"Ticket({RepositorySource.Value}/{GitHubIssueNumber.Value})";
+    public override string ToString() => $"Ticket({GitHubRepository.Value}/{GitHubIssueNumber.Value})";
 }

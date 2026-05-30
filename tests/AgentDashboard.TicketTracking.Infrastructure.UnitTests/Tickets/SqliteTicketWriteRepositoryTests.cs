@@ -122,7 +122,7 @@ public sealed class SqliteTicketWriteRepositoryTests : IDisposable
     {
         // Arrange
         var ticket = new Ticket(
-            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(1),
             new TicketTitle("No Agent Ticket"),
             TicketStatusValue.Created,
@@ -151,7 +151,7 @@ public sealed class SqliteTicketWriteRepositoryTests : IDisposable
     {
         // Arrange
         var ticket = new Ticket(
-            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(1),
             new TicketTitle("Open Ticket"),
             TicketStatusValue.Created,
@@ -181,7 +181,7 @@ public sealed class SqliteTicketWriteRepositoryTests : IDisposable
         // Arrange
         var ticket1 = CreateTestTicket(1, "Ticket 1");
         var ticket2 = new Ticket(
-            new RepositorySource("OtherOwner/other-repo"),
+            new GitHubRepository("OtherOwner/other-repo"),
             new GitHubIssueNumber(1),
             new TicketTitle("Ticket 2"),
             TicketStatusValue.Created,
@@ -212,7 +212,7 @@ public sealed class SqliteTicketWriteRepositoryTests : IDisposable
         // Arrange
         var specialTitle = "Ticket with 'quotes' and \"double quotes\" and symbols";
         var ticket = new Ticket(
-            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(1),
             new TicketTitle(specialTitle),
             TicketStatusValue.Created,
@@ -241,7 +241,7 @@ public sealed class SqliteTicketWriteRepositoryTests : IDisposable
     {
         // Arrange
         var ticket = new Ticket(
-            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(1),
             new TicketTitle("a"),
             TicketStatusValue.Created,
@@ -270,7 +270,7 @@ public sealed class SqliteTicketWriteRepositoryTests : IDisposable
     {
         // Arrange
         var ticket = new Ticket(
-            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(1),
             new TicketTitle("Max Retry Ticket"),
             TicketStatusValue.Created,
@@ -304,7 +304,7 @@ public sealed class SqliteTicketWriteRepositoryTests : IDisposable
         for (int i = 0; i < statuses.Length; i++)
         {
             var ticket = new Ticket(
-                new RepositorySource("AskmethatFR/agent-dashboard"),
+                new GitHubRepository("AskmethatFR/agent-dashboard"),
                 new GitHubIssueNumber(i + 1),
                 new TicketTitle("Ticket " + (i + 1)),
                 statuses[i],
@@ -331,7 +331,7 @@ public sealed class SqliteTicketWriteRepositoryTests : IDisposable
     private static Ticket CreateTestTicket(int issueNumber, string title)
     {
         return new Ticket(
-            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(issueNumber),
             new TicketTitle(title),
             TicketStatusValue.Created,
