@@ -2,12 +2,12 @@ using Microsoft.Extensions.Logging;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.GitHub.Fakes;
 
-internal sealed record LogEntry(
+public sealed record LogEntry(
     LogLevel Level,
     string Message,
     IReadOnlyDictionary<string, object?> State);
 
-internal sealed class RecordingLogger<T> : ILogger<T>
+public sealed class RecordingLogger<T> : ILogger<T>
 {
     private readonly List<LogEntry> _entries = [];
     private readonly Lock _gate = new();

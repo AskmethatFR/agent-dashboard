@@ -6,7 +6,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 
-internal sealed partial class GitHubIssuesPoller : BackgroundService
+public sealed partial class GitHubIssuesPoller : BackgroundService
 {
     private const int MinimumNextPollSeconds = 0;
     private readonly static RepositorySource HardcodedRepositorySource = new("AskmethatFR/agent-dashboard");
@@ -123,7 +123,7 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
     }
 }
 
-internal static partial class GitHubIssuesPollerLog
+public static partial class GitHubIssuesPollerLog
 {
     private const int PollSucceededEventId = 200;
     private const int PollFailedEventId = 201;

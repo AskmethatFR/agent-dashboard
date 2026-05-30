@@ -10,7 +10,7 @@ using Microsoft.Data.Sqlite;
 /// SQLite implementation of the ITicketWriteRepository port.
 /// Handles persisting Ticket entities to SQLite with WAL mode for concurrent access.
 /// </summary>
-internal sealed class SqliteTicketWriteRepository : ITicketWriteRepository
+public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
 {
     private readonly string _connectionString;
     private readonly string _schemaSql;
