@@ -1,4 +1,3 @@
-#nullable disable
 
 namespace AgentDashboard.TicketTracking.Infrastructure.Tickets;
 
@@ -95,17 +94,21 @@ public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
         ";
 
         await using var command = new SqliteCommand(commandText, connection);
+        var agentValue = ticket.AgentId?.Value;
+        var createdAtStr = ticket.CreatedAtUtc.ToString();
+        var updatedAtStr = ticket.UpdatedAtUtc.ToString();
+        var closedAtStr = ticket.ClosedAtUtc?.ToString();
+        
         command.Parameters.AddWithValue("@repo", ticket.GitHubRepository.Value);
         command.Parameters.AddWithValue("@github_issue_number", ticket.GitHubIssueNumber.Value);
         command.Parameters.AddWithValue("@title", ticket.TicketTitle.Value);
         command.Parameters.AddWithValue("@status", ticket.TicketStatus.Value.ToString());
-        command.Parameters.AddWithValue("@agent", (object)ticket.AgentId?.Value ?? DBNull.Value);
+        command.Parameters.AddWithValue("@agent", agentValue != null ? (object)agentValue : DBNull.Value);
         command.Parameters.AddWithValue("@retry_count", ticket.RetryCount.Value);
         command.Parameters.AddWithValue("@github_url", ticket.GitHubUrl.Value);
         
-        command.Parameters.AddWithValue("@created_at_utc", ticket.CreatedAtUtc.ToString());
-        command.Parameters.AddWithValue("@updated_at_utc", ticket.UpdatedAtUtc.ToString());
-        var closedAtStr = ticket.ClosedAtUtc?.ToString();
+        command.Parameters.AddWithValue("@created_at_utc", (object)createdAtStr);
+        command.Parameters.AddWithValue("@updated_at_utc", (object)updatedAtStr);
         command.Parameters.AddWithValue("@closed_at_utc", closedAtStr != null ? (object)closedAtStr : DBNull.Value);
 
         await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
