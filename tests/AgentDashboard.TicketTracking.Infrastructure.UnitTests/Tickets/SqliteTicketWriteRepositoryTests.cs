@@ -33,6 +33,16 @@ public sealed class SqliteTicketWriteRepositoryTests : IDisposable
     // [x] SaveAsync_Should_UpdateExistingTicket_When_SameCompositeKey
     // [x] SaveAsync_Should_NotCreateDuplicateRows
     //
+    // EDGE CASES:
+    // [x] SaveAsync_WithNullTicket_ThrowsArgumentNullException
+    // [x] SaveAsync_WithTicketNullAgent_SavesSuccessfully
+    // [x] SaveAsync_WithTicketClosedAtUtcNull_SavesSuccessfully
+    // [x] SaveAsync_WithMultipleDifferentRepos_SavesBothTickets
+    // [x] SaveAsync_WithSpecialCharactersInTitle_SavesSuccessfully
+    // [x] SaveAsync_WithSingleCharTitle_SavesSuccessfully
+    // [x] SaveAsync_WithMaximumRetryCount_SavesSuccessfully
+    // [x] SaveAsync_WithDifferentStatusValues_SavesSuccessfully
+    //
     // ========================================================================
 
     [Fact]
@@ -94,6 +104,227 @@ public sealed class SqliteTicketWriteRepositoryTests : IDisposable
         var count = (long)await command.ExecuteScalarAsync(CancellationToken.None);
 
         count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithNullTicket_ThrowsArgumentNullException()
+    {
+        // Arrange
+        Ticket nullTicket = null;
+
+        // Act & Assert
+        await Assert.ThrowsAsync<ArgumentNullException>(() =>
+            _repository.SaveAsync(nullTicket, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithTicketNullAgent_SavesSuccessfully()
+    {
+        // Arrange
+        var ticket = new Ticket(
+            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubIssueNumber(1),
+            new TicketTitle("No Agent Ticket"),
+            TicketStatusValue.Created,
+            null, // AgentId is null
+            new Retry(0),
+            new GitHubUrl("https://github.com/AskmethatFR/agent-dashboard/issues/1"),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            null);
+
+        // Act
+        await _repository.SaveAsync(ticket, CancellationToken.None);
+
+        // Assert
+        await using var connection = new SqliteConnection("Data Source=" + _testDbPath);
+        await connection.OpenAsync(CancellationToken.None);
+
+        await using var command = new SqliteCommand("SELECT COUNT(*) FROM tickets WHERE agent IS NULL", connection);
+        var count = (long)await command.ExecuteScalarAsync(CancellationToken.None);
+
+        count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithTicketClosedAtUtcNull_SavesSuccessfully()
+    {
+        // Arrange
+        var ticket = new Ticket(
+            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubIssueNumber(1),
+            new TicketTitle("Open Ticket"),
+            TicketStatusValue.Created,
+            new AgentId("pm"),
+            new Retry(0),
+            new GitHubUrl("https://github.com/AskmethatFR/agent-dashboard/issues/1"),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            null); // ClosedAtUtc is null
+
+        // Act
+        await _repository.SaveAsync(ticket, CancellationToken.None);
+
+        // Assert
+        await using var connection = new SqliteConnection("Data Source=" + _testDbPath);
+        await connection.OpenAsync(CancellationToken.None);
+
+        await using var command = new SqliteCommand("SELECT COUNT(*) FROM tickets WHERE closed_at_utc IS NULL", connection);
+        var count = (long)await command.ExecuteScalarAsync(CancellationToken.None);
+
+        count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithMultipleDifferentRepos_SavesBothTickets()
+    {
+        // Arrange
+        var ticket1 = CreateTestTicket(1, "Ticket 1");
+        var ticket2 = new Ticket(
+            new RepositorySource("OtherOwner/other-repo"),
+            new GitHubIssueNumber(1),
+            new TicketTitle("Ticket 2"),
+            TicketStatusValue.Created,
+            new AgentId("pm"),
+            new Retry(0),
+            new GitHubUrl("https://github.com/OtherOwner/other-repo/issues/1"),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            null);
+
+        // Act
+        await _repository.SaveAsync(ticket1, CancellationToken.None);
+        await _repository.SaveAsync(ticket2, CancellationToken.None);
+
+        // Assert
+        await using var connection = new SqliteConnection("Data Source=" + _testDbPath);
+        await connection.OpenAsync(CancellationToken.None);
+
+        await using var command = new SqliteCommand("SELECT COUNT(*) FROM tickets", connection);
+        var count = (long)await command.ExecuteScalarAsync(CancellationToken.None);
+
+        count.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithSpecialCharactersInTitle_SavesSuccessfully()
+    {
+        // Arrange
+        var specialTitle = "Ticket with 'quotes' and \"double quotes\" and symbols";
+        var ticket = new Ticket(
+            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubIssueNumber(1),
+            new TicketTitle(specialTitle),
+            TicketStatusValue.Created,
+            new AgentId("pm"),
+            new Retry(0),
+            new GitHubUrl("https://github.com/AskmethatFR/agent-dashboard/issues/1"),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            null);
+
+        // Act
+        await _repository.SaveAsync(ticket, CancellationToken.None);
+
+        // Assert
+        await using var connection = new SqliteConnection("Data Source=" + _testDbPath);
+        await connection.OpenAsync(CancellationToken.None);
+
+        await using var command = new SqliteCommand("SELECT title FROM tickets WHERE github_issue_number = 1", connection);
+        var savedTitle = (string)await command.ExecuteScalarAsync(CancellationToken.None);
+
+        savedTitle.Should().Be(specialTitle);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithSingleCharTitle_SavesSuccessfully()
+    {
+        // Arrange
+        var ticket = new Ticket(
+            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubIssueNumber(1),
+            new TicketTitle("a"),
+            TicketStatusValue.Created,
+            new AgentId("pm"),
+            new Retry(0),
+            new GitHubUrl("https://github.com/AskmethatFR/agent-dashboard/issues/1"),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            null);
+
+        // Act
+        await _repository.SaveAsync(ticket, CancellationToken.None);
+
+        // Assert
+        await using var connection = new SqliteConnection("Data Source=" + _testDbPath);
+        await connection.OpenAsync(CancellationToken.None);
+
+        await using var command = new SqliteCommand("SELECT title FROM tickets WHERE github_issue_number = 1", connection);
+        var savedTitle = (string)await command.ExecuteScalarAsync(CancellationToken.None);
+
+        savedTitle.Should().Be("a");
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithMaximumRetryCount_SavesSuccessfully()
+    {
+        // Arrange
+        var ticket = new Ticket(
+            new RepositorySource("AskmethatFR/agent-dashboard"),
+            new GitHubIssueNumber(1),
+            new TicketTitle("Max Retry Ticket"),
+            TicketStatusValue.Created,
+            new AgentId("pm"),
+            new Retry(3), // Maximum retry count
+            new GitHubUrl("https://github.com/AskmethatFR/agent-dashboard/issues/1"),
+            DateTimeOffset.UtcNow,
+            DateTimeOffset.UtcNow,
+            null);
+
+        // Act
+        await _repository.SaveAsync(ticket, CancellationToken.None);
+
+        // Assert
+        await using var connection = new SqliteConnection("Data Source=" + _testDbPath);
+        await connection.OpenAsync(CancellationToken.None);
+
+        await using var command = new SqliteCommand("SELECT retry_count FROM tickets WHERE github_issue_number = 1", connection);
+        var retryCount = (int)(long)await command.ExecuteScalarAsync(CancellationToken.None);
+
+        retryCount.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task SaveAsync_WithDifferentStatusValues_SavesSuccessfully()
+    {
+        // Arrange
+        var statuses = new[] { TicketStatusValue.Created, TicketStatusValue.Specified, TicketStatusValue.Done };
+        
+        // Act - save tickets with different statuses
+        for (int i = 0; i < statuses.Length; i++)
+        {
+            var ticket = new Ticket(
+                new RepositorySource("AskmethatFR/agent-dashboard"),
+                new GitHubIssueNumber(i + 1),
+                new TicketTitle("Ticket " + (i + 1)),
+                statuses[i],
+                new AgentId("pm"),
+                new Retry(0),
+                new GitHubUrl("https://github.com/AskmethatFR/agent-dashboard/issues/" + (i + 1)),
+                DateTimeOffset.UtcNow,
+                DateTimeOffset.UtcNow,
+                null);
+            await _repository.SaveAsync(ticket, CancellationToken.None);
+        }
+
+        // Assert
+        await using var connection = new SqliteConnection("Data Source=" + _testDbPath);
+        await connection.OpenAsync(CancellationToken.None);
+
+        await using var command = new SqliteCommand("SELECT COUNT(*) FROM tickets", connection);
+        var count = (long)await command.ExecuteScalarAsync(CancellationToken.None);
+
+        count.Should().Be(3);
     }
 
     // Helper method to create test tickets
