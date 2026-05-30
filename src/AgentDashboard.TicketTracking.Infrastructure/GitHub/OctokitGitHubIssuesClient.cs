@@ -45,53 +45,7 @@ internal sealed class OctokitGitHubIssuesClient : IGitHubIssuesClient
                 .GetAllForRepository(_options.RepositoryOwner, _options.RepositoryName, request)
                 .ConfigureAwait(false);
 
-            // Check rate limit using reflection to access LastResponse.ApiInfo
-            try
-            {
-                var connectionType = _client.Connection.GetType();
-                var lastResponseProperty = connectionType.GetProperty(
-                    "LastResponse", 
-                    System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
-                
-                if (lastResponseProperty != null)
-                {
-                    var lastResponse = lastResponseProperty.GetValue(_client.Connection);
-                    if (lastResponse != null)
-                    {
-                        var apiInfoProperty = lastResponse.GetType().GetProperty("ApiInfo");
-                        if (apiInfoProperty != null)
-                        {
-                            var apiInfo = apiInfoProperty.GetValue(lastResponse);
-                            if (apiInfo != null)
-                            {
-                                var rateLimitProperty = apiInfo.GetType().GetProperty("RateLimit");
-                                if (rateLimitProperty != null)
-                                {
-                                    var rateLimit = rateLimitProperty.GetValue(apiInfo);
-                                    if (rateLimit != null)
-                                    {
-                                        var remainingProperty = rateLimit.GetType().GetProperty("Remaining");
-                                        if (remainingProperty != null)
-                                        {
-                                            var rateLimitRemaining = (int?)remainingProperty.GetValue(rateLimit) ?? 0;
-                                            if (rateLimitRemaining < RateLimitThreshold)
-                                            {
-                                                _logger.LogWarning("GitHub API rate limit low: {Remaining} requests remaining", rateLimitRemaining);
-                                                await Task.Delay(TimeSpan.FromSeconds(RateLimitBackoffSeconds), cancellationToken).ConfigureAwait(false);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex) when (ex is not OperationCanceledException)
-            {
-                // Log reflection failure but don't fail the request
-                _logger.LogDebug(ex, "Failed to check GitHub API rate limit");
-            }
+            await CheckRateLimitAndBackoffIfNeededAsync(cancellationToken).ConfigureAwait(false);
 
             var result = new List<GitHubIssueRecord>(issues.Count);
             foreach (var issue in issues)
@@ -116,5 +70,70 @@ internal sealed class OctokitGitHubIssuesClient : IGitHubIssuesClient
         {
             throw new TimeoutException("GitHub API request timed out after 30 seconds");
         }
+    }
+
+    private async Task CheckRateLimitAndBackoffIfNeededAsync(CancellationToken ct)
+    {
+        try
+        {
+            var rateLimitRemaining = GetRateLimitRemaining();
+            if (rateLimitRemaining < RateLimitThreshold)
+            {
+                _logger.LogWarning("GitHub API rate limit low: {Remaining} requests remaining", rateLimitRemaining);
+                await Task.Delay(TimeSpan.FromSeconds(RateLimitBackoffSeconds), ct).ConfigureAwait(false);
+            }
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogDebug(ex, "Failed to check GitHub API rate limit");
+        }
+    }
+
+    private int GetRateLimitRemaining()
+    {
+        var lastResponse = GetLastResponse(_client.Connection);
+        if (lastResponse is null)
+        {
+            return 0;
+        }
+        
+        var apiInfo = GetApiInfo(lastResponse);
+        if (apiInfo is null)
+        {
+            return 0;
+        }
+        
+        var rateLimit = GetRateLimit(apiInfo);
+        if (rateLimit is null)
+        {
+            return 0;
+        }
+        
+        return GetRemainingRequests(rateLimit);
+    }
+
+    private static object? GetLastResponse(object connection)
+    {
+        var connectionType = connection.GetType();
+        var lastResponseProperty = connectionType.GetProperty(
+            "LastResponse",
+            System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Instance);
+        return lastResponseProperty?.GetValue(connection);
+    }
+
+    private static object? GetApiInfo(object lastResponse)
+    {
+        return lastResponse.GetType().GetProperty("ApiInfo")?.GetValue(lastResponse);
+    }
+
+    private static object? GetRateLimit(object apiInfo)
+    {
+        return apiInfo.GetType().GetProperty("RateLimit")?.GetValue(apiInfo);
+    }
+
+    private static int GetRemainingRequests(object rateLimit)
+    {
+        var remainingProperty = rateLimit.GetType().GetProperty("Remaining");
+        return (int?)remainingProperty?.GetValue(rateLimit) ?? 0;
     }
 }
