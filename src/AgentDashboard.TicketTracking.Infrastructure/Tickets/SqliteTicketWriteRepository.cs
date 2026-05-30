@@ -17,10 +17,10 @@ public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         _connectionString = connectionString;
-        InitializeSchemaAsync().GetAwaiter().GetResult();
+        InitializeSchema();
     }
 
-    private async Task InitializeSchemaAsync()
+    private void InitializeSchema()
     {
         // Ensure the directory exists
         var connectionStringBuilder = new SqliteConnectionStringBuilder(_connectionString);
@@ -34,13 +34,13 @@ public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
             }
         }
 
-        await using var connection = new SqliteConnection(_connectionString);
-        await connection.OpenAsync().ConfigureAwait(false);
+        using var connection = new SqliteConnection(_connectionString);
+        connection.Open();
 
         // Enable WAL mode for concurrent read/write
-        await using (var cmd = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+        using (var cmd = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
         {
-            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            cmd.ExecuteNonQuery();
         }
 
         // Create schema if not exists
@@ -62,9 +62,9 @@ public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
             CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
             CREATE INDEX IF NOT EXISTS idx_tickets_agent ON tickets(agent);
         ";
-        await using (var cmd = new SqliteCommand(schemaSql, connection))
+        using (var cmd = new SqliteCommand(schemaSql, connection))
         {
-            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+            cmd.ExecuteNonQuery();
         }
     }
 
