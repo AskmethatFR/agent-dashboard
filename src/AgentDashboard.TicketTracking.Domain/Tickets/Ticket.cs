@@ -96,6 +96,49 @@ public sealed class Ticket
     }
 
     /// <summary>
+    /// Externalizes this ticket's state into an immutable, primitive-only snapshot
+    /// for the Domain↔persistence boundary.
+    /// </summary>
+    public TicketPersistenceSnapshot ToSnapshot() => new(
+        Repo: GitHubRepository.Value,
+        GitHubIssueNumber: GitHubIssueNumber.Value,
+        Title: TicketTitle.Value,
+        Status: TicketStatus.Value.ToString(),
+        Agent: AgentId?.Value,
+        RetryCount: RetryCount.Value,
+        GitHubUrl: GitHubUrl.Value,
+        CreatedAtUtc: CreatedAtUtc.ToString(),
+        UpdatedAtUtc: UpdatedAtUtc.ToString(),
+        ClosedAtUtc: ClosedAtUtc?.ToString());
+
+    /// <summary>
+    /// Rehydrates a <see cref="Ticket"/> from a <see cref="TicketPersistenceSnapshot"/>.
+    /// Inverse of <see cref="ToSnapshot"/>.
+    /// </summary>
+    public static Ticket FromSnapshot(TicketPersistenceSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+
+        return new Ticket(
+            new GitHubRepository(snapshot.Repo),
+            new GitHubIssueNumber(snapshot.GitHubIssueNumber),
+            new TicketTitle(snapshot.Title),
+            TicketStatus.Parse(snapshot.Status),
+            snapshot.Agent is null ? null : new AgentId(snapshot.Agent),
+            new Retry(snapshot.RetryCount),
+            new GitHubUrl(snapshot.GitHubUrl),
+            new TimestampUtc(ParseTimestamp(snapshot.CreatedAtUtc)),
+            new TimestampUtc(ParseTimestamp(snapshot.UpdatedAtUtc)),
+            snapshot.ClosedAtUtc is null ? null : new TimestampUtc(ParseTimestamp(snapshot.ClosedAtUtc)));
+    }
+
+    private static DateTimeOffset ParseTimestamp(string value) =>
+        DateTimeOffset.Parse(
+            value,
+            System.Globalization.CultureInfo.InvariantCulture,
+            System.Globalization.DateTimeStyles.RoundtripKind);
+
+    /// <summary>
     /// Determines whether the specified object is equal to the current object.
     /// Equality is based on the composite key (GitHubRepository, GitHubIssueNumber).
     /// </summary>
