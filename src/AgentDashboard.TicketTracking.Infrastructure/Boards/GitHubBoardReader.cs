@@ -13,6 +13,7 @@ public sealed partial class GitHubBoardReader : IBoardReader
     private readonly BoardSnapshotCache _cache;
     private readonly IGitHubIssuesClient _client;
     private readonly IBoardSnapshotUpdater _snapshotUpdater;
+    private const int CacheFreshnessRatio = 2; // Cache valid for half the poll interval
     private readonly TimeSpan _pollInterval;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<GitHubBoardReader> _logger;
@@ -99,7 +100,7 @@ public sealed partial class GitHubBoardReader : IBoardReader
 
         var now = _timeProvider.GetUtcNow();
         var cacheAge = now - lastUpdated;
-        var freshnessThreshold = _pollInterval / 2;
+        var freshnessThreshold = _pollInterval / CacheFreshnessRatio;
 
         return cacheAge < freshnessThreshold;
     }
