@@ -6,7 +6,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="AgentDashboard.TicketTracking.Infrastructure.UnitTests" />
-    <InternalsVisibleTo Include="AgentDashboard.TicketTracking.Infrastructure.IntegrationTests" />
+    <InternalsVisibleTo Include="AgentDashboard.TicketTracking.IntegrationTests" />
   </ItemGroup>
 
   <ItemGroup>

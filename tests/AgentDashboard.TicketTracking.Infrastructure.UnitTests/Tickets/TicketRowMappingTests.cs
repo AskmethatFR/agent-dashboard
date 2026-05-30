@@ -21,6 +21,11 @@ namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.Tickets;
 //
 // TIMESTAMP BYTE-COMPATIBILITY (must match on-disk format = DateTimeOffset.ToString("o")):
 //  [x] CreatedAtUtc row string equals VO.ToString() ("o" round-trip format)
+//
+// CORRUPTED-ROW GUARDING (ToTicket() wraps raw parse failures, hides raw value):
+//  [x] invalid Status string → CorruptedTicketRowException naming "status" + row key,
+//      NOT echoing the raw bad value, inner = original ArgumentException
+//  [x] malformed CreatedAtUtc → CorruptedTicketRowException naming "created_at_utc"
 // ========================================================================
 
 public sealed class TicketRowMappingTests
@@ -147,6 +152,40 @@ public sealed class TicketRowMappingTests
         row.UpdatedAtUtc.Should().Be(ticket.UpdatedAtUtc.ToString());
         row.ClosedAtUtc.Should().Be(ticket.ClosedAtUtc!.ToString());
     }
+
+    [Fact]
+    public void ToTicket_InvalidStatus_ThrowsCorruptedRowNamingStatusColumn()
+    {
+        var corrupted = WellFormedRow();
+        corrupted.Status = "not-a-status";
+
+        var act = () => corrupted.ToTicket();
+
+        var thrown = act.Should().Throw<CorruptedTicketRowException>().Which;
+        thrown.Message.Should().Contain("status");
+        thrown.Message.Should().Contain("AskmethatFR/agent-dashboard");
+        thrown.Message.Should().Contain("42");
+        thrown.Message.Should().NotContain("not-a-status");
+        thrown.InnerException.Should().BeOfType<ArgumentException>();
+    }
+
+    [Fact]
+    public void ToTicket_MalformedCreatedAtUtc_ThrowsCorruptedRowNamingCreatedAtColumn()
+    {
+        var corrupted = WellFormedRow();
+        corrupted.CreatedAtUtc = "garbage";
+
+        var act = () => corrupted.ToTicket();
+
+        var thrown = act.Should().Throw<CorruptedTicketRowException>().Which;
+        thrown.Message.Should().Contain("created_at_utc");
+        thrown.Message.Should().Contain("AskmethatFR/agent-dashboard");
+        thrown.Message.Should().Contain("42");
+        thrown.Message.Should().NotContain("garbage");
+        thrown.InnerException.Should().BeOfType<FormatException>();
+    }
+
+    private static TicketRow WellFormedRow() => TicketRow.FromTicket(FullTicket());
 
     private static Ticket FullTicket()
     {

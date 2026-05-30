@@ -45,13 +45,25 @@ internal sealed class TicketRow
         new GitHubRepository(Repo),
         new GitHubIssueNumber(GitHubIssueNumber),
         new TicketTitle(Title),
-        TicketStatus.Parse(Status),
+        ParseColumn("status", () => TicketStatus.Parse(Status)),
         Agent is null ? null : new AgentId(Agent),
         new Retry(RetryCount),
         new GitHubUrl(GitHubUrl),
-        new TimestampUtc(ParseTimestamp(CreatedAtUtc)),
-        new TimestampUtc(ParseTimestamp(UpdatedAtUtc)),
-        ClosedAtUtc is null ? null : new TimestampUtc(ParseTimestamp(ClosedAtUtc)));
+        new TimestampUtc(ParseColumn("created_at_utc", () => ParseTimestamp(CreatedAtUtc))),
+        new TimestampUtc(ParseColumn("updated_at_utc", () => ParseTimestamp(UpdatedAtUtc))),
+        ClosedAtUtc is null ? null : new TimestampUtc(ParseColumn("closed_at_utc", () => ParseTimestamp(ClosedAtUtc))));
+
+    private T ParseColumn<T>(string column, Func<T> parse)
+    {
+        try
+        {
+            return parse();
+        }
+        catch (Exception inner) when (inner is FormatException or ArgumentException)
+        {
+            throw new CorruptedTicketRowException(column, Repo, GitHubIssueNumber, inner);
+        }
+    }
 
     private static DateTimeOffset ParseTimestamp(string value) =>
         DateTimeOffset.Parse(
