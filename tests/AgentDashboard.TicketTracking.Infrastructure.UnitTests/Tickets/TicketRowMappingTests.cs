@@ -1,35 +1,36 @@
-namespace AgentDashboard.TicketTracking.Domain.UnitTests.Tickets;
-
-using System;
 using AgentDashboard.TicketTracking.Domain.Agents;
 using AgentDashboard.TicketTracking.Domain.Tickets;
-using FluentAssertions;
-using Xunit;
+using AgentDashboard.TicketTracking.Infrastructure.Tickets.Persistence;
 
-// Test List for TicketPersistenceSnapshot (Snapshot pattern, Domain↔persistence boundary):
+namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.Tickets;
+
+// Test List for TicketRow self-mapping (Infrastructure boundary, Ticket ⇄ TicketRow):
 // ========================================================================
-// ROUND-TRIP (FromSnapshot(ToSnapshot(t)) == t, field-by-field):
+// Relocated from the deleted Domain TicketPersistenceSnapshotShould — the
+// Domain↔persistence contract now lives on the Infra TicketRow itself.
+//
+// ROUND-TRIP (ToTicket(FromTicket(t)) == t, field-by-field):
 //  [x] full ticket (every field populated) round-trips
 //  [x] null Agent round-trips to null
 //  [x] null ClosedAtUtc round-trips to null
 //  [x] every TicketStatusValue round-trips (enum-name ⇄ Parse)
 //
-// FIELD MAPPING (ToSnapshot flattens VO → primitive, exact column shape):
-//  [x] ToSnapshot maps each VO to its primitive (repo, number, title, status name,
+// FIELD FLATTENING (FromTicket flattens VO → primitive, exact column shape):
+//  [x] FromTicket maps each VO to its primitive (repo, number, title, status name,
 //      agent, retry, url, created/updated/closed as "o" ISO-8601)
 //
-// TIMESTAMP BYTE-COMPATIBILITY (must match old on-disk format = DateTimeOffset.ToString("o")):
-//  [x] CreatedAtUtc snapshot string equals VO.ToString() ("o" round-trip format)
+// TIMESTAMP BYTE-COMPATIBILITY (must match on-disk format = DateTimeOffset.ToString("o")):
+//  [x] CreatedAtUtc row string equals VO.ToString() ("o" round-trip format)
 // ========================================================================
 
-public sealed class TicketPersistenceSnapshotShould
+public sealed class TicketRowMappingTests
 {
     [Fact]
     public void RoundTrip_AllFieldsPopulated()
     {
         var original = FullTicket();
 
-        var restored = Ticket.FromSnapshot(original.ToSnapshot());
+        var restored = TicketRow.FromTicket(original).ToTicket();
 
         restored.GitHubRepository.Value.Should().Be(original.GitHubRepository.Value);
         restored.GitHubIssueNumber.Value.Should().Be(original.GitHubIssueNumber.Value);
@@ -58,34 +59,34 @@ public sealed class TicketPersistenceSnapshotShould
             DateTimeOffset.UtcNow,
             null);
 
-        var snapshot = original.ToSnapshot();
-        var restored = Ticket.FromSnapshot(snapshot);
+        var row = TicketRow.FromTicket(original);
+        var restored = row.ToTicket();
 
-        snapshot.Agent.Should().BeNull();
+        row.Agent.Should().BeNull();
         restored.AgentId.Should().BeNull();
     }
 
     [Fact]
     public void RoundTrip_NullClosedAtUtc()
     {
-        var original = FullTicket();
+        var full = FullTicket();
 
         var open = new Ticket(
-            original.GitHubRepository,
-            original.GitHubIssueNumber,
-            original.TicketTitle,
-            original.TicketStatus,
-            original.AgentId,
-            original.RetryCount,
-            original.GitHubUrl,
-            original.CreatedAtUtc,
-            original.UpdatedAtUtc,
+            full.GitHubRepository,
+            full.GitHubIssueNumber,
+            full.TicketTitle,
+            full.TicketStatus,
+            full.AgentId,
+            full.RetryCount,
+            full.GitHubUrl,
+            full.CreatedAtUtc,
+            full.UpdatedAtUtc,
             null);
 
-        var snapshot = open.ToSnapshot();
-        var restored = Ticket.FromSnapshot(snapshot);
+        var row = TicketRow.FromTicket(open);
+        var restored = row.ToTicket();
 
-        snapshot.ClosedAtUtc.Should().BeNull();
+        row.ClosedAtUtc.Should().BeNull();
         restored.ClosedAtUtc.Should().BeNull();
     }
 
@@ -112,39 +113,39 @@ public sealed class TicketPersistenceSnapshotShould
             DateTimeOffset.UtcNow,
             null);
 
-        var snapshot = original.ToSnapshot();
-        var restored = Ticket.FromSnapshot(snapshot);
+        var row = TicketRow.FromTicket(original);
+        var restored = row.ToTicket();
 
-        snapshot.Status.Should().Be(status.ToString());
+        row.Status.Should().Be(status.ToString());
         restored.TicketStatus.Value.Should().Be(status);
     }
 
     [Fact]
-    public void ToSnapshot_FlattensValueObjectsToPrimitives()
+    public void FromTicket_FlattensValueObjectsToPrimitives()
     {
         var ticket = FullTicket();
 
-        var snapshot = ticket.ToSnapshot();
+        var row = TicketRow.FromTicket(ticket);
 
-        snapshot.Repo.Should().Be("AskmethatFR/agent-dashboard");
-        snapshot.GitHubIssueNumber.Should().Be(42);
-        snapshot.Title.Should().Be("Full ticket");
-        snapshot.Status.Should().Be(nameof(TicketStatusValue.InReview));
-        snapshot.Agent.Should().Be("dev-a");
-        snapshot.RetryCount.Should().Be(2);
-        snapshot.GitHubUrl.Should().Be("https://github.com/AskmethatFR/agent-dashboard/issues/42");
+        row.Repo.Should().Be("AskmethatFR/agent-dashboard");
+        row.GitHubIssueNumber.Should().Be(42);
+        row.Title.Should().Be("Full ticket");
+        row.Status.Should().Be(nameof(TicketStatusValue.InReview));
+        row.Agent.Should().Be("dev-a");
+        row.RetryCount.Should().Be(2);
+        row.GitHubUrl.Should().Be("https://github.com/AskmethatFR/agent-dashboard/issues/42");
     }
 
     [Fact]
-    public void ToSnapshot_SerializesTimestampsInRoundTripFormat()
+    public void FromTicket_SerializesTimestampsInRoundTripFormat()
     {
         var ticket = FullTicket();
 
-        var snapshot = ticket.ToSnapshot();
+        var row = TicketRow.FromTicket(ticket);
 
-        snapshot.CreatedAtUtc.Should().Be(ticket.CreatedAtUtc.ToString());
-        snapshot.UpdatedAtUtc.Should().Be(ticket.UpdatedAtUtc.ToString());
-        snapshot.ClosedAtUtc.Should().Be(ticket.ClosedAtUtc!.ToString());
+        row.CreatedAtUtc.Should().Be(ticket.CreatedAtUtc.ToString());
+        row.UpdatedAtUtc.Should().Be(ticket.UpdatedAtUtc.ToString());
+        row.ClosedAtUtc.Should().Be(ticket.ClosedAtUtc!.ToString());
     }
 
     private static Ticket FullTicket()

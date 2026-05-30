@@ -3,6 +3,8 @@
 ## Status
 Accepted (supersedes ADR-009)
 
+> **Amended (2026-05-30, Issue #6 owner review).** The original "Snapshot pattern, two types" boundary-crossing design (a Domain `TicketPersistenceSnapshot` + `Ticket.ToSnapshot()`/`FromSnapshot()` plus a separate Infrastructure `TicketRowMapper`) is **superseded**. Per owner directive, the bidirectional mapping is now folded into a single Infrastructure artifact — `TicketRow` self-maps via `TicketRow.FromTicket(Ticket)` / `TicketRow.ToTicket()`. The Domain snapshot type, the `ToSnapshot`/`FromSnapshot` members, and the separate mapper are deleted. See the amended boundary-crossing bullet below. All other decisions (column shape, "o" timestamp format, guarded idempotent bootstrap, WAL + checkpoint, upsert semantics, DbContext lifetime) are unchanged.
+
 ## Context
 
 ADR-009 chose hand-rolled raw-ADO.NET SQL (`CREATE TABLE IF NOT EXISTS` + `INSERT ... ON CONFLICT`) for the SQLite write-side of the TicketTracking bounded context, explicitly rejecting EF Core to avoid dependency bloat and change-tracker overhead.
@@ -13,7 +15,8 @@ The owner has since mandated (non-negotiable) that the write-side use **EF Core 
 
 **Re-implement `SqliteTicketWriteRepository` over EF Core code-first.**
 
-- **Boundary crossing — Snapshot pattern, two types.** The domain `Ticket` externalizes its own state via `ToSnapshot()` returning an immutable `TicketPersistenceSnapshot` (flat primitives, Domain layer); `Ticket.FromSnapshot(...)` rehydrates. Infrastructure maps `TicketPersistenceSnapshot ⇄ TicketRow` (a mutable EF POCO) with a trivial flat-to-flat copy that never touches a value object. `TicketPersistenceSnapshot` is a frozen projection: no identity, no lifecycle, no transactional boundary — it is not an entity, aggregate, or `Entity<TId>`. `TicketRow` is a persistence POCO, not a domain type. Two types are required because EF's change-tracker / find-then-update path wants a mutable POCO with settable properties (an immutable record fights the tracker), and the layering rule forbids EF configuration referencing a Domain type.
+- **Boundary crossing — single Infrastructure self-mapping POCO (amended 2026-05-30).** The mutable EF POCO `TicketRow` is the *only* boundary artifact and owns both directions of the mapping: `static TicketRow FromTicket(Ticket)` flattens the domain `Ticket`'s public value-object getters to primitives (status = `TicketStatus.Value.ToString()`, timestamps = `TimestampUtc.ToString()` → "o" format, nullable `Agent`/`ClosedAtUtc`), and instance `Ticket ToTicket()` rehydrates each value object (`TicketStatus.Parse`, `DateTimeOffset.Parse` with InvariantCulture + RoundtripKind, null-aware `Agent`/`ClosedAtUtc`). There is **no Domain snapshot type** (`TicketPersistenceSnapshot` deleted), **no `Ticket.ToSnapshot()`/`FromSnapshot()`** (deleted from the Domain entity), and **no separate `TicketRowMapper`** (deleted). `TicketRow` stays a persistence POCO, not a domain type: it carries no invariants and lives only in Infrastructure (`internal`, with `InternalsVisibleTo` granting the Infrastructure test projects access to the round-trip contract).
+  - **ca-snapshot deviation (deliberate, owner-directed).** The canonical Snapshot pattern keeps the boundary DTO in the Domain and has the entity externalize its own state through a no-getters interface so persistence never reads value objects directly. Here that ideal is **waived**: the `Ticket` entity keeps its value-object getters and equality **public**, and Infrastructure reads them directly in `FromTicket`. The guarantees the snapshot pattern protected are preserved by other means — the Application port stays EF-unaware (`ITicketWriteRepository` unchanged), EF Core stays confined to Infrastructure, and the round-trip / flattening contract (status enum-name round-trip, "o" timestamp byte-compatibility, null handling) is pinned by `TicketRowMappingTests` in the Infrastructure unit tests. The single-type form removes the redundant intermediate DTO + mapper the owner flagged. A mutable POCO is still required because EF's change-tracker / find-then-update path wants settable properties (an immutable record fights the tracker), and the layering rule still forbids EF configuration referencing a Domain type — so `TicketRow` (not `Ticket`) remains what `OnModelCreating` configures.
 - **Schema creation — guarded `IRelationalDatabaseCreator` (NOT migrations).** Run synchronously once at bootstrap (in the repository constructor, matching the prior synchronous-init contract). No `dotnet ef` CLI, no migrations folder, no `__EFMigrationsHistory` table, preserving the "single `docker run`" / zero-external-tooling promise. **`Microsoft.EntityFrameworkCore.Design` is deliberately NOT referenced.** The bare `EnsureCreated()` proved **not robustly idempotent** under concurrent construction (see "Robustly idempotent bootstrap" below); the repository instead creates the database only when `!Exists()` and the tables only when `!HasTables()`, guarded by a per-data-source lock — semantically equivalent to the prior `CREATE TABLE IF NOT EXISTS`.
 - **WAL mode + checkpoint.** The repository runs `ExecuteSqlRaw("PRAGMA journal_mode=WAL;")` once at bootstrap, then `PRAGMA wal_checkpoint(TRUNCATE)` after creating the schema so the new tables are visible in the main `.db` file rather than only the `-wal` sidecar. Both pragmas are constant strings with no interpolation of any input.
 - **Table shape preserved verbatim.** Table `tickets`; columns `repo`, `github_issue_number`, `title`, `status`, `agent` (nullable), `retry_count`, `github_url`, `created_at_utc`, `updated_at_utc`, `closed_at_utc` (nullable); composite PK `(repo, github_issue_number)`; indexes on `repo`, `status`, `agent`. Configured via the Fluent API in `OnModelCreating` (`ToTable`/`HasKey`/`HasIndex`, explicit `HasColumnName`, nullability). No data annotations on `TicketRow`.
@@ -40,7 +43,7 @@ This stays on EF Core code-first + the Snapshot pattern; no migrations, no raw D
 ## Rationale
 
 - Aligns the write-side with the owner's mandated stack contract.
-- The Snapshot pattern keeps the Domain encapsulated and the Application port EF-unaware (Clean Architecture preserved).
+- The single `TicketRow` self-mapping keeps the Application port EF-unaware and EF Core confined to Infrastructure (Clean Architecture preserved); the deliberate ca-snapshot deviation is documented above.
 - `EnsureCreated()` keeps the zero-external-tooling / single-`docker run` distribution promise intact — the main practical benefit ADR-009 sought.
 - Preserving the verbatim column shape and timestamp format means the read-side (Dapper) and all existing tests continue to work unchanged.
 
@@ -48,7 +51,7 @@ This stays on EF Core code-first + the Snapshot pattern; no migrations, no raw D
 
 ### Positive
 - Owner stack contract satisfied; write path is now ORM-managed and testable with EF tooling.
-- Encapsulation and layering preserved via the Snapshot pattern.
+- Layering preserved via the single Infrastructure `TicketRow` self-mapping (ca-snapshot deviation documented).
 - Existing read-side and test suites unaffected (column shape + timestamp format preserved verbatim).
 
 ### Negative

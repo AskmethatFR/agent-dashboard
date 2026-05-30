@@ -4,6 +4,7 @@ using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard;
 using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos;
 using AgentDashboard.TicketTracking.Infrastructure.Boards;
+using AgentDashboard.TicketTracking.Infrastructure.Tickets;
 using AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.GitHub.Fakes;
 using Cortex.Mediator;
 using FluentAssertions;
@@ -29,9 +30,14 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
     private IMediator _mediator = null!;
     private IBoardRefreshTrigger _refreshTrigger = null!;
     private BoardSnapshotCache _cache = null!;
+    private string _testDbPath = null!;
 
     public Task InitializeAsync()
     {
+        var dir = Path.Combine(Path.GetTempPath(), "agent-dashboard-it", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        _testDbPath = Path.Combine(dir, "tickets.db");
+
         _timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 5, 27, 9, 0, 0, TimeSpan.Zero));
         _fakeClient = new FakeGitHubIssuesClient(_timeProvider);
         // Clear default issues BEFORE factory creation so poller gets empty list
@@ -46,7 +52,6 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
                     {
                         ["GITHUB_TOKEN"] = ValidToken,
                         ["POLL_INTERVAL_SECONDS"] = ((int)PollInterval.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture),
-                        ["DATA_PATH"] = Path.GetTempPath(),
                     });
                 });
 
@@ -54,6 +59,10 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
                 {
                     services.Replace(ServiceDescriptor.Singleton<IGitHubIssuesClient>(_fakeClient));
                     services.Replace(ServiceDescriptor.Singleton<TimeProvider>(_timeProvider));
+
+                    services.RemoveAll<ITicketWriteRepository>();
+                    services.AddSingleton<ITicketWriteRepository>(_ =>
+                        new SqliteTicketWriteRepository("Data Source=" + _testDbPath));
                 });
             });
 
@@ -70,6 +79,16 @@ public sealed class GitHubBoardReaderIntegrationTests : IAsyncLifetime
     {
         _scope?.Dispose();
         _factory?.Dispose();
+
+        var dir = Path.GetDirectoryName(_testDbPath);
+        if (File.Exists(_testDbPath))
+        {
+            File.Delete(_testDbPath);
+        }
+        if (!string.IsNullOrEmpty(dir) && Directory.Exists(dir))
+        {
+            Directory.Delete(dir, recursive: true);
+        }
         return Task.CompletedTask;
     }
 

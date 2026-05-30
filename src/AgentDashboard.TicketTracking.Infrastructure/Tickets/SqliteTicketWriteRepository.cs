@@ -85,7 +85,7 @@ public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
     {
         ArgumentNullException.ThrowIfNull(ticket);
 
-        var row = TicketRowMapper.ToRow(ticket.ToSnapshot());
+        var row = TicketRow.FromTicket(ticket);
 
         await using var context = await _contextFactory.CreateDbContextAsync(cancellationToken)
             .ConfigureAwait(false);

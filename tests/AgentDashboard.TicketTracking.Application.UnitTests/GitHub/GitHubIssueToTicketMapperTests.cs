@@ -24,7 +24,7 @@ namespace AgentDashboard.TicketTracking.Application.GitHub;
 //   [x] no retry label -> Retry==0, NO warning
 // Happy path:
 //   [x] exactly one status + one agent + one retry -> mapped correctly, Warnings EMPTY
-public class GitHubIssueToTicketMapperShould
+public class GitHubIssueToTicketMapperTests
 {
     private static readonly GitHubRepository Repository = new("AskmethatFR/agent-dashboard");
 
