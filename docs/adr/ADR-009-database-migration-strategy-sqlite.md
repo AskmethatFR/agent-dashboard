@@ -20,7 +20,7 @@ Options considered:
 
 **Use hand-rolled SQL with `CREATE TABLE IF NOT EXISTS` and no migration tooling.**
 
-The schema is embedded as a string constant in the `SqliteTicketWriteRepository` class and executed at runtime on each `SaveAsync` call. SQLite's `IF NOT EXISTS` clause makes this idempotent.
+The schema is embedded as a string constant in the `SqliteTicketWriteRepository` class and executed **once at startup in the constructor**. SQLite's `IF NOT EXISTS` clause makes this idempotent.
 
 ## Rationale
 
