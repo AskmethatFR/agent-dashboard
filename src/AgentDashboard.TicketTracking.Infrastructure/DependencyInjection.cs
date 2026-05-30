@@ -54,7 +54,14 @@ public static class DependencyInjection
             new SqliteTicketWriteRepository(connectionString));
 
         // Override IBoardReader with GitHubBoardReader when GitHub ingestion is enabled
-        services.AddSingleton<IBoardReader, GitHubBoardReader>();
+        services.AddSingleton<IBoardReader, GitHubBoardReader>(sp =>
+            new GitHubBoardReader(
+                sp.GetRequiredService<BoardSnapshotCache>(),
+                sp.GetRequiredService<IGitHubIssuesClient>(),
+                sp.GetRequiredService<IBoardSnapshotUpdater>(),
+                sp.GetRequiredService<GitHubPollingOptions>().PollInterval,
+                sp.GetRequiredService<TimeProvider>(),
+                sp.GetRequiredService<ILogger<GitHubBoardReader>>()));
         services.AddHostedService<GitHubIssuesPoller>();
 
         return services;

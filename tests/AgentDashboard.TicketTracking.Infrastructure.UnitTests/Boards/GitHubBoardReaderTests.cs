@@ -283,7 +283,7 @@ public sealed class GitHubBoardReaderTests
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(null!, client, updater, options, timeProvider, NullLogger);
+        var act = () => new GitHubBoardReader(null!, client, updater, options.PollInterval, timeProvider, NullLogger);
         act.Should().Throw<ArgumentNullException>(
             "because the cache parameter cannot be null");
     }
@@ -298,7 +298,7 @@ public sealed class GitHubBoardReaderTests
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(cache, null!, updater, options, timeProvider, NullLogger);
+        var act = () => new GitHubBoardReader(cache, null!, updater, options.PollInterval, timeProvider, NullLogger);
         act.Should().Throw<ArgumentNullException>(
             "because the client parameter cannot be null");
     }
@@ -313,7 +313,7 @@ public sealed class GitHubBoardReaderTests
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(cache, client, null!, options, timeProvider, NullLogger);
+        var act = () => new GitHubBoardReader(cache, client, null!, options.PollInterval, timeProvider, NullLogger);
         act.Should().Throw<ArgumentNullException>(
             "because the snapshotUpdater parameter cannot be null");
     }
@@ -328,9 +328,9 @@ public sealed class GitHubBoardReaderTests
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(cache, client, updater, null!, timeProvider, NullLogger);
+        var act = () => new GitHubBoardReader(cache, client, updater, TimeSpan.FromMinutes(10), null!, NullLogger);
         act.Should().Throw<ArgumentNullException>(
-            "because the options parameter cannot be null");
+            "because the timeProvider parameter cannot be null");
     }
 
     [Fact]
@@ -343,7 +343,7 @@ public sealed class GitHubBoardReaderTests
         var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(cache, client, updater, options, null!, NullLogger);
+        var act = () => new GitHubBoardReader(cache, client, updater, options.PollInterval, null!, NullLogger);
         act.Should().Throw<ArgumentNullException>(
             "because the timeProvider parameter cannot be null");
     }
@@ -359,7 +359,7 @@ public sealed class GitHubBoardReaderTests
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(cache, client, updater, options, timeProvider, null!);
+        var act = () => new GitHubBoardReader(cache, client, updater, options.PollInterval, timeProvider, null!);
         act.Should().Throw<ArgumentNullException>(
             "because the logger parameter cannot be null");
     }
@@ -386,7 +386,7 @@ public sealed class GitHubBoardReaderTests
     {
         var timeProvider = new ManualTimeProvider(now);
         var updater = snapshotUpdater ?? new BoardSnapshotUpdater(cache);
-        return new GitHubBoardReader(cache, client, updater, options, timeProvider, NullLogger);
+        return new GitHubBoardReader(cache, client, updater, options.PollInterval, timeProvider, NullLogger);
     }
 
     private static BoardSnapshot BuildTestSnapshot(int ticketId = 1)

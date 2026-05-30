@@ -1,6 +1,6 @@
 namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 
-public sealed class GitHubPollingOptions
+internal sealed class GitHubPollingOptions
 {
     private const string DogfoodingRepositoryOwner = "AskmethatFR";
     private const string DogfoodingRepositoryName = "agent-dashboard";
