@@ -170,4 +170,16 @@ public sealed class TicketTests
         Assert.Contains("Owner/Repo", str);
         Assert.Contains("42", str);
     }
+
+    [Fact]
+    public void Equals_NullOperands_ReturnsFalse()
+    {
+#nullable disable
+        var ticket = CreateTestTicket();
+        
+        Assert.False(ticket.Equals(null));
+        Assert.False((null as Ticket) == ticket);
+        Assert.False(ticket == (null as Ticket));
+#nullable enable
+    }
 }
