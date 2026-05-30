@@ -13,13 +13,39 @@ using Microsoft.Data.Sqlite;
 public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
 {
     private readonly string _connectionString;
-    private readonly string _schemaSql;
 
     public SqliteTicketWriteRepository(string connectionString)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
         _connectionString = connectionString;
-        _schemaSql = @"
+        InitializeSchemaAsync().GetAwaiter().GetResult();
+    }
+
+    private async Task InitializeSchemaAsync()
+    {
+        // Ensure the directory exists
+        var connectionStringBuilder = new SqliteConnectionStringBuilder(_connectionString);
+        var dataSource = connectionStringBuilder.DataSource;
+        if (!string.IsNullOrEmpty(dataSource))
+        {
+            var directory = System.IO.Path.GetDirectoryName(dataSource);
+            if (!string.IsNullOrEmpty(directory) && !System.IO.Directory.Exists(directory))
+            {
+                System.IO.Directory.CreateDirectory(directory);
+            }
+        }
+
+        await using var connection = new SqliteConnection(_connectionString);
+        await connection.OpenAsync().ConfigureAwait(false);
+
+        // Enable WAL mode for concurrent read/write
+        await using (var cmd = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
+        {
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        }
+
+        // Create schema if not exists
+        const string schemaSql = @"
             CREATE TABLE IF NOT EXISTS tickets (
                 repo TEXT NOT NULL,
                 github_issue_number INTEGER NOT NULL,
@@ -37,6 +63,10 @@ public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
             CREATE INDEX IF NOT EXISTS idx_tickets_status ON tickets(status);
             CREATE INDEX IF NOT EXISTS idx_tickets_agent ON tickets(agent);
         ";
+        await using (var cmd = new SqliteCommand(schemaSql, connection))
+        {
+            await cmd.ExecuteNonQueryAsync().ConfigureAwait(false);
+        }
     }
 
     public async Task SaveAsync(Ticket ticket, CancellationToken cancellationToken)
@@ -45,18 +75,6 @@ public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
 
         await using var connection = new SqliteConnection(_connectionString);
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
-
-        // Enable WAL mode for concurrent read/write
-        await using (var cmd = new SqliteCommand("PRAGMA journal_mode=WAL;", connection))
-        {
-            await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
-
-        // Create schema if not exists
-        await using (var cmd = new SqliteCommand(_schemaSql, connection))
-        {
-            await cmd.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
-        }
 
         // Upsert the ticket
         var commandText = @"
