@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 
-public static class GitHubPollingOptionsFactory
+internal static class GitHubPollingOptionsFactory
 {
     private const string TokenKey = "GITHUB_TOKEN";
     private const string IntervalKey = "POLL_INTERVAL_SECONDS";

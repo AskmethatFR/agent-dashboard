@@ -12,7 +12,7 @@ internal sealed class OctokitGitHubIssuesClient : IGitHubIssuesClient
     private readonly GitHubPollingOptions _options;
     private readonly GitHubClient _client;
 
-    public OctokitGitHubIssuesClient(GitHubPollingOptions options)
+    internal OctokitGitHubIssuesClient(GitHubPollingOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
         _options = options;

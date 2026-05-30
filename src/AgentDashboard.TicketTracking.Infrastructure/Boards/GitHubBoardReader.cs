@@ -27,7 +27,7 @@ public sealed partial class GitHubBoardReader : IBoardReader
     /// <param name="options">The polling options containing PollInterval.</param>
     /// <param name="timeProvider">The time provider for getting current time.</param>
     /// <param name="logger">The logger for error logging.</param>
-    public GitHubBoardReader(
+    internal GitHubBoardReader(
         BoardSnapshotCache cache,
         IGitHubIssuesClient client,
         IBoardSnapshotUpdater snapshotUpdater,

@@ -20,7 +20,7 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
     private readonly ILogger<GitHubIssuesPoller> _logger;
     private readonly string _repoLabel;
 
-    public GitHubIssuesPoller(
+    internal GitHubIssuesPoller(
         IGitHubIssuesClient client,
         IBoardSnapshotUpdater snapshotUpdater,
         BoardRefreshTrigger trigger,
