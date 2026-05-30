@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Domain.Tickets;
@@ -118,8 +119,18 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
         catch (Exception ex)
 #pragma warning restore CA1031
         {
-            GitHubIssuesPollerLog.PollFailed(_logger, ex.GetType().Name, ex.Message);
+            GitHubIssuesPollerLog.PollFailed(_logger, ex.GetType().Name, SanitizeExceptionMessage(ex));
         }
+    }
+
+    private static string SanitizeExceptionMessage(Exception ex)
+    {
+        var message = ex.ToString();
+        // Remove GitHub token patterns
+        message = Regex.Replace(message, "ghp_[A-Za-z0-9]{36}", "[REDACTED_TOKEN]");
+        message = Regex.Replace(message, "github_pat_[A-Za-z0-9]{22}", "[REDACTED_TOKEN]");
+        message = Regex.Replace(message, "Authorization:.*", "Authorization: [REDACTED]");
+        return message;
     }
 }
 
