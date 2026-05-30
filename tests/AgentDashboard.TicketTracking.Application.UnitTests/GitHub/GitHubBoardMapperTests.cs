@@ -7,12 +7,14 @@ using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Domain.Agents;
 using AgentDashboard.TicketTracking.Domain.Boards;
 using AgentDashboard.TicketTracking.Domain.Tickets;
+using AgentDashboard.TicketTracking.TestShared.Factories;
 
 namespace AgentDashboard.TicketTracking.Application.UnitTests.GitHub;
 
 public class GitHubBoardMapperTests
 {
     private static readonly DateTimeOffset FixedNow = new(2026, 05, 27, 12, 0, 0, TimeSpan.Zero);
+    private static readonly string FixedHtmlUrl = "https://github.com/AskmethatFR/agent-dashboard/issues/1";
 
     // ========================================================================
     // TEST LIST (TDD by Example - Kent Beck's Test List technique)
@@ -77,9 +79,33 @@ public class GitHubBoardMapperTests
     {
         var records = new List<GitHubIssueRecord>
         {
-            new GitHubIssueRecord(1, "Feature A", new List<string> { "status:created", "agent:pm", "retry:0" }, FixedNow.AddHours(-1)),
-            new GitHubIssueRecord(2, "Feature B", new List<string> { "status:in-review", "agent:dev-a", "retry:2" }, FixedNow.AddHours(-2)),
-            new GitHubIssueRecord(3, "Feature C", new List<string> { "status:done", "agent:dev-b", "retry:0" }, FixedNow.AddHours(-12)),
+            new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Feature A")
+            .WithLabels("status:created", "agent:pm", "retry:0")
+            .WithCreatedAt(FixedNow.AddHours(-1))
+            .WithHtmlUrl("https://github.com/AskmethatFR/agent-dashboard/issues/1")
+            .WithUpdatedAt(FixedNow.AddHours(-1))
+            .AsOpen()
+            .Build(),
+            new GitHubIssueRecordBuilder()
+            .WithNumber(2)
+            .WithTitle("Feature B")
+            .WithLabels("status:in-review", "agent:dev-a", "retry:2")
+            .WithCreatedAt(FixedNow.AddHours(-2))
+            .WithHtmlUrl("https://github.com/AskmethatFR/agent-dashboard/issues/2")
+            .WithUpdatedAt(FixedNow.AddHours(-2))
+            .AsOpen()
+            .Build(),
+            new GitHubIssueRecordBuilder()
+            .WithNumber(3)
+            .WithTitle("Feature C")
+            .WithLabels("status:done", "agent:dev-b", "retry:0")
+            .WithCreatedAt(FixedNow.AddHours(-12))
+            .WithHtmlUrl("https://github.com/AskmethatFR/agent-dashboard/issues/3")
+            .WithUpdatedAt(FixedNow.AddHours(-12))
+            .AsOpen()
+            .Build(),
         };
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(records, FixedNow);
@@ -94,11 +120,15 @@ public class GitHubBoardMapperTests
     {
         var records = new List<GitHubIssueRecord>
         {
-            new GitHubIssueRecord(
-                42,
-                "Implement health check",
-                new List<string> { "status:in-development", "agent:dev-a", "retry:1" },
-                FixedNow.AddHours(-2))
+            new GitHubIssueRecordBuilder()
+            .WithNumber(42)
+            .WithTitle("Implement health check")
+            .WithLabels("status:in-development", "agent:dev-a", "retry:1")
+            .WithCreatedAt(FixedNow.AddHours(-2))
+            .WithHtmlUrl("https://github.com/AskmethatFR/agent-dashboard/issues/42")
+            .WithUpdatedAt(FixedNow.AddHours(-2))
+            .AsOpen()
+            .Build()
         };
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(records, FixedNow);
@@ -118,8 +148,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_StatusCreated_ToCreatedColumn()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:created" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:created")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -130,8 +167,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_StatusSpecified_ToSpecifiedColumn()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:specified" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:specified")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -142,8 +186,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_StatusInDevelopment_ToInDevelopmentColumn()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:in-development" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:in-development")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -154,8 +205,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_StatusInReview_ToInReviewColumn()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:in-review" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:in-review")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -166,8 +224,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_StatusInQa_ToInQaColumn()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:in-qa" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:in-qa")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -178,8 +243,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_StatusAwaitingValidation_ToAwaitingValidationColumn()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:awaiting-validation" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:awaiting-validation")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -190,8 +262,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_StatusDone_ToDoneColumn()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:done" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:done")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -202,8 +281,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_StatusEscalated_ToCreatedColumn_Fallback()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:escalated" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:escalated")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -214,8 +300,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_RecordWithoutStatus_ToCreatedColumn_Fallback()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string>(), FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels(Array.Empty<string>())
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -230,8 +323,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_AgentPm_ToPmAgent()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "agent:pm" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("agent:pm")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -242,8 +342,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_AgentArchitect_ToArchitectAgent()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "agent:architect" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("agent:architect")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -254,8 +361,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_AgentDevA_ToDevAAgent()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "agent:dev-a" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("agent:dev-a")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -266,8 +380,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_AgentDevB_ToDevBAgent()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "agent:dev-b" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("agent:dev-b")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -278,8 +399,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_AgentQa_ToQaAgent()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "agent:qa" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("agent:qa")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -290,8 +418,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_AgentSecurity_ToSecurityAgent()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "agent:security" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("agent:security")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -302,8 +437,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_RecordWithoutAgent_ToPmAgent_Fallback()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:created" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:created")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -318,8 +460,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_Retry0_ToRetryZero()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "retry:0" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("retry:0")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -330,8 +479,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_Retry1_ToRetryOne()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "retry:1" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("retry:1")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -342,8 +498,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_Retry2_ToRetryTwo()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "retry:2" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("retry:2")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -354,8 +517,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_Retry3_ToRetryThree()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "retry:3" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("retry:3")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -366,8 +536,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_RecordWithoutRetry_ToRetryZero_Fallback()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string>(), FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels(Array.Empty<string>())
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -382,8 +559,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_DoneTicketWithAgeLessThan24h_ToFresh()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:done" }, FixedNow.AddHours(-12));
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:done")
+            .WithCreatedAt(FixedNow.AddHours(-12))
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow.AddHours(-12))
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -394,8 +578,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_TicketWithAgeAtWarningThreshold_ToStale()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string>(), FixedNow.Subtract(Age.WarningThreshold));
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels(Array.Empty<string>())
+            .WithCreatedAt(FixedNow.Subtract(Age.WarningThreshold))
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow.Subtract(Age.WarningThreshold))
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -406,8 +597,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_TicketWithAgeBelowWarningThreshold_ToNeutral()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string>(), FixedNow.AddMinutes(-30));
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels(Array.Empty<string>())
+            .WithCreatedAt(FixedNow.AddMinutes(-30))
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow.AddMinutes(-30))
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -418,8 +616,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_DoneTicketWithAgeOver24h_ToStale()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:done" }, FixedNow.AddDays(-2));
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:done")
+            .WithCreatedAt(FixedNow.AddDays(-2))
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow.AddDays(-2))
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -435,8 +640,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_InReviewStatus_ToCrossReviewTicket()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:in-review", "agent:dev-a" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:in-review", "agent:dev-a")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -447,8 +659,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_EscalatedStatus_ToEscalatedTicket()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:escalated", "agent:dev-a", "retry:3", "escalation-target:pm" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:escalated", "agent:dev-a", "retry:3", "escalation-target:pm")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -459,8 +678,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_InReviewAndEscalated_ToBothFlagsSet()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string> { "status:in-review", "status:escalated", "agent:dev-a", "retry:3", "escalation-target:pm" }, FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels("status:in-review", "status:escalated", "agent:dev-a", "retry:3", "escalation-target:pm")
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -507,9 +733,33 @@ public class GitHubBoardMapperTests
     {
         var records = new List<GitHubIssueRecord>
         {
-            new GitHubIssueRecord(1, "A", new List<string>(), FixedNow),
-            new GitHubIssueRecord(2, "B", new List<string>(), FixedNow),
-            new GitHubIssueRecord(3, "C", new List<string>(), FixedNow),
+            new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("A")
+            .WithLabels(Array.Empty<string>())
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build(),
+            new GitHubIssueRecordBuilder()
+            .WithNumber(2)
+            .WithTitle("B")
+            .WithLabels(Array.Empty<string>())
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl("https://github.com/AskmethatFR/agent-dashboard/issues/2")
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build(),
+            new GitHubIssueRecordBuilder()
+            .WithNumber(3)
+            .WithTitle("C")
+            .WithLabels(Array.Empty<string>())
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl("https://github.com/AskmethatFR/agent-dashboard/issues/3")
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build(),
         };
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(records, FixedNow);
@@ -535,8 +785,15 @@ public class GitHubBoardMapperTests
     public void Calculate_AgeFromCreatedAt_When_RecordHasCreatedAt()
     {
         var createdAt = FixedNow.AddHours(-5);
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string>(), createdAt);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels(Array.Empty<string>())
+            .WithCreatedAt(createdAt)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(createdAt)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];
@@ -551,8 +808,15 @@ public class GitHubBoardMapperTests
     [Fact]
     public void Map_ThinkingFlag_ToFalse_ForAllTickets()
     {
-        var record = new GitHubIssueRecord(
-            1, "Test", new List<string>(), FixedNow);
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("Test")
+            .WithLabels(Array.Empty<string>())
+            .WithCreatedAt(FixedNow)
+            .WithHtmlUrl(FixedHtmlUrl)
+            .WithUpdatedAt(FixedNow)
+            .AsOpen()
+            .Build();
 
         var snapshot = GitHubBoardMapper.MapToBoardSnapshot(new List<GitHubIssueRecord> { record }, FixedNow);
         var ticket = snapshot.Tickets[0];

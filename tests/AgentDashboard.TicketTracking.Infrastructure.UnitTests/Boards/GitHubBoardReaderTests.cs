@@ -103,7 +103,8 @@ public sealed class GitHubBoardReaderTests
         
         var records = new List<GitHubIssueRecord>
         {
-            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow.AddHours(-1))
+            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow.AddHours(-1),
+                "https://github.com/AskmethatFR/agent-dashboard/issues/1", FixedNow.AddHours(-1), null)
         };
         var client = new FakeGitHubIssuesClient(records);
         var reader = BuildReader(cache, client, BuildOptions(), FixedNow);
@@ -130,7 +131,8 @@ public sealed class GitHubBoardReaderTests
 
         var records = new List<GitHubIssueRecord>
         {
-            new(2, "New Issue", new List<string> { "status:created", "agent:pm" }, FixedNow)
+            new(2, "New Issue", new List<string> { "status:created", "agent:pm" }, FixedNow,
+                "https://github.com/AskmethatFR/agent-dashboard/issues/2", FixedNow, null)
         };
         var client = new FakeGitHubIssuesClient(records);
         var reader = BuildReader(cache, client, BuildOptions(pollInterval: TimeSpan.FromMilliseconds(100)), timeAfterCache);
@@ -200,7 +202,8 @@ public sealed class GitHubBoardReaderTests
 
         var records = new List<GitHubIssueRecord>
         {
-            new(2, "New Issue", new List<string> { "status:created", "agent:pm" }, FixedNow)
+            new(2, "New Issue", new List<string> { "status:created", "agent:pm" }, FixedNow,
+                "https://github.com/AskmethatFR/agent-dashboard/issues/2", FixedNow, null)
         };
         var client = new FakeGitHubIssuesClient(records);
         var reader = BuildReader(cache, client, BuildOptions(pollInterval: TimeSpan.Zero), FixedNow);
@@ -224,7 +227,8 @@ public sealed class GitHubBoardReaderTests
         
         var records = new List<GitHubIssueRecord>
         {
-            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow)
+            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow,
+                "https://github.com/AskmethatFR/agent-dashboard/issues/1", FixedNow, null)
         };
         var client = new FakeGitHubIssuesClient(records);
         var reader = BuildReader(cache, client, BuildOptions(), FixedNow);
@@ -246,7 +250,8 @@ public sealed class GitHubBoardReaderTests
 
         var records = new List<GitHubIssueRecord>
         {
-            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow.AddHours(-1))
+            new(1, "Test Issue", new List<string> { "status:created", "agent:pm" }, FixedNow.AddHours(-1),
+                "https://github.com/AskmethatFR/agent-dashboard/issues/1", FixedNow.AddHours(-1), null)
         };
         var client = new FakeGitHubIssuesClient(records);
 
@@ -278,7 +283,7 @@ public sealed class GitHubBoardReaderTests
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(null!, client, updater, options, timeProvider, NullLogger);
+        var act = () => new GitHubBoardReader(null!, client, updater, options.PollInterval, timeProvider, NullLogger);
         act.Should().Throw<ArgumentNullException>(
             "because the cache parameter cannot be null");
     }
@@ -293,7 +298,7 @@ public sealed class GitHubBoardReaderTests
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(cache, null!, updater, options, timeProvider, NullLogger);
+        var act = () => new GitHubBoardReader(cache, null!, updater, options.PollInterval, timeProvider, NullLogger);
         act.Should().Throw<ArgumentNullException>(
             "because the client parameter cannot be null");
     }
@@ -308,7 +313,7 @@ public sealed class GitHubBoardReaderTests
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(cache, client, null!, options, timeProvider, NullLogger);
+        var act = () => new GitHubBoardReader(cache, client, null!, options.PollInterval, timeProvider, NullLogger);
         act.Should().Throw<ArgumentNullException>(
             "because the snapshotUpdater parameter cannot be null");
     }
@@ -323,9 +328,9 @@ public sealed class GitHubBoardReaderTests
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(cache, client, updater, null!, timeProvider, NullLogger);
+        var act = () => new GitHubBoardReader(cache, client, updater, TimeSpan.FromMinutes(10), null!, NullLogger);
         act.Should().Throw<ArgumentNullException>(
-            "because the options parameter cannot be null");
+            "because the timeProvider parameter cannot be null");
     }
 
     [Fact]
@@ -338,7 +343,7 @@ public sealed class GitHubBoardReaderTests
         var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(cache, client, updater, options, null!, NullLogger);
+        var act = () => new GitHubBoardReader(cache, client, updater, options.PollInterval, null!, NullLogger);
         act.Should().Throw<ArgumentNullException>(
             "because the timeProvider parameter cannot be null");
     }
@@ -354,7 +359,7 @@ public sealed class GitHubBoardReaderTests
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
-        var act = () => new GitHubBoardReader(cache, client, updater, options, timeProvider, null!);
+        var act = () => new GitHubBoardReader(cache, client, updater, options.PollInterval, timeProvider, null!);
         act.Should().Throw<ArgumentNullException>(
             "because the logger parameter cannot be null");
     }
@@ -381,7 +386,7 @@ public sealed class GitHubBoardReaderTests
     {
         var timeProvider = new ManualTimeProvider(now);
         var updater = snapshotUpdater ?? new BoardSnapshotUpdater(cache);
-        return new GitHubBoardReader(cache, client, updater, options, timeProvider, NullLogger);
+        return new GitHubBoardReader(cache, client, updater, options.PollInterval, timeProvider, NullLogger);
     }
 
     private static BoardSnapshot BuildTestSnapshot(int ticketId = 1)

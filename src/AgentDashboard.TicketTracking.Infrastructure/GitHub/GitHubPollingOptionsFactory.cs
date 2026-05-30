@@ -4,7 +4,7 @@ using Microsoft.Extensions.Logging;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 
-public static class GitHubPollingOptionsFactory
+internal static class GitHubPollingOptionsFactory
 {
     private const string TokenKey = "GITHUB_TOKEN";
     private const string IntervalKey = "POLL_INTERVAL_SECONDS";
@@ -13,6 +13,7 @@ public static class GitHubPollingOptionsFactory
     {
         ("ghp_", 14),          // ghp_ + at least 10 chars  (preserves existing behavior)
         ("github_pat_", 21),   // github_pat_ + at least 10 chars
+        ("gho_", 14),          // gh CLI OAuth token
     };
 
     private static readonly TimeSpan DefaultInterval = TimeSpan.FromSeconds(600);
@@ -44,7 +45,7 @@ public static class GitHubPollingOptionsFactory
         if (match.Prefix is null)
         {
             throw new InvalidOperationException(
-                $"{TokenKey} must be a valid GitHub Personal Access Token. Accepted prefixes: 'ghp_' (classic) or 'github_pat_' (fine-grained). Found a token of length {token.Length} with an unrecognized prefix.");
+                $"{TokenKey} must be a valid GitHub Personal Access Token. Accepted prefixes: 'ghp_' (classic), 'github_pat_' (fine-grained), or 'gho_' (GitHub CLI OAuth). Found a token with an unrecognized prefix.");
         }
 
         if (token.Length < match.MinLength)
