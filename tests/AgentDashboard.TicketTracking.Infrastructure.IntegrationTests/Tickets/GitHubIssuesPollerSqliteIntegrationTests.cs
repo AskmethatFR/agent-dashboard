@@ -33,8 +33,6 @@ namespace AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.Tickets;
 public sealed class GitHubIssuesPollerSqliteIntegrationTests : IAsyncLifetime
 {
     private const string ValidToken = "ghp_examplePAT12345";
-    private const string TestDataPath = "/tmp/test-data-agent-dashboard";
-    private const string DatabaseFileName = "tickets.db";
     private static readonly TimeSpan PollInterval = TimeSpan.FromSeconds(600);
 
     private FakeTimeProvider _timeProvider = null!;
@@ -42,16 +40,13 @@ public sealed class GitHubIssuesPollerSqliteIntegrationTests : IAsyncLifetime
     private RecordingLogger<GitHubIssuesPoller> _pollerLogger = null!;
     private WebApplicationFactory<Program> _factory = null!;
     private string _testDbPath = null!;
+    private string _testDbDir = null!;
 
     public Task InitializeAsync()
     {
-        _testDbPath = Path.Combine(TestDataPath, DatabaseFileName);
-        Directory.CreateDirectory(TestDataPath);
-
-        if (File.Exists(_testDbPath))
-        {
-            File.Delete(_testDbPath);
-        }
+        _testDbDir = Path.Combine(Path.GetTempPath(), "agent-dashboard-it", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(_testDbDir);
+        _testDbPath = Path.Combine(_testDbDir, "tickets.db");
 
         _timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 5, 22, 9, 0, 0, TimeSpan.Zero));
         _fakeClient = new FakeGitHubIssuesClient(_timeProvider);
@@ -66,7 +61,7 @@ public sealed class GitHubIssuesPollerSqliteIntegrationTests : IAsyncLifetime
                     {
                         ["GITHUB_TOKEN"] = ValidToken,
                         ["POLL_INTERVAL_SECONDS"] = ((int)PollInterval.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture),
-                        ["DATA_PATH"] = TestDataPath,
+                        ["DATA_PATH"] = _testDbDir,
                     });
                 });
 
@@ -88,13 +83,9 @@ public sealed class GitHubIssuesPollerSqliteIntegrationTests : IAsyncLifetime
     public Task DisposeAsync()
     {
         _factory.Dispose();
-        if (File.Exists(_testDbPath))
+        if (Directory.Exists(_testDbDir))
         {
-            File.Delete(_testDbPath);
-        }
-        if (Directory.Exists(TestDataPath) && Directory.GetFiles(TestDataPath).Length == 0)
-        {
-            Directory.Delete(TestDataPath);
+            Directory.Delete(_testDbDir, recursive: true);
         }
         return Task.CompletedTask;
     }
