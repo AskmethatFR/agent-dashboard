@@ -4,6 +4,7 @@ namespace AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.GitHub.F
 
 public sealed record LogEntry(
     LogLevel Level,
+    EventId EventId,
     string Message,
     IReadOnlyDictionary<string, object?> State);
 
@@ -47,7 +48,7 @@ public sealed class RecordingLogger<T> : ILogger<T>
 
         lock (_gate)
         {
-            _entries.Add(new LogEntry(logLevel, formatter(state, exception), dictionary));
+            _entries.Add(new LogEntry(logLevel, eventId, formatter(state, exception), dictionary));
         }
     }
 

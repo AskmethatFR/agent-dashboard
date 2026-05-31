@@ -44,8 +44,28 @@
 // [✓] 21. Project_ThreeRecords_ReturnsThreeUniqueTickets
 // [✓] 23. Project_ColumnAndAgentIds_MatchExpectedSets
 //
-// VALIDATION:
-// [✓] 22. Project_WithMalformedLabel_ThrowsInvalidOperationException (Theory)
+// DEGRADATION (ADR-014 — security-driven, A04):
+// [✓] 22a. Project_WithMalformedLabel_DoesNotThrow (Theory)
+// [✓] 22b. Project_WithMalformedLabel_EmitsMalformedLabelWarning (Theory)
+// [✓] 22c. Project_WithMalformedStatus_FallsBackToCreatedAndRenders
+// [✓] 22d. Project_WithMalformedAgent_FallsBackToPmAndRenders
+// [✓] 22e. Project_WithMalformedRetry_FallsBackToZeroAndRenders
+// [✓] 22f. Project_OneBadAmongMany_RendersValidTicketsAndWarnsOnlyForBad (THE security test)
+// [✓] 22g. Project_AllValid_EmitsNoWarnings
+// [✓] 22h. Project_MultipleBadLabelsOnOneRecord_EmitsOneWarningPerBadLabel
+// [✓] 22i. Project_WithUnknownNonTeamPrefix_RendersWithNoWarning (Theory)
+//
+// DEGRADATION — OUT-OF-RANGE RETRY (B1 fix — security A04):
+// [✓] 22j. Project_WithOutOfRangeRetryLabel_DoesNotThrow (Theory: retry:4, retry:999, retry:-1)
+// [✓] 22k. Project_WithOutOfRangeRetryLabel_EmitsMalformedLabelWarning (Theory: retry:4, retry:999)
+// [✓] 22l. Project_WithOutOfRangeRetry_FallsBackToZeroAndRenders
+//
+// B2 — UNTESTED BRANCHES (co-agent and escalation-target invalid arms):
+// [✓] 22m. Project_InReview_WithInvalidCoAgent_FallsBackAndWarns
+// [✓] 22n. Project_Escalated_WithInvalidEscalationTarget_FallsBackAndWarns
+//
+// B3 — PASS-THROUGH (bare word, no colon):
+// [✓] 22o. Project_WithBareWordLabel_RendersWithNoWarning
 //
 // ========================================================================
 
@@ -79,9 +99,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecord(1, statusLabel);
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].ColumnId.Value.Should().Be(expectedColumnId);
+        result.Snapshot.Tickets[0].ColumnId.Value.Should().Be(expectedColumnId);
     }
 
     // -------------------------------------------------------------------------
@@ -93,9 +113,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecord(1, "status:escalated");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].ColumnId.Value.Should().Be("CREATED");
+        result.Snapshot.Tickets[0].ColumnId.Value.Should().Be("CREATED");
     }
 
     // -------------------------------------------------------------------------
@@ -107,9 +127,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordNoLabels(1);
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].ColumnId.Value.Should().Be("CREATED");
+        result.Snapshot.Tickets[0].ColumnId.Value.Should().Be("CREATED");
     }
 
     // -------------------------------------------------------------------------
@@ -127,9 +147,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecord(1, agentLabel);
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].AgentId.Value.Should().Be(expectedAgentId);
+        result.Snapshot.Tickets[0].AgentId.Value.Should().Be(expectedAgentId);
     }
 
     // -------------------------------------------------------------------------
@@ -141,9 +161,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecord(1, "status:created");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].AgentId.Value.Should().Be("pm");
+        result.Snapshot.Tickets[0].AgentId.Value.Should().Be("pm");
     }
 
     // -------------------------------------------------------------------------
@@ -159,9 +179,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecord(1, retryLabel);
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].Retry.Value.Should().Be(expected);
+        result.Snapshot.Tickets[0].Retry.Value.Should().Be(expected);
     }
 
     // -------------------------------------------------------------------------
@@ -173,9 +193,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordWithLabels(1, "retry:1", "retry:3");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].Retry.Value.Should().Be(1);
+        result.Snapshot.Tickets[0].Retry.Value.Should().Be(1);
     }
 
     // -------------------------------------------------------------------------
@@ -187,9 +207,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordNoLabels(1);
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].Retry.Value.Should().Be(0);
+        result.Snapshot.Tickets[0].Retry.Value.Should().Be(0);
     }
 
     // -------------------------------------------------------------------------
@@ -201,9 +221,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordWithLabels(1, "status:in-review", "agent:dev-a");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        var ticket = snapshot.Tickets[0];
+        var ticket = result.Snapshot.Tickets[0];
         ticket.IsInCrossReview.Should().BeTrue();
         ticket.CoAgentId!.Value.Should().Be("dev-a");
     }
@@ -217,9 +237,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordWithLabels(1, "status:in-review", "agent:dev-a", "co-agent:dev-b");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].CoAgentId!.Value.Should().Be("dev-b");
+        result.Snapshot.Tickets[0].CoAgentId!.Value.Should().Be("dev-b");
     }
 
     // -------------------------------------------------------------------------
@@ -231,9 +251,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordWithLabels(1, "status:escalated", "agent:dev-a", "retry:3", "escalation-target:pm");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].IsEscalated.Should().BeTrue();
+        result.Snapshot.Tickets[0].IsEscalated.Should().BeTrue();
     }
 
     // -------------------------------------------------------------------------
@@ -245,9 +265,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordWithLabels(1, "status:escalated", "agent:dev-a", "retry:2");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].IsEscalated.Should().BeFalse();
+        result.Snapshot.Tickets[0].IsEscalated.Should().BeFalse();
     }
 
     // -------------------------------------------------------------------------
@@ -259,9 +279,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordWithLabels(1, "status:escalated", "agent:dev-a", "retry:3");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        var ticket = snapshot.Tickets[0];
+        var ticket = result.Snapshot.Tickets[0];
         ticket.IsEscalated.Should().BeTrue();
         ticket.EscalationTarget!.Value.Should().Be("dev-a");
     }
@@ -275,9 +295,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordWithLabels(1, "status:in-review", "status:escalated", "agent:dev-a", "retry:3", "escalation-target:pm");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        var ticket = snapshot.Tickets[0];
+        var ticket = result.Snapshot.Tickets[0];
         ticket.IsInCrossReview.Should().BeTrue();
         ticket.IsEscalated.Should().BeTrue();
     }
@@ -299,9 +319,9 @@ public sealed class BoardProjectionShould
             .AsOpen()
             .Build();
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Fresh);
+        result.Snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Fresh);
     }
 
     // -------------------------------------------------------------------------
@@ -321,9 +341,9 @@ public sealed class BoardProjectionShould
             .AsOpen()
             .Build();
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Stale);
+        result.Snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Stale);
     }
 
     // -------------------------------------------------------------------------
@@ -343,9 +363,9 @@ public sealed class BoardProjectionShould
             .AsOpen()
             .Build();
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Neutral);
+        result.Snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Neutral);
     }
 
     // -------------------------------------------------------------------------
@@ -365,9 +385,9 @@ public sealed class BoardProjectionShould
             .AsOpen()
             .Build();
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Stale);
+        result.Snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Stale);
     }
 
     // -------------------------------------------------------------------------
@@ -388,9 +408,9 @@ public sealed class BoardProjectionShould
             .AsOpen()
             .Build();
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].Age.Value.Should().Be(TimeSpan.FromHours(5));
+        result.Snapshot.Tickets[0].Age.Value.Should().Be(TimeSpan.FromHours(5));
     }
 
     // -------------------------------------------------------------------------
@@ -402,9 +422,9 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordNoLabels(1);
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].IsThinking.Should().BeFalse();
+        result.Snapshot.Tickets[0].IsThinking.Should().BeFalse();
     }
 
     // -------------------------------------------------------------------------
@@ -414,11 +434,11 @@ public sealed class BoardProjectionShould
     [Fact]
     public void Project_EmptyRecords_ReturnsSevenColumnsAndSixAgentsAndZeroTickets()
     {
-        var snapshot = _sut.Project(new List<GitHubIssueRecord>(), AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord>(), AsOf);
 
-        snapshot.Columns.Should().HaveCount(7);
-        snapshot.Agents.Should().HaveCount(6);
-        snapshot.Tickets.Should().BeEmpty();
+        result.Snapshot.Columns.Should().HaveCount(7);
+        result.Snapshot.Agents.Should().HaveCount(6);
+        result.Snapshot.Tickets.Should().BeEmpty();
     }
 
     // -------------------------------------------------------------------------
@@ -435,29 +455,185 @@ public sealed class BoardProjectionShould
             BuildRecordWithLabels(3, "status:done", "agent:dev-b")
         };
 
-        var snapshot = _sut.Project(records, AsOf);
+        var result = _sut.Project(records, AsOf);
 
-        snapshot.Tickets.Should().HaveCount(3);
-        snapshot.Tickets.Select(t => t.Id.Value).Should().OnlyHaveUniqueItems();
+        result.Snapshot.Tickets.Should().HaveCount(3);
+        result.Snapshot.Tickets.Select(t => t.Id.Value).Should().OnlyHaveUniqueItems();
     }
 
     // -------------------------------------------------------------------------
-    // 22. ValidateLabels throws InvalidOperationException on malformed label
+    // 22a. Degradation: malformed label → does NOT throw (replaces old throw-test)
     // -------------------------------------------------------------------------
 
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    [InlineData("status:not-a-valid-status")]
-    [InlineData("agent:not-a-valid-agent")]
-    [InlineData("retry:not-an-int")]
-    public void Project_WithMalformedLabel_ThrowsInvalidOperationException(string malformedLabel)
+    [InlineData("status:foo")]
+    [InlineData("agent:bob")]
+    [InlineData("retry:xyz")]
+    [InlineData("status:")]
+    [InlineData("foo:")]
+    [InlineData(":bar")]
+    public void Project_WithMalformedLabel_DoesNotThrow(string malformedLabel)
     {
         var record = BuildRecord(1, malformedLabel);
 
         var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        act.Should().Throw<InvalidOperationException>();
+        act.Should().NotThrow();
+    }
+
+    // -------------------------------------------------------------------------
+    // 22b. Malformed label → exactly one ProjectionWarning (MalformedLabel)
+    // -------------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("status:foo")]
+    [InlineData("agent:bob")]
+    [InlineData("retry:xyz")]
+    [InlineData("status:")]
+    [InlineData("foo:")]
+    [InlineData(":bar")]
+    public void Project_WithMalformedLabel_EmitsMalformedLabelWarning(string malformedLabel)
+    {
+        var record = BuildRecord(1, malformedLabel);
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Warnings.Should().ContainSingle();
+        var warning = result.Warnings[0];
+        warning.Kind.Should().Be(ProjectionWarningKind.MalformedLabel);
+        warning.IssueNumber.Should().Be(1);
+        warning.OffendingLabel.Should().Be(malformedLabel);
+    }
+
+    // -------------------------------------------------------------------------
+    // 22c. Malformed status → CREATED fallback + warning + renders
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_WithMalformedStatus_FallsBackToCreatedAndRenders()
+    {
+        var record = BuildRecord(1, "status:foo");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        result.Snapshot.Tickets[0].ColumnId.Value.Should().Be("CREATED");
+        result.Warnings.Should().ContainSingle(w => w.Kind == ProjectionWarningKind.MalformedLabel);
+    }
+
+    // -------------------------------------------------------------------------
+    // 22d. Malformed agent → pm fallback + warning + renders
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_WithMalformedAgent_FallsBackToPmAndRenders()
+    {
+        var record = BuildRecord(1, "agent:bob");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        result.Snapshot.Tickets[0].AgentId.Value.Should().Be("pm");
+        result.Warnings.Should().ContainSingle(w => w.Kind == ProjectionWarningKind.MalformedLabel);
+    }
+
+    // -------------------------------------------------------------------------
+    // 22e. Malformed retry → 0 fallback + warning + renders
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_WithMalformedRetry_FallsBackToZeroAndRenders()
+    {
+        var record = BuildRecord(1, "retry:xyz");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        result.Snapshot.Tickets[0].Retry.Value.Should().Be(0);
+        result.Warnings.Should().ContainSingle(w => w.Kind == ProjectionWarningKind.MalformedLabel);
+    }
+
+    // -------------------------------------------------------------------------
+    // 22f. THE security test: one bad among many → valid records render, warn only for bad
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_OneBadAmongMany_RendersValidTicketsAndWarnsOnlyForBad()
+    {
+        var records = new List<GitHubIssueRecord>
+        {
+            BuildRecordWithLabels(1, "status:created"),
+            BuildRecordWithLabels(2, "status:foo"),
+            BuildRecordWithLabels(3, "status:done")
+        };
+
+        var result = _sut.Project(records, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(3);
+        result.Warnings.Should().ContainSingle();
+        result.Warnings[0].IssueNumber.Should().Be(2);
+        result.Warnings[0].Kind.Should().Be(ProjectionWarningKind.MalformedLabel);
+    }
+
+    // -------------------------------------------------------------------------
+    // 22g. All valid → zero warnings
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_AllValid_EmitsNoWarnings()
+    {
+        var records = new List<GitHubIssueRecord>
+        {
+            BuildRecordWithLabels(1, "status:created", "agent:pm"),
+            BuildRecordWithLabels(2, "status:in-review", "agent:dev-a"),
+            BuildRecordWithLabels(3, "status:done", "agent:dev-b")
+        };
+
+        var result = _sut.Project(records, AsOf);
+
+        result.Warnings.Should().BeEmpty();
+    }
+
+    // -------------------------------------------------------------------------
+    // 22h. Multiple bad labels on one record → one warning per bad label
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_MultipleBadLabelsOnOneRecord_EmitsOneWarningPerBadLabel()
+    {
+        var record = BuildRecordWithLabels(1, "status:foo", "retry:xyz");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        result.Snapshot.Tickets[0].ColumnId.Value.Should().Be("CREATED");
+        result.Snapshot.Tickets[0].Retry.Value.Should().Be(0);
+        result.Warnings.Should().HaveCount(2);
+        result.Warnings.Should().Contain(w => w.OffendingLabel == "status:foo");
+        result.Warnings.Should().Contain(w => w.OffendingLabel == "retry:xyz");
+    }
+
+    // -------------------------------------------------------------------------
+    // 22i. Unknown non-team prefix → renders, no warning
+    // -------------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("epic:ingestion")]
+    [InlineData("size:L")]
+    [InlineData("type:feat")]
+    [InlineData("size:large")]
+    public void Project_WithUnknownNonTeamPrefix_RendersWithNoWarning(string label)
+    {
+        var record = BuildRecord(1, label);
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        result.Warnings.Should().BeEmpty();
     }
 
     // -------------------------------------------------------------------------
@@ -467,71 +643,27 @@ public sealed class BoardProjectionShould
     [Fact]
     public void Project_ColumnAndAgentIds_MatchExpectedSets()
     {
-        var snapshot = _sut.Project(new List<GitHubIssueRecord>(), AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord>(), AsOf);
 
-        snapshot.Columns.Select(c => c.Id.Value).Should().BeEquivalentTo(
+        result.Snapshot.Columns.Select(c => c.Id.Value).Should().BeEquivalentTo(
             new List<string> { "CREATED", "SPECIFIED", "IN_DEVELOPMENT", "IN_REVIEW", "IN_QA", "AWAITING_VALIDATION", "DONE" });
 
-        snapshot.Agents.Select(a => a.Id.Value).Should().BeEquivalentTo(
+        result.Snapshot.Agents.Select(a => a.Id.Value).Should().BeEquivalentTo(
             new List<string> { "pm", "architect", "dev-a", "dev-b", "qa", "security" });
     }
 
     // -------------------------------------------------------------------------
-    // Mutation-killing targeted cases (AC8 — kill Stryker survivors)
+    // Mutation-killing targeted cases
     // -------------------------------------------------------------------------
-
-    [Fact]
-    public void Project_WithEmptyLabel_ThrowsWithMessage()
-    {
-        var record = BuildRecord(1, "");
-
-        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
-
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*null, empty, or whitespace*");
-    }
-
-    [Fact]
-    public void Project_WithInvalidStatusValue_ThrowsWithMessage()
-    {
-        var record = BuildRecord(1, "status:not-valid");
-
-        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
-
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Invalid status value*");
-    }
-
-    [Fact]
-    public void Project_WithInvalidAgentValue_ThrowsWithMessage()
-    {
-        var record = BuildRecord(1, "agent:not-valid");
-
-        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
-
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Invalid agent value*");
-    }
-
-    [Fact]
-    public void Project_WithInvalidRetryValue_ThrowsWithMessage()
-    {
-        var record = BuildRecord(1, "retry:not-an-int");
-
-        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
-
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Invalid retry value*");
-    }
 
     [Fact]
     public void Project_InReview_IsThinkingFalse()
     {
         var record = BuildRecordWithLabels(1, "status:in-review", "agent:dev-a");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].IsThinking.Should().BeFalse();
+        result.Snapshot.Tickets[0].IsThinking.Should().BeFalse();
     }
 
     [Fact]
@@ -539,21 +671,19 @@ public sealed class BoardProjectionShould
     {
         var record = BuildRecordWithLabels(1, "status:escalated", "agent:dev-a", "retry:3");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].IsThinking.Should().BeFalse();
+        result.Snapshot.Tickets[0].IsThinking.Should().BeFalse();
     }
 
     [Fact]
     public void Project_InReview_AndEscalated_WithRetry3_AndEscalationTarget_TargetIsPreserved()
     {
-        // Kills: Line 219 conditional (isEscalated ? escalationTarget : null)
-        // When in-review+escalated, the escalationTarget must be passed through (not null)
         var record = BuildRecordWithLabels(1, "status:in-review", "status:escalated", "agent:dev-a", "retry:3", "escalation-target:pm");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        var ticket = snapshot.Tickets[0];
+        var ticket = result.Snapshot.Tickets[0];
         ticket.IsInCrossReview.Should().BeTrue();
         ticket.IsEscalated.Should().BeTrue();
         ticket.EscalationTarget!.Value.Should().Be("pm");
@@ -562,19 +692,16 @@ public sealed class BoardProjectionShould
     [Fact]
     public void Project_Escalated_WithRetry3_AndExplicitEscalationTarget_TargetIsNotAgentId()
     {
-        // Kills: Line 228 null coalescing (escalationTarget ?? agentId → agentId alone)
-        // Target is "pm" while agent is "dev-a" — they differ so the fallback is distinguishable
         var record = BuildRecordWithLabels(1, "status:escalated", "agent:dev-a", "retry:3", "escalation-target:pm");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].EscalationTarget!.Value.Should().Be("pm");
+        result.Snapshot.Tickets[0].EscalationTarget!.Value.Should().Be("pm");
     }
 
     [Fact]
     public void Project_DoneTicket_WithAgeExactly24h_IsStale()
     {
-        // Kills: Line 334 boundary (< vs <=): age exactly at 24h must NOT be fresh
         var record = new GitHubIssueRecordBuilder()
             .WithNumber(1)
             .WithTitle("24h done ticket")
@@ -585,16 +712,14 @@ public sealed class BoardProjectionShould
             .AsOpen()
             .Build();
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Stale);
+        result.Snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Stale);
     }
 
     [Fact]
     public void Project_WithUnknownPrefixLabel_DoesNotThrow()
     {
-        // Kills: Line 140 negation of label.Contains(':') — a label with no colon should pass through
-        // (no colon → skip the inner validation block entirely)
         var record = BuildRecord(1, "size:large");
 
         var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
@@ -603,31 +728,137 @@ public sealed class BoardProjectionShould
     }
 
     [Fact]
-    public void Project_WithValidPrefixButInvalidValue_StopsAfterFirstMatchingPrefix()
+    public void Project_WithValidPrefixButInvalidValue_FallsBackToDefaultAndWarns()
     {
-        // Kills: Line 127 (hasValidPrefix = false) + Line 132 (break removal)
-        // "status:not-valid" matches StatusPrefix → hasValidPrefix is set → throws for invalid value
+        // status:not-valid → CREATED column + one MalformedLabel warning (no throw)
         var record = BuildRecord(1, "status:not-valid");
 
-        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        act.Should().Throw<InvalidOperationException>()
-            .WithMessage("*Invalid status value*");
+        result.Snapshot.Tickets[0].ColumnId.Value.Should().Be("CREATED");
+        result.Warnings.Should().ContainSingle(w =>
+            w.Kind == ProjectionWarningKind.MalformedLabel &&
+            w.OffendingLabel == "status:not-valid");
     }
 
     [Fact]
     public void Project_InReview_NotEscalated_WithEscalationTarget_EscalationTargetIsNull()
     {
-        // Kills: Line 219 conditional (true?escalationTarget:null)
-        // in-review + escalation-target present, but NOT escalated (retry:0) → EscalationTarget must be null
         var record = BuildRecordWithLabels(1, "status:in-review", "agent:dev-a", "retry:0", "escalation-target:pm");
 
-        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
 
-        var ticket = snapshot.Tickets[0];
+        var ticket = result.Snapshot.Tickets[0];
         ticket.IsInCrossReview.Should().BeTrue();
         ticket.IsEscalated.Should().BeFalse();
         ticket.EscalationTarget.Should().BeNull();
+    }
+
+    // -------------------------------------------------------------------------
+    // 22j/22k. Out-of-range retry → does NOT throw + emits warning (B1)
+    // -------------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("retry:4")]
+    [InlineData("retry:999")]
+    [InlineData("retry:-1")]
+    public void Project_WithOutOfRangeRetryLabel_DoesNotThrow(string retryLabel)
+    {
+        var record = BuildRecord(1, retryLabel);
+
+        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        act.Should().NotThrow();
+    }
+
+    [Theory]
+    [InlineData("retry:4")]
+    [InlineData("retry:999")]
+    public void Project_WithOutOfRangeRetryLabel_EmitsMalformedLabelWarning(string retryLabel)
+    {
+        var record = BuildRecord(1, retryLabel);
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Warnings.Should().ContainSingle();
+        var warning = result.Warnings[0];
+        warning.Kind.Should().Be(ProjectionWarningKind.MalformedLabel);
+        warning.OffendingLabel.Should().Be(retryLabel);
+    }
+
+    // -------------------------------------------------------------------------
+    // 22l. Out-of-range retry → 0 fallback + renders (B1)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_WithOutOfRangeRetry_FallsBackToZeroAndRenders()
+    {
+        var record = BuildRecordWithLabels(1, "status:created", "agent:pm", "retry:4");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        result.Snapshot.Tickets[0].Retry.Value.Should().Be(0);
+        result.Warnings.Should().ContainSingle(w =>
+            w.Kind == ProjectionWarningKind.MalformedLabel &&
+            w.OffendingLabel == "retry:4");
+    }
+
+    // -------------------------------------------------------------------------
+    // 22m. Invalid co-agent → null fallback + warning (B2)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_InReview_WithInvalidCoAgent_FallsBackAndWarns()
+    {
+        var record = BuildRecordWithLabels(1, "status:in-review", "agent:dev-a", "co-agent:unknown");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        var ticket = result.Snapshot.Tickets[0];
+        ticket.IsInCrossReview.Should().BeTrue();
+        // co-agent:unknown → null → defaults to agentId (dev-a) per MapToTicket logic
+        ticket.CoAgentId!.Value.Should().Be("dev-a");
+        result.Warnings.Should().ContainSingle(w =>
+            w.Kind == ProjectionWarningKind.MalformedLabel &&
+            w.OffendingLabel == "co-agent:unknown");
+    }
+
+    // -------------------------------------------------------------------------
+    // 22n. Invalid escalation-target → null fallback + warning (B2)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_Escalated_WithInvalidEscalationTarget_FallsBackAndWarns()
+    {
+        var record = BuildRecordWithLabels(1, "status:escalated", "agent:dev-a", "retry:3", "escalation-target:badvalue");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        var ticket = result.Snapshot.Tickets[0];
+        ticket.IsEscalated.Should().BeTrue();
+        // escalation-target:badvalue → null → falls back to agentId (dev-a) per MapToTicket logic
+        ticket.EscalationTarget!.Value.Should().Be("dev-a");
+        result.Warnings.Should().ContainSingle(w =>
+            w.Kind == ProjectionWarningKind.MalformedLabel &&
+            w.OffendingLabel == "escalation-target:badvalue");
+    }
+
+    // -------------------------------------------------------------------------
+    // 22o. Bare word label (no colon) → renders, no warning (B3)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_WithBareWordLabel_RendersWithNoWarning()
+    {
+        var record = BuildRecord(1, "bug");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        result.Warnings.Should().BeEmpty();
     }
 
     // -------------------------------------------------------------------------

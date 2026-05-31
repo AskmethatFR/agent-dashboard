@@ -47,7 +47,11 @@ public static class DependencyInjection
         services.AddSingleton<IBoardRefreshTrigger>(sp => sp.GetRequiredService<BoardRefreshTrigger>());
         services.TryAddSingleton(TimeProvider.System);
         services.AddSingleton<IBoardProjection, BoardProjection>();
-        services.AddSingleton<IBoardSnapshotUpdater, BoardSnapshotUpdater>();
+        services.AddSingleton<IBoardSnapshotUpdater>(sp =>
+            new BoardSnapshotUpdater(
+                sp.GetRequiredService<IBoardProjection>(),
+                sp.GetRequiredService<BoardSnapshotCache>(),
+                sp.GetRequiredService<ILogger<BoardSnapshotUpdater>>()));
 
         // Register SQLite ticket write repository
         var dataPath = configuration[DataPathEnvVar] ?? DefaultDataPath;

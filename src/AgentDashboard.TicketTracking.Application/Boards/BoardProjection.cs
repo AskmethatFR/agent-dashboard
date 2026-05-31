@@ -54,8 +54,7 @@ public sealed class BoardProjection : IBoardProjection
         new Agent(new AgentId("security"), new AgentName("Security"), new AgentGlyph("SC"), new AgentRole("security"))
     };
 
-    private static readonly HashSet<string> ValidLabelPrefixes = new(
-        StringComparer.Ordinal)
+    private static readonly HashSet<string> TeamPrefixes = new(StringComparer.Ordinal)
     {
         StatusPrefix,
         AgentPrefix,
@@ -64,8 +63,7 @@ public sealed class BoardProjection : IBoardProjection
         EscalationTargetPrefix
     };
 
-    private static readonly HashSet<string> ValidStatusValues = new(
-        StringComparer.Ordinal)
+    private static readonly HashSet<string> ValidStatusValues = new(StringComparer.Ordinal)
     {
         "created",
         "specified",
@@ -77,8 +75,7 @@ public sealed class BoardProjection : IBoardProjection
         "escalated"
     };
 
-    private static readonly HashSet<string> ValidAgentValues = new(
-        StringComparer.Ordinal)
+    private static readonly HashSet<string> ValidAgentValues = new(StringComparer.Ordinal)
     {
         "pm",
         "architect",
@@ -88,105 +85,106 @@ public sealed class BoardProjection : IBoardProjection
         "security"
     };
 
-    public BoardSnapshot Project(
+    public BoardProjectionResult Project(
         IReadOnlyList<GitHubIssueRecord> records,
         DateTimeOffset asOf)
     {
-        // Validate all labels in all records before processing
+        var warnings = new List<ProjectionWarning>();
+
         foreach (var record in records)
         {
-            ValidateLabels(record.Labels);
+            warnings.AddRange(CollectLabelWarnings(record));
         }
 
         var tickets = records.Select(r => MapToTicket(r, asOf)).ToList();
-        return new BoardSnapshot(Columns, tickets, Agents);
+        var snapshot = new BoardSnapshot(Columns, tickets, Agents);
+        return new BoardProjectionResult(snapshot, warnings);
     }
 
-    private static void ValidateLabels(IReadOnlyList<string> labels)
+    internal static IReadOnlyList<ProjectionWarning> CollectLabelWarnings(GitHubIssueRecord record)
     {
-        foreach (var label in labels)
+        var warnings = new List<ProjectionWarning>();
+
+        foreach (var label in record.Labels)
         {
-            ValidateLabelFormat(label);
+            if (IsMalformed(label, out var reason) && reason is not null)
+            {
+                warnings.Add(ProjectionWarning.MalformedLabel(record.Number, label));
+            }
         }
+
+        return warnings;
     }
 
-    private static void ValidateLabelFormat(string label)
+    private static bool IsMalformed(string label, out string? reason)
     {
+        reason = null;
+
+        // Empty or whitespace
         if (string.IsNullOrWhiteSpace(label))
         {
-            throw new InvalidOperationException(
-                $"GitHub label is null, empty, or whitespace. All labels must have a valid format.");
+            reason = "empty or whitespace";
+            return true;
         }
 
-        // Check if the label has a valid prefix
-        var hasValidPrefix = false;
-        foreach (var prefix in ValidLabelPrefixes)
+        // Check if starts with a team prefix
+        foreach (var prefix in TeamPrefixes)
         {
-            if (label.StartsWith(prefix, StringComparison.Ordinal))
+            if (!label.StartsWith(prefix, StringComparison.Ordinal))
             {
-                hasValidPrefix = true;
-                var value = label[prefix.Length..];
-
-                // Validate the value based on the prefix
-                ValidateLabelValue(prefix, value);
-                break;
+                continue;
             }
-        }
 
-        if (!hasValidPrefix)
-        {
-            // Label doesn't have a recognized prefix - this might be okay (e.g., "status:in-review")
-            // but we should at least check it's not malicious
-            if (label.Contains(':'))
+            var value = label[prefix.Length..];
+
+            // Empty value after a team prefix
+            if (string.IsNullOrWhiteSpace(value))
             {
-                // Has a colon but not a recognized prefix - validate the format
-                var parts = label.Split(':', 2);
-                if (parts.Length != 2 || string.IsNullOrWhiteSpace(parts[0]) || string.IsNullOrWhiteSpace(parts[1]))
-                {
-                    throw new InvalidOperationException(
-                        $"GitHub label '{label}' has invalid format. Labels must be in the format 'prefix:value'.");
-                }
+                reason = "empty value after team prefix";
+                return true;
             }
-        }
-    }
 
-    private static void ValidateLabelValue(string prefix, string value)
-    {
-        if (string.IsNullOrWhiteSpace(value))
+            // Validate by prefix
+            switch (prefix)
+            {
+                case StatusPrefix when !ValidStatusValues.Contains(value):
+                    reason = "invalid status value";
+                    return true;
+
+                case AgentPrefix or CoAgentPrefix or EscalationTargetPrefix
+                    when !ValidAgentValues.Contains(value):
+                    reason = "invalid agent value";
+                    return true;
+
+                case RetryPrefix
+                    when !int.TryParse(value, out var retryInt)
+                         || retryInt < 0
+                         || retryInt > Retry.MaxBeforeEscalation:
+                    reason = "invalid retry value";
+                    return true;
+            }
+
+            return false;
+        }
+
+        // Not a team-prefix label: check if it has a colon at all
+        if (!label.Contains(':', StringComparison.Ordinal))
         {
-            throw new InvalidOperationException(
-                $"GitHub label with prefix '{prefix}' has empty or whitespace value.");
+            // No colon, no team prefix → not a team label, pass silently
+            return false;
         }
 
-        // Validate based on prefix
-        switch (prefix)
+        // Has a colon but not a recognized team prefix
+        var parts = label.Split(':', 2);
+        if (parts.Length == 2 && !string.IsNullOrWhiteSpace(parts[0]) && !string.IsNullOrWhiteSpace(parts[1]))
         {
-            case StatusPrefix:
-                if (!ValidStatusValues.Contains(value))
-                {
-                    throw new InvalidOperationException(
-                        $"Invalid status value '{value}'. Valid values are: {string.Join(", ", ValidStatusValues)}.");
-                }
-                break;
-
-            case AgentPrefix:
-            case CoAgentPrefix:
-            case EscalationTargetPrefix:
-                if (!ValidAgentValues.Contains(value))
-                {
-                    throw new InvalidOperationException(
-                        $"Invalid agent value '{value}'. Valid values are: {string.Join(", ", ValidAgentValues)}.");
-                }
-                break;
-
-            case RetryPrefix:
-                if (!int.TryParse(value, out _))
-                {
-                    throw new InvalidOperationException(
-                        $"Invalid retry value '{value}'. Retry must be a valid integer.");
-                }
-                break;
+            // Unknown prefix with non-empty value → silently passes (e.g. epic:ingestion, size:L)
+            return false;
         }
+
+        // Malformed colon pattern: "foo:" or ":bar"
+        reason = "malformed colon pattern";
+        return true;
     }
 
     private static TicketSnapshot MapToTicket(GitHubIssueRecord record, DateTimeOffset asOf)
@@ -205,7 +203,6 @@ public sealed class BoardProjection : IBoardProjection
 
         if (hasInReviewStatus)
         {
-            // InCrossReview requires non-null coAgentId, so use agentId if coAgentId is null
             return TicketSnapshot.InCrossReview(
                 id: new TicketId((int)record.Number),
                 columnId: columnId,
@@ -276,7 +273,11 @@ public sealed class BoardProjection : IBoardProjection
             if (label.StartsWith(AgentPrefix, StringComparison.Ordinal))
             {
                 var agentValue = label[AgentPrefix.Length..];
-                return new AgentId(agentValue);
+                if (ValidAgentValues.Contains(agentValue))
+                {
+                    return new AgentId(agentValue);
+                }
+                return new AgentId(DefaultAgentId);
             }
         }
         return new AgentId(DefaultAgentId);
@@ -289,7 +290,9 @@ public sealed class BoardProjection : IBoardProjection
             if (label.StartsWith(RetryPrefix, StringComparison.Ordinal))
             {
                 var retryValue = label[RetryPrefix.Length..];
-                if (int.TryParse(retryValue, out var value))
+                if (int.TryParse(retryValue, out var value)
+                    && value >= 0
+                    && value <= Retry.MaxBeforeEscalation)
                 {
                     return new Retry(value);
                 }
@@ -305,7 +308,7 @@ public sealed class BoardProjection : IBoardProjection
             if (label.StartsWith(CoAgentPrefix, StringComparison.Ordinal))
             {
                 var coAgentValue = label[CoAgentPrefix.Length..];
-                return new AgentId(coAgentValue);
+                return ValidAgentValues.Contains(coAgentValue) ? new AgentId(coAgentValue) : null;
             }
         }
         return null;
@@ -318,7 +321,7 @@ public sealed class BoardProjection : IBoardProjection
             if (label.StartsWith(EscalationTargetPrefix, StringComparison.Ordinal))
             {
                 var targetValue = label[EscalationTargetPrefix.Length..];
-                return new AgentId(targetValue);
+                return ValidAgentValues.Contains(targetValue) ? new AgentId(targetValue) : null;
             }
         }
         return null;

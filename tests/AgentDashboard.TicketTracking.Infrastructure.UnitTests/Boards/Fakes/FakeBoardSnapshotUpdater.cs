@@ -20,8 +20,8 @@ internal sealed class FakeBoardSnapshotUpdater : IBoardSnapshotUpdater
     {
         if (_shouldUpdateCache && _cache is not null)
         {
-            var snapshot = new BoardProjection().Project(records, asOf);
-            _cache.Update(snapshot, asOf);
+            var result = new BoardProjection().Project(records, asOf);
+            _cache.Update(result.Snapshot, asOf);
         }
     }
 }
