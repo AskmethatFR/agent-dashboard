@@ -62,6 +62,7 @@ coverage*.info
 
 # --- Local data (SQLite, transcripts cache) ---
 /data/
+src/AgentDashboard.Web/data/
 *.db
 *.db-journal
 *.db-wal

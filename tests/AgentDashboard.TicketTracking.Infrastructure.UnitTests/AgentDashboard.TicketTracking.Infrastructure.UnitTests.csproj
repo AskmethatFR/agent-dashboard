@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AgentDashboard.TicketTracking.Infrastructure\AgentDashboard.TicketTracking.Infrastructure.csproj" />
+    <ProjectReference Include="..\AgentDashboard.TicketTracking.TestShared\AgentDashboard.TicketTracking.TestShared.csproj" />
   </ItemGroup>
 
 </Project>

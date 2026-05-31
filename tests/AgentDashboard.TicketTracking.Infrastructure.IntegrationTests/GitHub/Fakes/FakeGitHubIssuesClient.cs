@@ -1,5 +1,6 @@
 using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Application.Ports;
+using AgentDashboard.TicketTracking.TestShared.Factories;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.GitHub.Fakes;
 
@@ -12,11 +13,30 @@ internal sealed class FakeGitHubIssuesClient : IGitHubIssuesClient
     private static readonly IReadOnlyList<string> FeatureLabels = new[] { "type:feat" };
     private static readonly IReadOnlyList<string> ChoreLabels = new[] { "type:chore" };
     private static readonly DateTimeOffset DefaultCreatedAt = new(2024, 1, 15, 10, 30, 0, TimeSpan.Zero);
+    private static readonly DateTimeOffset DefaultUpdatedAt = new(2024, 1, 15, 11, 0, 0, TimeSpan.Zero);
+    private static readonly string DefaultHtmlUrl1 = "https://github.com/AskmethatFR/agent-dashboard/issues/1";
+    private static readonly string DefaultHtmlUrl2 = "https://github.com/AskmethatFR/agent-dashboard/issues/2";
 
     private static readonly IReadOnlyList<GitHubIssueRecord> CannedResponse =
     [
-        new GitHubIssueRecord(1, "first issue", FeatureLabels, DefaultCreatedAt),
-        new GitHubIssueRecord(2, "second issue", ChoreLabels, DefaultCreatedAt.AddDays(1)),
+        new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("first issue")
+            .WithLabels(FeatureLabels)
+            .WithCreatedAt(DefaultCreatedAt)
+            .WithHtmlUrl(DefaultHtmlUrl1)
+            .WithUpdatedAt(DefaultUpdatedAt)
+            .AsOpen()
+            .Build(),
+        new GitHubIssueRecordBuilder()
+            .WithNumber(2)
+            .WithTitle("second issue")
+            .WithLabels(ChoreLabels)
+            .WithCreatedAt(DefaultCreatedAt.AddDays(1))
+            .WithHtmlUrl(DefaultHtmlUrl2)
+            .WithUpdatedAt(DefaultUpdatedAt.AddDays(1))
+            .AsOpen()
+            .Build(),
     ];
 
     private IReadOnlyList<GitHubIssueRecord> _customIssues = CannedResponse;
