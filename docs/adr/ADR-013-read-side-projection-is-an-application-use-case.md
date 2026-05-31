@@ -59,7 +59,11 @@ Concretely:
 - The isolated `GitHubBoardMapperTests` suite is **deleted** with **no acceptance
   criterion lost**.
 - Mutation effectiveness is measured **per bounded context**; the Application target is
-  **≥ 80%**, **achieved 85.80%** (up from the 64.20% honest baseline).
+  **≥ 80%** (report-only). `BoardProjection` itself scores **~88–93%**. The *aggregate*
+  Application score is currently **non-deterministic** (61.9–85.8% across runs of the same
+  commit) because flaky `GitHubIssuesPollerSqliteIntegrationTests` pollute the Stryker
+  baseline — tracked by [[mutation-testing-strategy]] and issue #54; only the **Domain**
+  gate is enforced until that isolation fix lands.
 
 ## Consequences
 
@@ -71,7 +75,8 @@ Concretely:
   then caches. The CQRS read-side responsibilities (project vs. materialize/cache) are
   cleanly separated ([[adr-001]] reinforced: the snapshot stays a replace-only read model).
 - Mutation score is **attributed to the owning layer**, closing the dominant Application
-  gap and raising the honest score to 85.80%.
+  gap (`BoardProjection` ~88–93%); the aggregate Application gate remains report-only
+  pending the integration-test isolation fix (issue #54).
 - The projection can be **reshaped** (new columns, derived fields) behind a stable port
   without disturbing callers.
 
@@ -97,9 +102,9 @@ Concretely:
 - Builds on [[adr-008]] (which named `MapToBoardSnapshot` the canonical CQRS projection of
   this read-side-only bounded context).
 - Reinforces [[adr-001]] (BoardSnapshot is a read-only projection, not an aggregate).
-- References [[mutation-testing-strategy]] (per-BC scoring; Application ≥ 80%, achieved
-  85.80%).
-- Issue #45 / EPIC-2.
+- References [[mutation-testing-strategy]] (per-BC scoring; Application ≥ 80% report-only,
+  Domain gate enforced; aggregate Application non-determinism tracked by issue #54).
+- Issue #45 / EPIC-2. Follow-up: issue #54 (integration-test SQLite isolation).
 - Code paths:
   - `src/AgentDashboard.TicketTracking.Application/Boards/BoardProjection.cs`
   - `src/AgentDashboard.TicketTracking.Application/Ports/IBoardProjection.cs`
