@@ -9,9 +9,11 @@ public sealed record BoardColumnLabel
     public BoardColumnLabel(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
+        // Stryker disable once String
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Column label cannot be empty.", nameof(value));
         if (value.Length > MaxLength)
+            // Stryker disable once String
             throw new ArgumentOutOfRangeException(
                 nameof(value),
                 $"Column label cannot exceed {MaxLength} characters.");

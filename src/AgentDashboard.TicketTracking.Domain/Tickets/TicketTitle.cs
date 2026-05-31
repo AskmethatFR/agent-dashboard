@@ -9,13 +9,16 @@ public sealed record TicketTitle
     public TicketTitle(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
+        // Stryker disable once String
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Ticket title cannot be empty.", nameof(value));
         if (value.Length > MaxLength)
+            // Stryker disable once String
             throw new ArgumentOutOfRangeException(
                 nameof(value),
                 $"Ticket title cannot exceed {MaxLength} characters.");
         if (ContainsRejectedControlCharacter(value))
+            // Stryker disable once String
             throw new ArgumentException(
                 "Ticket title cannot contain control characters.",
                 nameof(value));

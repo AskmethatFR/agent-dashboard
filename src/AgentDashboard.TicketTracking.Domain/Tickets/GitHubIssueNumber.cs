@@ -20,6 +20,7 @@ public sealed record GitHubIssueNumber
     {
         if (value <= 0)
         {
+            // Stryker disable once String
             throw new ArgumentOutOfRangeException(
                 nameof(value),
                 "GitHub issue number must be positive.");

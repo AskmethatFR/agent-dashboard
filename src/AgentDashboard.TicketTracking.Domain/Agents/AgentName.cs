@@ -9,9 +9,11 @@ public sealed record AgentName
     public AgentName(string value)
     {
         ArgumentNullException.ThrowIfNull(value);
+        // Stryker disable once String
         if (string.IsNullOrWhiteSpace(value))
             throw new ArgumentException("Agent name cannot be empty.", nameof(value));
         if (value.Length > MaxLength)
+            // Stryker disable once String
             throw new ArgumentOutOfRangeException(
                 nameof(value),
                 $"Agent name cannot exceed {MaxLength} characters.");

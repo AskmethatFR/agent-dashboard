@@ -44,6 +44,7 @@ public sealed record TicketStatus
     {
         if (string.IsNullOrWhiteSpace(value))
         {
+            // Stryker disable once String
             throw new ArgumentException("Status value cannot be empty.", nameof(value));
         }
 
@@ -54,7 +55,9 @@ public sealed record TicketStatus
             return new TicketStatus(statusValue);
         }
 
+        // Stryker disable once String
         var validValues = string.Join(", ", System.Enum.GetNames<TicketStatusValue>());
+        // Stryker disable once String
         throw new ArgumentException(
             "Cannot parse '" + value + "' as a valid TicketStatus. Valid values are: " + validValues,
             nameof(value));

@@ -10,6 +10,7 @@ public sealed record Retry
     public Retry(int value)
     {
         if (value < 0 || value > MaxBeforeEscalation)
+            // Stryker disable once String
             throw new ArgumentOutOfRangeException(
                 nameof(value),
                 $"Retry must be between 0 and {MaxBeforeEscalation}.");

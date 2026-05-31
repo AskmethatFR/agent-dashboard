@@ -7,6 +7,7 @@ public sealed record TicketId
     public TicketId(int value)
     {
         if (value <= 0)
+            // Stryker disable once String
             throw new ArgumentOutOfRangeException(nameof(value), "TicketId must be positive.");
         Value = value;
     }

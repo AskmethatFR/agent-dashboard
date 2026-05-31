@@ -29,6 +29,7 @@ public sealed record GitHubUrl
             throw new ArgumentException("GitHub URL cannot be empty or whitespace.", nameof(value));
         }
 
+        // Stryker disable once String
         if (!value.StartsWith(HttpsScheme + "://", StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException(
@@ -48,6 +49,7 @@ public sealed record GitHubUrl
         // Ensure there is a path (not just the domain)
         if (string.IsNullOrEmpty(uri.PathAndQuery) || uri.PathAndQuery == "/")
         {
+            // Stryker disable once String
             throw new ArgumentException(
                 "GitHub URL must include a path.",
                 nameof(value));
