@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Application.Ports;
 using Microsoft.Extensions.Hosting;
@@ -97,7 +96,7 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
 
                 foreach (var warning in mappingResult.Warnings)
                 {
-                    GitHubIssuesPollerLog.LabelMappingWarning(_logger, Sanitize(FormatWarning(warning)));
+                    GitHubIssuesPollerLog.LabelMappingWarning(_logger, GitHubLogSanitizer.Sanitize(FormatWarning(warning)));
                 }
             }
 
@@ -126,15 +125,7 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
         }
     }
 
-    private static string SanitizeExceptionMessage(Exception ex) => Sanitize(ex.ToString());
-
-    private static string Sanitize(string message)
-    {
-        message = Regex.Replace(message, "ghp_[A-Za-z0-9]{36}", "[REDACTED_TOKEN]");
-        message = Regex.Replace(message, "github_pat_[A-Za-z0-9]{22}", "[REDACTED_TOKEN]");
-        message = Regex.Replace(message, "Authorization:.*", "Authorization: [REDACTED]");
-        return message;
-    }
+    private static string SanitizeExceptionMessage(Exception ex) => GitHubLogSanitizer.Sanitize(ex.ToString());
 
     private static string FormatWarning(MappingWarning warning) => warning.Kind switch
     {

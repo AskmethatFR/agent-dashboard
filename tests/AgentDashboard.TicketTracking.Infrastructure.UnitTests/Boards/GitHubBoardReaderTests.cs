@@ -279,7 +279,7 @@ public sealed class GitHubBoardReaderTests
     {
         // Arrange
         var client = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>());
-        var updater = new BoardSnapshotUpdater(new BoardProjection(), new BoardSnapshotCache());
+        var updater = new BoardSnapshotUpdater(new BoardProjection(), new BoardSnapshotCache(), NullLogger<BoardSnapshotUpdater>.Instance);
         var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
         var timeProvider = new ManualTimeProvider(FixedNow);
 
@@ -294,7 +294,7 @@ public sealed class GitHubBoardReaderTests
     {
         // Arrange
         using var cache = new BoardSnapshotCache();
-        var updater = new BoardSnapshotUpdater(new BoardProjection(), cache);
+        var updater = new BoardSnapshotUpdater(new BoardProjection(), cache, NullLogger<BoardSnapshotUpdater>.Instance);
         var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
         var timeProvider = new ManualTimeProvider(FixedNow);
 
@@ -325,7 +325,7 @@ public sealed class GitHubBoardReaderTests
         // Arrange
         using var cache = new BoardSnapshotCache();
         var client = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>());
-        var updater = new BoardSnapshotUpdater(new BoardProjection(), cache);
+        var updater = new BoardSnapshotUpdater(new BoardProjection(), cache, NullLogger<BoardSnapshotUpdater>.Instance);
         var timeProvider = new ManualTimeProvider(FixedNow);
 
         // Act & Assert
@@ -340,7 +340,7 @@ public sealed class GitHubBoardReaderTests
         // Arrange
         using var cache = new BoardSnapshotCache();
         var client = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>());
-        var updater = new BoardSnapshotUpdater(new BoardProjection(), cache);
+        var updater = new BoardSnapshotUpdater(new BoardProjection(), cache, NullLogger<BoardSnapshotUpdater>.Instance);
         var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
 
         // Act & Assert
@@ -355,7 +355,7 @@ public sealed class GitHubBoardReaderTests
         // Arrange
         using var cache = new BoardSnapshotCache();
         var client = new FakeGitHubIssuesClient(Array.Empty<GitHubIssueRecord>());
-        var updater = new BoardSnapshotUpdater(new BoardProjection(), cache);
+        var updater = new BoardSnapshotUpdater(new BoardProjection(), cache, NullLogger<BoardSnapshotUpdater>.Instance);
         var options = BuildOptions(pollInterval: TimeSpan.FromMinutes(1));
         var timeProvider = new ManualTimeProvider(FixedNow);
 
@@ -386,7 +386,7 @@ public sealed class GitHubBoardReaderTests
         IBoardSnapshotUpdater snapshotUpdater = null)
     {
         var timeProvider = new ManualTimeProvider(now);
-        var updater = snapshotUpdater ?? new BoardSnapshotUpdater(new BoardProjection(), cache);
+        var updater = snapshotUpdater ?? new BoardSnapshotUpdater(new BoardProjection(), cache, NullLogger<BoardSnapshotUpdater>.Instance);
         return new GitHubBoardReader(cache, client, updater, options.PollInterval, timeProvider, NullLogger);
     }
 
