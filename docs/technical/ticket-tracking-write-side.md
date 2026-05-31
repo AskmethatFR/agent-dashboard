@@ -3,9 +3,10 @@ id: "ticket-tracking-write-side"
 type: "technical"
 owner: "architect"
 status: "current"
-updated: "2026-05-30"
+updated: "2026-05-31"
 links:
   - "architecture-overview"
+  - "adr-005"
   - "adr-008"
   - "adr-009"
   - "adr-010"
@@ -17,6 +18,7 @@ answers:
   - "What are the upsert semantics (insert vs update, created_at_utc preservation)?"
   - "What happens when a persisted row fails to rehydrate?"
   - "How are ambiguous label-mapping situations surfaced and logged?"
+  - "What is the Ticket's persistence identity / upsert key, and why is it not composite with the repo?"
 decided_in:
   - "#6"
 ---
@@ -24,7 +26,7 @@ decided_in:
 # TicketTracking Write-Side
 
 > **One-liner**: The EF Core code-first write path that persists a domain `Ticket` to the SQLite cache — its mapping, idempotent bootstrap, upsert semantics, corruption handling, and label-mapping warnings.
-> **Links**: [[architecture-overview]] [[adr-010]] [[adr-011]] [[adr-008]] [[adr-009]] — the ADRs carry the full rationale; this node is the navigable summary.
+> **Links**: [[architecture-overview]] [[adr-005]] [[adr-010]] [[adr-011]] [[adr-008]] [[adr-009]] — the ADRs carry the full rationale; this node is the navigable summary.
 
 ## Context
 
@@ -33,6 +35,18 @@ The `TicketTracking` context is a downstream Conformist read model of GitHub ([[
 Code lives in `src/AgentDashboard.TicketTracking.Infrastructure/Tickets/` (adapter + `Persistence/`) and the port in `src/AgentDashboard.TicketTracking.Application/Ports/ITicketWriteRepository.cs`.
 
 ## Decision / Specification
+
+### Ticket identity / schema key — `GitHubIssueNumber` alone (#6, [[adr-005]] alignment)
+
+| Aspect | Decision |
+|---|---|
+| Domain identity | `Ticket`'s identity is `GitHubIssueNumber` **alone** — not the composite `(GitHubRepository, GitHubIssueNumber)` |
+| `GitHubRepository` VO | **deleted** from `TicketTracking.Domain` — the repo is a v1.0 Infrastructure deployment detail ([[adr-005]]), already carried by `GitHubPollingOptions`; a second Domain carrier was redundant per YAGNI |
+| Table `tickets` PK | `github_issue_number` alone (was the composite `(repo, github_issue_number)`) |
+| `repo` column | **dropped**, with its index — read by no consumer; `github_url` already records issue provenance |
+| Multi-repo identity | deferred to #29 (clean-slate design once v1.0 is DONE) |
+
+This aligns the code with [[adr-005]] (repo = Infrastructure deployment constant) and amends both [[adr-008]] (identity) and [[adr-010]] (PK + upsert key). The bounded context's category is unchanged: `TicketTracking` stays a downstream Conformist read model ([[adr-008]]).
 
 ### Persistence stack and boundary
 
@@ -73,14 +87,14 @@ The bidirectional Ticket↔row mapping is folded into the single Infrastructure 
 |---|---|
 | Context factory | `PooledDbContextFactory<TicketTrackingDbContext>` |
 | Context lifetime | one context created + disposed **per `SaveAsync`** — the singleton repository never shares a mutable change tracker |
-| Upsert | find-then-add-or-update on key `(GitHubRepository, GitHubIssueNumber)` |
+| Upsert | find-then-add-or-update on key `GitHubIssueNumber` alone ([[adr-005]] alignment, #6) |
 | Invariant on update | **`created_at_utc` is preserved** (only mutable fields updated) |
 
 ### Failure & ambiguity handling
 
 | Situation | Behavior | Reference |
 |---|---|---|
-| Row fails to rehydrate (`ToTicket` parse error) | throw `CorruptedTicketRowException` naming the **column** + `(repo, #issue)` key; **does not leak the raw value** | [[adr-010]] |
+| Row fails to rehydrate (`ToTicket` parse error) | throw `CorruptedTicketRowException` naming the **column** + `#<number>` key; **does not leak the raw value** | [[adr-010]] |
 | Multiple `status:*` labels / unrecognized label | `GitHubIssueToTicketMapper.Map` (Application) returns `MappingResult` = `Ticket` + `MappingWarning[]`; the row is still produced | [[adr-011]] |
 | Warning surfacing | Infrastructure poller (`GitHubIssuesPoller`) logs each warning via sanitized `LoggerMessage` **EventId 202** | [[adr-011]] |
 | Hyphenated `status:*` labels | parse fixed (e.g. `status:in-development`) | #6 |

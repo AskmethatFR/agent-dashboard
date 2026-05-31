@@ -332,6 +332,29 @@ question.
   surface after ADR-008 is published, **then** the rename ticket
   (Option B) is reactivated and run as a separate refactor PR.
 
+## Amendment (2026-05-31, Issue #6 follow-up): Ticket identity is `GitHubIssueNumber` alone, not a composite with the repository
+
+The original `Ticket` projection entity used the composite identity
+`(GitHubRepository, GitHubIssueNumber)`, carrying a `GitHubRepository`
+value object in `TicketTracking.Domain`. This contradicted ADR-005,
+which fixed the hardcoded repository as a **v1.0 Infrastructure
+deployment detail** ("lives in Infrastructure, not in Domain or
+Application"). The repo identity was therefore both mis-layered (a
+deployment constant living in the Domain) and redundant (already held
+by `GitHubPollingOptions` owner/name constants in Infrastructure).
+
+**Decision.** Align to ADR-005: `Ticket`'s identity is
+`GitHubIssueNumber` alone. The `GitHubRepository` value object is
+**deleted** from the Domain (not relocated — Infrastructure already
+expresses the repo via `GitHubPollingOptions`; a second carrier would
+be redundant per YAGNI). Multi-repo identity remains deferred to #29
+("no implementation, no ADR, no tech spec until v1.0 is DONE"), to be
+designed on a clean slate.
+
+This does not change the bounded context's category: `TicketTracking`
+remains a downstream Conformist read model of GitHub. `GitHubIssueNumber`
+still names a GitHub-owned thing; the dashboard owns no write-side.
+
 ## References
 
 - ADR-001 — BoardSnapshot as a read-only projection. Not superseded;

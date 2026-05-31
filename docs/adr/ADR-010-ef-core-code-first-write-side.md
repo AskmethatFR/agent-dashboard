@@ -68,3 +68,38 @@ This stays on EF Core code-first + the Snapshot pattern; no migrations, no raw D
 ## Notes
 
 `Microsoft.EntityFrameworkCore.Sqlite` version is pinned via central package management (`Directory.Packages.props`) on the `10.0.0` wave, aligned to the existing `Microsoft.Data.Sqlite 10.0.0`. `Microsoft.Data.Sqlite` and `Dapper` are kept (read-side and tests depend on them).
+
+## Amendment (2026-05-31, Issue #6 follow-up): primary key and upsert key are `github_issue_number` alone
+
+Aligning with the ADR-008 amendment (Ticket identity is no longer
+composite), the write-side schema and upsert key change:
+
+- **Table `tickets` PK** is now `github_issue_number` alone (was the
+  composite `(repo, github_issue_number)`).
+- **The `repo` column is dropped**, along with its index. It was read
+  by no consumer (the Dapper read-side projects the board in-memory
+  from GitHub records and never queries the `tickets` table), so the
+  drop has zero read-side impact. `github_url` already records issue
+  provenance.
+- **Upsert** (`SaveAsync`) keys on `github_issue_number` alone:
+  `FindAsync([GitHubIssueNumber])`, then add-or-update. The
+  `created_at_utc`-preservation invariant is unchanged.
+- `TicketRow.Repo`, the `repo` mapping in `OnModelCreating`, and the
+  `repo` field in `CorruptedTicketRowException`'s message are removed.
+
+All other ADR-010 decisions are unchanged: EF Core code-first, no
+migrations, no `.Design` package, guarded idempotent `EnsureCreated`
+bootstrap, WAL + checkpoint, "o" timestamp byte-format, single
+`TicketRow` self-mapping POCO (the documented `ca-snapshot` deviation),
+and per-`SaveAsync` DbContext lifetime.
+
+### Existing on-disk databases (operational note)
+
+`EnsureCreated()`/`HasTables()` never ALTER an existing schema, so a
+`tickets.db` provisioned before this change keeps the old composite-PK
+table; the new `FindAsync([number])` would fault against it. Because
+the SQLite store is a **disposable cache of GitHub state** (ADR-008),
+the migration stance is **drop-and-recreate**: delete `tickets.db`
+(and its `-wal`/`-shm` sidecars) once before deploying; the poller
+repopulates from GitHub on the next cycle. No migration code is added —
+that would require a deliberate ADR superseding this one.
