@@ -1,3 +1,11 @@
+---
+id: mutation-testing-strategy
+type: technical
+owner: architect
+status: current
+links: [[adr-012]], [[adr-013]]
+---
+
 # Mutation testing (Stryker.NET)
 
 We measure test **effectiveness** with mutation testing, not just line/branch
@@ -16,9 +24,24 @@ coverage and reports the mapper as "NoCoverage", understating the real score.
 
 Measured per bounded-context instead, the Application score moved from a
 misleading **48.86 %** (unit-project only) to a truthful **64.20 %** (unit +
-integration). The residual gap is concentrated in the read-side projection
-`GitHubBoardMapper` — tracked by issue #45, which pulls that projection into an
-Application-owned use case so its verification stops depending on Infrastructure.
+integration). The read-side projection — once the dominant gap, concentrated in
+`GitHubBoardMapper` — is **addressed by issue #45**: the projection is now
+`BoardProjection`, a first-class Application use case behind `IBoardProjection`
+([ADR-013](adr/ADR-013-read-side-projection-is-an-application-use-case.md)),
+verified by a behavioral `[Theory]` at the Application boundary
+(`BoardProjectionShould`) instead of through Infrastructure. `BoardProjection`
+itself mutation-scores **~88–93 %**.
+
+> **⚠️ The aggregate Application-context score is currently non-deterministic.**
+> Three Stryker runs of the *same* commit produced **61.9 % / 77.8 % / 85.8 %**.
+> Root cause: `GitHubIssuesPollerSqliteIntegrationTests` fail under Stryker's
+> repeated execution (shared SQLite file state — `table already exists`); when
+> they fail at the baseline, Stryker drops their coverage and mutants they would
+> kill appear as survivors. The fix (deterministic per-test SQLite isolation) is
+> tracked by **issue #54**. Until it lands, the per-bounded-context **Application
+> target ≥ 80 % is report-only** (not CI-gated); only the **Domain** gate is
+> enforced (see issue #48). The Domain run is deterministic (`Domain.UnitTests`
+> only, no integration tests).
 
 | Context | `--config-file` | Mutated project | Test set |
 |---|---|---|---|
@@ -45,5 +68,20 @@ Reports land in `StrykerOutput/` (git-ignored): `reports/mutation-report.html`
 to browse, `mutation-report.json` to script against, plus a `cleartext` summary
 on stdout.
 
-> `thresholds.break` is `0` for now (report-only). The CI-failing gate is wired
-> separately once the scores are lifted — see issue #48.
+## CI gate & ratchet
+
+The **Domain** run is CI-gated: the `mutation-domain` job in `.github/workflows/ci.yml`
+runs `stryker.domain.config.json`, whose `thresholds.break` is **90** — Stryker exits
+non-zero (failing the PR) if the Domain mutation score drops below 90 %. Current Domain
+score is ~98 %, so the gate has ~8 pts of headroom and catches regressions, not noise.
+
+The **Application** run stays **report-only** (`break: 0`): its aggregate score is
+non-deterministic while `GitHubIssuesPollerSqliteIntegrationTests` are flaky under
+repeated execution (see the ⚠️ note above; fix tracked by issue #54). Gating a flaky
+score would fail PRs at random — worse than no gate. Once #54 lands and the Application
+score is reproducible, raise its `break` to **70 → ratchet 80**.
+
+**Ratchet policy.** Thresholds live in the two `stryker.*.config.json` files. Raise a
+`break` value only after the score has sat comfortably above the next step for a few
+cycles — never lower it to make a red build pass (fix the surviving mutant instead).
+Domain ratchet: 90 → 95. Application ratchet (post-#54): 70 → 80.

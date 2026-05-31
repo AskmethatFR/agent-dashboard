@@ -1,3 +1,4 @@
+using AgentDashboard.TicketTracking.Application.Boards;
 using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Infrastructure.Boards;
@@ -19,7 +20,7 @@ internal sealed class FakeBoardSnapshotUpdater : IBoardSnapshotUpdater
     {
         if (_shouldUpdateCache && _cache is not null)
         {
-            var snapshot = GitHubBoardMapper.MapToBoardSnapshot(records, asOf);
+            var snapshot = new BoardProjection().Project(records, asOf);
             _cache.Update(snapshot, asOf);
         }
     }

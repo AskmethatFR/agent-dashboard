@@ -5,6 +5,6 @@
       "tests/AgentDashboard.TicketTracking.Domain.UnitTests/AgentDashboard.TicketTracking.Domain.UnitTests.csproj"
     ],
     "reporters": ["html", "json", "cleartext"],
-    "thresholds": { "high": 90, "low": 80, "break": 0 }
+    "thresholds": { "high": 95, "low": 90, "break": 90 }
   }
 }

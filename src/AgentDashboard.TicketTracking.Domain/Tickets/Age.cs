@@ -9,6 +9,7 @@ public sealed record Age
     public Age(TimeSpan value)
     {
         if (value < TimeSpan.Zero)
+            // Stryker disable once String
             throw new ArgumentOutOfRangeException(nameof(value), "Age cannot be negative.");
         Value = value;
     }

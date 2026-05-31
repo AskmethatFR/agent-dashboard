@@ -298,4 +298,30 @@ public sealed class TicketSnapshotTests : RecordEqualityContract<TicketSnapshot>
 
         withCoAgent.Should().NotBe(withoutCoAgent);
     }
+
+    // Test list — mutant kills
+    // 5. TicketSnapshot.cs L79: GuardCommonInputs call in InCrossReview
+    // 6. TicketSnapshot.cs L101: GuardCommonInputs call in Escalated
+
+    [Fact]
+    public void Should_Throw_ArgumentNullException_When_InCrossReviewWithNullId()
+    {
+        var act = () => TicketSnapshot.InCrossReview(
+            null!, new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
+            new AgentId("DB"),
+            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
+
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("id");
+    }
+
+    [Fact]
+    public void Should_Throw_ArgumentNullException_When_EscalatedWithNullId()
+    {
+        var act = () => TicketSnapshot.Escalated(
+            null!, new BoardColumnId("CREATED"), new TicketTitle("t"), new AgentId("DA"),
+            new AgentId("PM"),
+            new Retry(0), new Age(TimeSpan.Zero), thinking: false, TicketFreshness.Neutral);
+
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("id");
+    }
 }

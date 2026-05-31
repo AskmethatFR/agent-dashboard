@@ -42,3 +42,34 @@ jobs:
           name: test-results
           path: TestResults/**/*.trx
           if-no-files-found: ignore
+
+  # Mutation gate — DOMAIN ONLY (deterministic: Domain.UnitTests, no integration tests).
+  # The Application-context score is report-only until the integration-test SQLite
+  # isolation fix (#54) makes it reproducible — see docs/mutation-testing.md.
+  mutation-domain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore AgentDashboard.slnx
+
+      - name: Install Stryker.NET
+        run: dotnet tool install --global dotnet-stryker
+
+      - name: Mutation test (Domain) — fails if score < break threshold (90%)
+        run: dotnet-stryker --config-file stryker.domain.config.json
+
+      - name: Upload mutation report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mutation-report-domain
+          path: StrykerOutput/**/reports/mutation-report.html
+          if-no-files-found: ignore

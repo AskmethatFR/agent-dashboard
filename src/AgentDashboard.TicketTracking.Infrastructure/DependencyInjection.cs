@@ -1,3 +1,4 @@
+using AgentDashboard.TicketTracking.Application.Boards;
 using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Infrastructure.Boards;
 using AgentDashboard.TicketTracking.Infrastructure.GitHub;
@@ -45,6 +46,7 @@ public static class DependencyInjection
         services.AddSingleton<BoardRefreshTrigger>();
         services.AddSingleton<IBoardRefreshTrigger>(sp => sp.GetRequiredService<BoardRefreshTrigger>());
         services.TryAddSingleton(TimeProvider.System);
+        services.AddSingleton<IBoardProjection, BoardProjection>();
         services.AddSingleton<IBoardSnapshotUpdater, BoardSnapshotUpdater>();
 
         // Register SQLite ticket write repository

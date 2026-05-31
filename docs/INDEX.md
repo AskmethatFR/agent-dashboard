@@ -25,8 +25,10 @@
 | `adr-009` | Database migration strategy — hand-rolled SQL for SQLite | superseded | 2026-05-30 | `[[adr-010]]` | `docs/adr/ADR-009-database-migration-strategy-sqlite.md` |
 | `adr-010` | EF Core code-first for the SQLite write-side | current | 2026-05-31 | `[[ticket-tracking-write-side]]`, `[[adr-009]]`, `[[adr-005]]`, `[[adr-008]]` | `docs/adr/ADR-010-ef-core-code-first-write-side.md` |
 | `adr-011` | Label-mapping warnings surfaced as data, logged in Infrastructure | current | 2026-05-30 | `[[ticket-tracking-write-side]]` | `docs/adr/ADR-011-label-mapping-warnings-as-data.md` |
-| `adr-012` | Test single-consumer mappers at the slice boundary, not in isolated unit suites | current | 2026-05-31 | `[[ticket-tracking-write-side]]`, `[[adr-011]]`, `[[adr-010]]` | `docs/adr/ADR-012-test-mappers-at-slice-boundary.md` |
+| `adr-012` | Test single-consumer mappers at the slice boundary, not in isolated unit suites | current | 2026-05-31 | `[[ticket-tracking-write-side]]`, `[[adr-011]]`, `[[adr-010]]`, `[[adr-013]]` | `docs/adr/ADR-012-test-mappers-at-slice-boundary.md` |
+| `adr-013` | The read-side projection is a first-class Application use case behind a port | current | 2026-05-31 | `[[adr-012]]`, `[[adr-008]]`, `[[adr-001]]`, `[[mutation-testing-strategy]]` | `docs/adr/ADR-013-read-side-projection-is-an-application-use-case.md` |
 | `architecture-overview` | System shape, bounded contexts, layers | current | 2026-05-30 | `[[ticket-tracking-write-side]]`, `[[adr-003]]`, `[[adr-008]]`, `[[adr-010]]` | `docs/technical/architecture.md` |
+| `mutation-testing-strategy` | Mutation testing (Stryker.NET) — per-bounded-context scoring strategy | current | 2026-05-31 | `[[adr-012]]`, `[[adr-013]]` | `docs/mutation-testing.md` |
 | `ticket-tracking-write-side` | TicketTracking write-side — EF Core code-first persistence | current | 2026-05-31 | `[[architecture-overview]]`, `[[adr-005]]`, `[[adr-008]]`, `[[adr-009]]`, `[[adr-010]]`, `[[adr-011]]`, `[[adr-012]]` | `docs/technical/ticket-tracking-write-side.md` |
 
 ## Functional nodes (owner: pm)
@@ -45,3 +47,5 @@
 - [x] `Updated` reflects the last cycle that touched the node.
 
 > **Coverage note (2026-05-31, #6 follow-up):** The Ticket-identity shrink (`GitHubIssueNumber` alone, `GitHubRepository` VO deleted) amended ADR-008 + ADR-010 and added `[[adr-005]]` edges, so **ADR-005 is now registered** as a node. ADR-002, ADR-004, ADR-007 still exist under `docs/adr/` but are not yet registered — backfill them as future cycles touch their areas.
+>
+> **Coverage note (2026-05-31, #45 — read-side projection):** The read-side projection was promoted to an Application use case (`IBoardProjection.Project` / `BoardProjection`, `GitHubBoardMapper` deleted), closing the dominant Application mutation gap (64.20% → 85.80%). **ADR-013** is now registered and **amends ADR-012** (read-side slice boundary is the Application projection use case, not the Infrastructure reader). The pre-existing `docs/mutation-testing.md` prose is now registered as the **`mutation-testing-strategy`** node so ADRs can cite `[[mutation-testing-strategy]]`.

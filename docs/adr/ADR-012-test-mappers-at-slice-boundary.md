@@ -60,7 +60,7 @@ shared collaborator and keeps its own focused suite.
 | Side | Mapper | Slice entry point | Status |
 |---|---|---|---|
 | Write | `GitHubIssueToTicketMapper` | `GitHubIssuesPoller` | **Done in PR #44** — AC3/AC4/AC5 + happy-path warning+mapping moved into `GitHubIssuesPollerTests` (`[Theory]`); isolated `GitHubIssueToTicketMapperTests` deleted; no AC lost |
-| Read | `GitHubBoardMapper` | `GitHubBoardReader` / `GetBoardQuery` | **Deferred to issue #45 (EPIC-2)** — enrich `GitHubBoardReaderTests`, delete `GitHubBoardMapperTests` |
+| Read | `GitHubBoardMapper` → `BoardProjection` | **`IBoardProjection.Project`** (Application use case) | **Done in issue #45** — projection absorbed into Application `BoardProjection` (behind `IBoardProjection`); `GitHubBoardMapper` deleted; behavioral `[Theory]` added in `BoardProjectionShould`; isolated `GitHubBoardMapperTests` deleted; no AC lost. Per-BC Application Stryker ≥ 80% (85.80%). |
 
 The PR #44 change was **test-only** (commit `84a911b`); no production code changed.
 
@@ -77,10 +77,29 @@ The PR #44 change was **test-only** (commit `84a911b`); no production code chang
   isolated suite would; the "minimum representative set that could break the mapping"
   judgement is deliberately what we keep, and that residual risk is accepted.
 
+## Amendment (issue #45) — read-side boundary is the Application projection use case
+
+ADR-012 originally placed the read-side mapper's slice boundary at the Infrastructure
+reader (`GitHubBoardReader` / `GetBoardQuery`). Issue #45 found the read-side projection
+had **no Application-owned behavioral entry point** (its only caller was
+`BoardSnapshotUpdater` in Infrastructure, fusing projection with caching), so it could
+only be exercised through integration tests and was the dominant Application mutation
+gap (~64% honest score).
+
+Correction: the read-side projection **is an Application use case**
+(`IBoardProjection.Project`, implemented by `BoardProjection`); the slice boundary at
+which it is verified is **that Application entry point, not the Infrastructure reader**.
+`GitHubBoardMapper` is absorbed into `BoardProjection` and deleted; the behavioral
+`[Theory]` lives in `BoardProjectionShould`; the Infrastructure reader keeps only its
+cache/poll/error tests. This does **not** weaken ADR-012's principle — it identifies the
+correct boundary for the read-side. See [[adr-013]].
+
 ## Links
 - Issue #6 / PR #44 (write-side application, commit `84a911b`).
-- Issue #45 / EPIC-2 (read-side application — `GitHubBoardMapper` → `GitHubBoardReaderTests`).
+- Issue #45 / EPIC-2 (read-side application — `GitHubBoardMapper` → `BoardProjection`,
+  verified at `BoardProjectionShould`; see [[adr-013]]).
 - Related: [[ticket-tracking-write-side]] (the slice whose mapper this governs on the
   write-side), [[adr-011]] (the warning-as-data behavior asserted at the poller),
-  [[adr-010]] (the write-side persistence the poller slice produces).
+  [[adr-010]] (the write-side persistence the poller slice produces),
+  [[adr-013]] (amends this ADR for the read-side boundary).
 - Testing approach: Chicago-school (`tests/chicago-school.md`).

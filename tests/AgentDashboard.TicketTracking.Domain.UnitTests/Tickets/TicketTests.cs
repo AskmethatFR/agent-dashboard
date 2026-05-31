@@ -147,4 +147,79 @@ public sealed class TicketTests
         Assert.False(ticket == (null as Ticket));
 #nullable enable
     }
+
+    // Test list — mutant kills
+    // 1. Ticket.cs L72: null ticketTitle guard
+    // 2. Ticket.cs L76: null createdAtUtc guard
+    // 3. Ticket.cs L77: null updatedAtUtc guard
+    // 4. Ticket.cs L109: != operator NoCoverage
+
+    [Fact]
+    public void Ctor_NullTicketTitle_ThrowsArgumentNullException()
+    {
+        var act = () => new Ticket(
+            new GitHubIssueNumber(1),
+            null!,
+            new TicketStatus(TicketStatusValue.Created),
+            null,
+            new Retry(0),
+            new GitHubUrl("https://github.com/O/R/issues/1"),
+            FixedUtc,
+            FixedUtc,
+            null);
+
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("ticketTitle");
+    }
+
+    [Fact]
+    public void Ctor_NullCreatedAtUtc_ThrowsArgumentNullException()
+    {
+        var act = () => new Ticket(
+            new GitHubIssueNumber(1),
+            new TicketTitle("t"),
+            new TicketStatus(TicketStatusValue.Created),
+            null,
+            new Retry(0),
+            new GitHubUrl("https://github.com/O/R/issues/1"),
+            null!,
+            FixedUtc,
+            null);
+
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("createdAtUtc");
+    }
+
+    [Fact]
+    public void Ctor_NullUpdatedAtUtc_ThrowsArgumentNullException()
+    {
+        var act = () => new Ticket(
+            new GitHubIssueNumber(1),
+            new TicketTitle("t"),
+            new TicketStatus(TicketStatusValue.Created),
+            null,
+            new Retry(0),
+            new GitHubUrl("https://github.com/O/R/issues/1"),
+            FixedUtc,
+            null!,
+            null);
+
+        act.Should().ThrowExactly<ArgumentNullException>().WithParameterName("updatedAtUtc");
+    }
+
+    [Fact]
+    public void NotEqualOperator_DifferentIssueNumbers_ReturnsTrue()
+    {
+        var ticket1 = CreateTestTicket(issueNumber: 1);
+        var ticket2 = CreateTestTicket(issueNumber: 2);
+
+        (ticket1 != ticket2).Should().BeTrue();
+    }
+
+    [Fact]
+    public void NotEqualOperator_SameIssueNumber_ReturnsFalse()
+    {
+        var ticket1 = CreateTestTicket(issueNumber: 5);
+        var ticket2 = CreateTestTicket(issueNumber: 5);
+
+        (ticket1 != ticket2).Should().BeFalse();
+    }
 }

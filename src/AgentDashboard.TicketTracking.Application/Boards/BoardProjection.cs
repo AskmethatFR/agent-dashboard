@@ -1,10 +1,12 @@
+using AgentDashboard.TicketTracking.Application.GitHub;
+using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Domain.Agents;
 using AgentDashboard.TicketTracking.Domain.Boards;
 using AgentDashboard.TicketTracking.Domain.Tickets;
 
-namespace AgentDashboard.TicketTracking.Application.GitHub;
+namespace AgentDashboard.TicketTracking.Application.Boards;
 
-public static class GitHubBoardMapper
+public sealed class BoardProjection : IBoardProjection
 {
     private const string StatusPrefix = "status:";
     private const string AgentPrefix = "agent:";
@@ -86,9 +88,9 @@ public static class GitHubBoardMapper
         "security"
     };
 
-    public static BoardSnapshot MapToBoardSnapshot(
+    public BoardSnapshot Project(
         IReadOnlyList<GitHubIssueRecord> records,
-        DateTimeOffset now)
+        DateTimeOffset asOf)
     {
         // Validate all labels in all records before processing
         foreach (var record in records)
@@ -96,7 +98,7 @@ public static class GitHubBoardMapper
             ValidateLabels(record.Labels);
         }
 
-        var tickets = records.Select(r => MapToTicket(r, now)).ToList();
+        var tickets = records.Select(r => MapToTicket(r, asOf)).ToList();
         return new BoardSnapshot(Columns, tickets, Agents);
     }
 
@@ -124,7 +126,7 @@ public static class GitHubBoardMapper
             {
                 hasValidPrefix = true;
                 var value = label[prefix.Length..];
-                
+
                 // Validate the value based on the prefix
                 ValidateLabelValue(prefix, value);
                 break;
@@ -187,7 +189,7 @@ public static class GitHubBoardMapper
         }
     }
 
-    private static TicketSnapshot MapToTicket(GitHubIssueRecord record, DateTimeOffset now)
+    private static TicketSnapshot MapToTicket(GitHubIssueRecord record, DateTimeOffset asOf)
     {
         var columnId = MapStatusLabel(record.Labels);
         var agentId = MapAgentLabel(record.Labels);
@@ -198,7 +200,7 @@ public static class GitHubBoardMapper
         var hasEscalatedStatus = record.Labels.Contains(StatusEscalated);
         var isEscalated = hasEscalatedStatus && retry.Value >= 3;
 
-        var age = new Age(now - record.CreatedAt);
+        var age = new Age(asOf - record.CreatedAt);
         var freshness = CalculateFreshness(record.Labels, columnId.Value, age);
 
         if (hasInReviewStatus)
