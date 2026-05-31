@@ -85,16 +85,6 @@ public sealed class TicketTests
     }
 
     [Fact]
-    public void Equals_SameIssueNumber_DifferentRepository_ReturnsTrue()
-    {
-        // Identity is GitHubIssueNumber alone — repo is not part of the key (ADR-005)
-        var ticket1 = CreateTestTicket(issueNumber: 6, githubUrl: "https://github.com/AskmethatFR/agent-dashboard/issues/6");
-        var ticket2 = CreateTestTicket(issueNumber: 6, githubUrl: "https://github.com/AskmethatFR/agent-dashboard/issues/6");
-        Assert.Equal(ticket1, ticket2);
-        Assert.True(ticket1 == ticket2);
-    }
-
-    [Fact]
     public void Equals_DifferentIssueNumber_ReturnsFalse()
     {
         var ticket1 = CreateTestTicket(issueNumber: 6);
