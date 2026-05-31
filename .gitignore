@@ -43,6 +43,9 @@ coverage*.json
 coverage*.xml
 coverage*.info
 
+# --- Stryker.NET mutation testing (reports are artifacts, never committed) ---
+StrykerOutput/
+
 # --- Rider / Visual Studio ---
 .idea/
 *.sln.iml
