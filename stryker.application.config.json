@@ -1,0 +1,11 @@
+{
+  "stryker-config": {
+    "project": "AgentDashboard.TicketTracking.Application.csproj",
+    "test-projects": [
+      "tests/AgentDashboard.TicketTracking.Application.UnitTests/AgentDashboard.TicketTracking.Application.UnitTests.csproj",
+      "tests/AgentDashboard.TicketTracking.Infrastructure.IntegrationTests/AgentDashboard.TicketTracking.IntegrationTests.csproj"
+    ],
+    "reporters": ["html", "json", "cleartext"],
+    "thresholds": { "high": 85, "low": 70, "break": 0 }
+  }
+}
