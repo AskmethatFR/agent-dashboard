@@ -5,6 +5,7 @@ using AgentDashboard.TicketTracking.TestShared.Factories;
 using AgentDashboard.TicketTracking.Infrastructure.IntegrationTests.GitHub.Fakes;
 using FluentAssertions;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Data.Sqlite;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -218,6 +219,122 @@ public sealed class GitHubIssuesPollerTests : IAsyncLifetime
         warning.Message.Should().Contain("status:in-qa");
         warning.Message.Should().Contain("status:done");
         warning.Message.Should().Contain("selected 'status:done'");
+    }
+
+    // AC4 — no recognized status:* label: persisted status defaults to Created, MissingStatusLabel warning logged.
+
+    [Fact]
+    public async Task DefaultToCreatedAndLogWarning_WhenIssueHasNoStatusLabel()
+    {
+        _fakeClient.SetIssues(new[]
+        {
+            new GitHubIssueRecordBuilder()
+                .WithNumber(100)
+                .WithTitle("no-status issue")
+                .WithLabels("type:feat", "agent:dev-a")
+                .AsOpen()
+                .Build(),
+        });
+
+        _ = _factory.Server;
+        await WaitUntilAsync(() => _fakeClient.CallCount >= 1);
+        await WaitUntilAsync(() => _pollerLogger.Entries.Any(e => e.Level == LogLevel.Warning));
+
+        var warning = _pollerLogger.Entries.Should().ContainSingle(e => e.Level == LogLevel.Warning).Subject;
+        warning.Message.Should().Contain("Issue #100");
+        warning.Message.Should().Contain("no status label");
+
+        var (status, _) = await QueryTicketRowAsync(100);
+        status.Should().Be("Created");
+    }
+
+    [Fact]
+    public async Task DefaultToCreatedAndLogWarning_WhenIssueHasOnlyUnrecognizedStatusLabel()
+    {
+        _fakeClient.SetIssues(new[]
+        {
+            new GitHubIssueRecordBuilder()
+                .WithNumber(101)
+                .WithTitle("unrecognized-status issue")
+                .WithLabels("status:foo")
+                .AsOpen()
+                .Build(),
+        });
+
+        _ = _factory.Server;
+        await WaitUntilAsync(() => _fakeClient.CallCount >= 1);
+        await WaitUntilAsync(() => _pollerLogger.Entries.Any(e => e.Level == LogLevel.Warning));
+
+        var warning = _pollerLogger.Entries.Should().ContainSingle(e => e.Level == LogLevel.Warning).Subject;
+        warning.Message.Should().Contain("Issue #101");
+        warning.Message.Should().Contain("no status label");
+
+        var (status, _) = await QueryTicketRowAsync(101);
+        status.Should().Be("Created");
+    }
+
+    // AC5 — multiple retry:N labels: persisted retry_count is the highest, no warning logged.
+
+    [Fact]
+    public async Task PersistHighestRetryCount_AndLogNoWarning_WhenIssueHasMultipleRetryLabels()
+    {
+        _fakeClient.SetIssues(new[]
+        {
+            new GitHubIssueRecordBuilder()
+                .WithNumber(55)
+                .WithTitle("multi-retry issue")
+                .WithLabels("status:created", "retry:1", "retry:3", "retry:2")
+                .AsOpen()
+                .Build(),
+        });
+
+        _ = _factory.Server;
+        await WaitUntilAsync(() => _fakeClient.CallCount >= 1);
+        await Task.Delay(50); // allow any warning to be captured if the mapper incorrectly emits one
+
+        _pollerLogger.Entries.Should().NotContain(e => e.Level == LogLevel.Warning);
+
+        var (_, retryCount) = await QueryTicketRowAsync(55);
+        retryCount.Should().Be(3);
+    }
+
+    // Happy path — exactly one status + one agent + one retry: mapped correctly, no warning.
+
+    [Fact]
+    public async Task MapCorrectly_AndLogNoWarning_OnHappyPath()
+    {
+        _fakeClient.SetIssues(new[]
+        {
+            new GitHubIssueRecordBuilder()
+                .WithNumber(1)
+                .WithTitle("happy path issue")
+                .WithLabels("status:in-development", "agent:dev-a", "retry:1")
+                .AsOpen()
+                .Build(),
+        });
+
+        _ = _factory.Server;
+        await WaitUntilAsync(() => _fakeClient.CallCount >= 1);
+        await Task.Delay(50); // allow any warning to be captured if the mapper incorrectly emits one
+
+        _pollerLogger.Entries.Should().NotContain(e => e.Level == LogLevel.Warning);
+
+        var (status, retryCount) = await QueryTicketRowAsync(1);
+        status.Should().Be("InDevelopment");
+        retryCount.Should().Be(1);
+    }
+
+    private async Task<(string Status, int RetryCount)> QueryTicketRowAsync(long issueNumber)
+    {
+        await using var conn = new SqliteConnection("Data Source=" + _testDbPath);
+        await conn.OpenAsync(CancellationToken.None);
+        await using var cmd = new SqliteCommand(
+            "SELECT status, retry_count FROM tickets WHERE github_issue_number = @n",
+            conn);
+        cmd.Parameters.AddWithValue("@n", issueNumber);
+        await using var reader = await cmd.ExecuteReaderAsync(CancellationToken.None);
+        reader.Read().Should().BeTrue($"ticket #{issueNumber} should have been persisted");
+        return (reader.GetString(0), reader.GetInt32(1));
     }
 
     private static async Task WaitUntilAsync(Func<bool> predicate, int timeoutMs = 2000)
