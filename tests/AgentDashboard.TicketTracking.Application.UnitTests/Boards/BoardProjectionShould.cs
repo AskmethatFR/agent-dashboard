@@ -55,6 +55,18 @@
 // [✓] 22h. Project_MultipleBadLabelsOnOneRecord_EmitsOneWarningPerBadLabel
 // [✓] 22i. Project_WithUnknownNonTeamPrefix_RendersWithNoWarning (Theory)
 //
+// DEGRADATION — OUT-OF-RANGE RETRY (B1 fix — security A04):
+// [✓] 22j. Project_WithOutOfRangeRetryLabel_DoesNotThrow (Theory: retry:4, retry:999, retry:-1)
+// [✓] 22k. Project_WithOutOfRangeRetryLabel_EmitsMalformedLabelWarning (Theory: retry:4, retry:999)
+// [✓] 22l. Project_WithOutOfRangeRetry_FallsBackToZeroAndRenders
+//
+// B2 — UNTESTED BRANCHES (co-agent and escalation-target invalid arms):
+// [✓] 22m. Project_InReview_WithInvalidCoAgent_FallsBackAndWarns
+// [✓] 22n. Project_Escalated_WithInvalidEscalationTarget_FallsBackAndWarns
+//
+// B3 — PASS-THROUGH (bare word, no colon):
+// [✓] 22o. Project_WithBareWordLabel_RendersWithNoWarning
+//
 // ========================================================================
 
 using AgentDashboard.TicketTracking.Application.Boards;
@@ -740,6 +752,113 @@ public sealed class BoardProjectionShould
         ticket.IsInCrossReview.Should().BeTrue();
         ticket.IsEscalated.Should().BeFalse();
         ticket.EscalationTarget.Should().BeNull();
+    }
+
+    // -------------------------------------------------------------------------
+    // 22j/22k. Out-of-range retry → does NOT throw + emits warning (B1)
+    // -------------------------------------------------------------------------
+
+    [Theory]
+    [InlineData("retry:4")]
+    [InlineData("retry:999")]
+    [InlineData("retry:-1")]
+    public void Project_WithOutOfRangeRetryLabel_DoesNotThrow(string retryLabel)
+    {
+        var record = BuildRecord(1, retryLabel);
+
+        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        act.Should().NotThrow();
+    }
+
+    [Theory]
+    [InlineData("retry:4")]
+    [InlineData("retry:999")]
+    public void Project_WithOutOfRangeRetryLabel_EmitsMalformedLabelWarning(string retryLabel)
+    {
+        var record = BuildRecord(1, retryLabel);
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Warnings.Should().ContainSingle();
+        var warning = result.Warnings[0];
+        warning.Kind.Should().Be(ProjectionWarningKind.MalformedLabel);
+        warning.OffendingLabel.Should().Be(retryLabel);
+    }
+
+    // -------------------------------------------------------------------------
+    // 22l. Out-of-range retry → 0 fallback + renders (B1)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_WithOutOfRangeRetry_FallsBackToZeroAndRenders()
+    {
+        var record = BuildRecordWithLabels(1, "status:created", "agent:pm", "retry:4");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        result.Snapshot.Tickets[0].Retry.Value.Should().Be(0);
+        result.Warnings.Should().ContainSingle(w =>
+            w.Kind == ProjectionWarningKind.MalformedLabel &&
+            w.OffendingLabel == "retry:4");
+    }
+
+    // -------------------------------------------------------------------------
+    // 22m. Invalid co-agent → null fallback + warning (B2)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_InReview_WithInvalidCoAgent_FallsBackAndWarns()
+    {
+        var record = BuildRecordWithLabels(1, "status:in-review", "agent:dev-a", "co-agent:unknown");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        var ticket = result.Snapshot.Tickets[0];
+        ticket.IsInCrossReview.Should().BeTrue();
+        // co-agent:unknown → null → defaults to agentId (dev-a) per MapToTicket logic
+        ticket.CoAgentId!.Value.Should().Be("dev-a");
+        result.Warnings.Should().ContainSingle(w =>
+            w.Kind == ProjectionWarningKind.MalformedLabel &&
+            w.OffendingLabel == "co-agent:unknown");
+    }
+
+    // -------------------------------------------------------------------------
+    // 22n. Invalid escalation-target → null fallback + warning (B2)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_Escalated_WithInvalidEscalationTarget_FallsBackAndWarns()
+    {
+        var record = BuildRecordWithLabels(1, "status:escalated", "agent:dev-a", "retry:3", "escalation-target:badvalue");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        var ticket = result.Snapshot.Tickets[0];
+        ticket.IsEscalated.Should().BeTrue();
+        // escalation-target:badvalue → null → falls back to agentId (dev-a) per MapToTicket logic
+        ticket.EscalationTarget!.Value.Should().Be("dev-a");
+        result.Warnings.Should().ContainSingle(w =>
+            w.Kind == ProjectionWarningKind.MalformedLabel &&
+            w.OffendingLabel == "escalation-target:badvalue");
+    }
+
+    // -------------------------------------------------------------------------
+    // 22o. Bare word label (no colon) → renders, no warning (B3)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_WithBareWordLabel_RendersWithNoWarning()
+    {
+        var record = BuildRecord(1, "bug");
+
+        var result = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        result.Snapshot.Tickets.Should().HaveCount(1);
+        result.Warnings.Should().BeEmpty();
     }
 
     // -------------------------------------------------------------------------

@@ -156,7 +156,10 @@ public sealed class BoardProjection : IBoardProjection
                     reason = "invalid agent value";
                     return true;
 
-                case RetryPrefix when !int.TryParse(value, out _):
+                case RetryPrefix
+                    when !int.TryParse(value, out var retryInt)
+                         || retryInt < 0
+                         || retryInt > Retry.MaxBeforeEscalation:
                     reason = "invalid retry value";
                     return true;
             }
@@ -287,7 +290,9 @@ public sealed class BoardProjection : IBoardProjection
             if (label.StartsWith(RetryPrefix, StringComparison.Ordinal))
             {
                 var retryValue = label[RetryPrefix.Length..];
-                if (int.TryParse(retryValue, out var value))
+                if (int.TryParse(retryValue, out var value)
+                    && value >= 0
+                    && value <= Retry.MaxBeforeEscalation)
                 {
                     return new Retry(value);
                 }
