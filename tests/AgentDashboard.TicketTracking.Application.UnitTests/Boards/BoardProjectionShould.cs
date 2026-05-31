@@ -477,6 +477,160 @@ public sealed class BoardProjectionShould
     }
 
     // -------------------------------------------------------------------------
+    // Mutation-killing targeted cases (AC8 — kill Stryker survivors)
+    // -------------------------------------------------------------------------
+
+    [Fact]
+    public void Project_WithEmptyLabel_ThrowsWithMessage()
+    {
+        var record = BuildRecord(1, "");
+
+        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*null, empty, or whitespace*");
+    }
+
+    [Fact]
+    public void Project_WithInvalidStatusValue_ThrowsWithMessage()
+    {
+        var record = BuildRecord(1, "status:not-valid");
+
+        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Invalid status value*");
+    }
+
+    [Fact]
+    public void Project_WithInvalidAgentValue_ThrowsWithMessage()
+    {
+        var record = BuildRecord(1, "agent:not-valid");
+
+        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Invalid agent value*");
+    }
+
+    [Fact]
+    public void Project_WithInvalidRetryValue_ThrowsWithMessage()
+    {
+        var record = BuildRecord(1, "retry:not-an-int");
+
+        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Invalid retry value*");
+    }
+
+    [Fact]
+    public void Project_InReview_IsThinkingFalse()
+    {
+        var record = BuildRecordWithLabels(1, "status:in-review", "agent:dev-a");
+
+        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        snapshot.Tickets[0].IsThinking.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Project_Escalated_IsThinkingFalse()
+    {
+        var record = BuildRecordWithLabels(1, "status:escalated", "agent:dev-a", "retry:3");
+
+        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        snapshot.Tickets[0].IsThinking.Should().BeFalse();
+    }
+
+    [Fact]
+    public void Project_InReview_AndEscalated_WithRetry3_AndEscalationTarget_TargetIsPreserved()
+    {
+        // Kills: Line 219 conditional (isEscalated ? escalationTarget : null)
+        // When in-review+escalated, the escalationTarget must be passed through (not null)
+        var record = BuildRecordWithLabels(1, "status:in-review", "status:escalated", "agent:dev-a", "retry:3", "escalation-target:pm");
+
+        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        var ticket = snapshot.Tickets[0];
+        ticket.IsInCrossReview.Should().BeTrue();
+        ticket.IsEscalated.Should().BeTrue();
+        ticket.EscalationTarget!.Value.Should().Be("pm");
+    }
+
+    [Fact]
+    public void Project_Escalated_WithRetry3_AndExplicitEscalationTarget_TargetIsNotAgentId()
+    {
+        // Kills: Line 228 null coalescing (escalationTarget ?? agentId → agentId alone)
+        // Target is "pm" while agent is "dev-a" — they differ so the fallback is distinguishable
+        var record = BuildRecordWithLabels(1, "status:escalated", "agent:dev-a", "retry:3", "escalation-target:pm");
+
+        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        snapshot.Tickets[0].EscalationTarget!.Value.Should().Be("pm");
+    }
+
+    [Fact]
+    public void Project_DoneTicket_WithAgeExactly24h_IsStale()
+    {
+        // Kills: Line 334 boundary (< vs <=): age exactly at 24h must NOT be fresh
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("24h done ticket")
+            .WithLabels("status:done")
+            .WithCreatedAt(AsOf.AddHours(-24))
+            .WithHtmlUrl(AnyUrl)
+            .WithUpdatedAt(AsOf.AddHours(-24))
+            .AsOpen()
+            .Build();
+
+        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        snapshot.Tickets[0].Freshness.Should().Be(TicketFreshness.Stale);
+    }
+
+    [Fact]
+    public void Project_WithUnknownPrefixLabel_DoesNotThrow()
+    {
+        // Kills: Line 140 negation of label.Contains(':') — a label with no colon should pass through
+        // (no colon → skip the inner validation block entirely)
+        var record = BuildRecord(1, "size:large");
+
+        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        act.Should().NotThrow();
+    }
+
+    [Fact]
+    public void Project_WithValidPrefixButInvalidValue_StopsAfterFirstMatchingPrefix()
+    {
+        // Kills: Line 127 (hasValidPrefix = false) + Line 132 (break removal)
+        // "status:not-valid" matches StatusPrefix → hasValidPrefix is set → throws for invalid value
+        var record = BuildRecord(1, "status:not-valid");
+
+        var act = () => _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        act.Should().Throw<InvalidOperationException>()
+            .WithMessage("*Invalid status value*");
+    }
+
+    [Fact]
+    public void Project_InReview_NotEscalated_WithEscalationTarget_EscalationTargetIsNull()
+    {
+        // Kills: Line 219 conditional (true?escalationTarget:null)
+        // in-review + escalation-target present, but NOT escalated (retry:0) → EscalationTarget must be null
+        var record = BuildRecordWithLabels(1, "status:in-review", "agent:dev-a", "retry:0", "escalation-target:pm");
+
+        var snapshot = _sut.Project(new List<GitHubIssueRecord> { record }, AsOf);
+
+        var ticket = snapshot.Tickets[0];
+        ticket.IsInCrossReview.Should().BeTrue();
+        ticket.IsEscalated.Should().BeFalse();
+        ticket.EscalationTarget.Should().BeNull();
+    }
+
+    // -------------------------------------------------------------------------
     // Helpers
     // -------------------------------------------------------------------------
 
