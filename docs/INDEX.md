@@ -32,9 +32,9 @@
 
 | ID | Title | Status | Updated | Links | Path |
 |---|---|---|---|---|---|
-| `feature-catalog` | All capabilities → behavior → acceptance | current | 2026-05-30 | `[[ticket-ingestion-acceptance]]`, `[[glossary]]` | `docs/functional/features.md` |
-| `glossary` | Ubiquitous language — TicketTracking domain terms | current | 2026-05-30 | `[[feature-catalog]]`, `[[ticket-ingestion-acceptance]]`, `[[ticket-tracking-write-side]]`, `[[adr-008]]` | `docs/functional/glossary.md` |
-| `ticket-ingestion-acceptance` | GitHub Issues → Ticket write model — acceptance (AC1..AC10) | current | 2026-05-30 | `[[feature-catalog]]`, `[[glossary]]`, `[[ticket-tracking-write-side]]`, `[[adr-011]]`, `[[adr-010]]` | `docs/functional/ticket-ingestion-acceptance.md` |
+| `feature-catalog` | All capabilities → behavior → acceptance | current | 2026-05-31 | `[[ticket-ingestion-acceptance]]`, `[[glossary]]` | `docs/functional/features.md` |
+| `glossary` | Ubiquitous language — TicketTracking domain terms | current | 2026-05-31 | `[[feature-catalog]]`, `[[ticket-ingestion-acceptance]]`, `[[ticket-tracking-write-side]]`, `[[adr-008]]`, `[[adr-005]]` | `docs/functional/glossary.md` |
+| `ticket-ingestion-acceptance` | GitHub Issues → Ticket write model — acceptance (AC1..AC10) | current | 2026-05-31 | `[[feature-catalog]]`, `[[glossary]]`, `[[ticket-tracking-write-side]]`, `[[adr-011]]`, `[[adr-010]]`, `[[adr-005]]`, `[[adr-008]]` | `docs/functional/ticket-ingestion-acceptance.md` |
 
 ## Graph health (maintained by the owners at end of each cycle)
 

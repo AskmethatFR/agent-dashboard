@@ -3,7 +3,7 @@ id: "feature-catalog"
 type: "functional"
 owner: "pm"
 status: "current"
-updated: "2026-05-30"
+updated: "2026-05-31"
 links:
   - "ticket-ingestion-acceptance"
   - "glossary"
@@ -28,11 +28,11 @@ decided_in:
 
 | Capability | Epic | What it does (observable behavior) | Detailed acceptance |
 |---|---|---|---|
-| **GitHub Issues ingestion → Ticket write model** | EPIC-1 (ingestion) | Each open GitHub Issue observed by the poller is deterministically mapped to a `Ticket` row in SQLite, keyed by `(repo, github_issue_number)`. Re-observing an issue updates the same row in place. Status / agent / retry are derived from the issue's labels per `docs/labels.md`; ambiguous or missing `status:*` labels still produce a row plus an operator warning. | [[ticket-ingestion-acceptance]] |
+| **GitHub Issues ingestion → Ticket write model** | EPIC-1 (ingestion) | Each open GitHub Issue observed by the poller is deterministically mapped to a `Ticket` row in SQLite, keyed by `github_issue_number`. Re-observing an issue updates the same row in place. Status / agent / retry are derived from the issue's labels per `docs/labels.md`; ambiguous or missing `status:*` labels still produce a row plus an operator warning. | [[ticket-ingestion-acceptance]] |
 
 ## Consequences / Constraints
 
-- **MUST**: every observed open issue results in exactly one persisted `Ticket` row (insert-or-update on `(repo, github_issue_number)`).
+- **MUST**: every observed open issue results in exactly one persisted `Ticket` row (insert-or-update on `github_issue_number`).
 - **MUST**: label-to-domain mapping is **deterministic** (a mapper, not a heuristic engine) — it follows the [[glossary]] terms and the taxonomy in `docs/labels.md`.
 - **MUST NOT**: surface ingestion as a user action — the dashboard is read-only; ingestion is driven by the background poller (default 600s + manual refresh).
 - **Out of scope (delivered by later slices / epics)**:

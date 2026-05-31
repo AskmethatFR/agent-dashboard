@@ -3,12 +3,13 @@ id: "glossary"
 type: "functional"
 owner: "pm"
 status: "current"
-updated: "2026-05-30"
+updated: "2026-05-31"
 links:
   - "feature-catalog"
   - "ticket-ingestion-acceptance"
   - "ticket-tracking-write-side"
   - "adr-008"
+  - "adr-005"
 answers:
   - "What does each domain term in agent-dashboard mean (Ticket, TicketStatus, AgentId, RetryCount, MappingWarning)?"
   - "What are the 8 TicketStatus values and their state-machine order?"
@@ -31,7 +32,7 @@ The team and the model speak one language. This node is the canonical definition
 
 | Term | Definition |
 |---|---|
-| **Ticket** | The write-model entity representing one tracked GitHub Issue. Identified by `(repo, github_issue_number)`. Carries `id`, `title`, `status`, `agent` (nullable), `retry_count`, `github_url`, `created_at_utc`, `updated_at_utc`, `closed_at_utc` (nullable). One open issue ⇒ exactly one `Ticket` row. |
+| **Ticket** | The write-model entity representing one tracked GitHub Issue. Identified by `github_issue_number` alone (v1.0 observes a single hardcoded repo per [[adr-005]], so the issue number is a sufficient identity; the former `(repo, github_issue_number)` composite was dropped — see [[adr-008]]). Carries `title`, `status`, `agent` (nullable), `retry_count`, `github_url`, `created_at_utc`, `updated_at_utc`, `closed_at_utc` (nullable). One open issue ⇒ exactly one `Ticket` row. |
 | **TicketStatus** | The workflow state of a `Ticket`, a value object with 8 values. Ordered (earliest → latest): `created → specified → in-development → in-review → in-qa → awaiting-validation → done`. `escalated` is the 8th value — a **transverse** state outside the linear order (blocker / conflict / max-retries-reached). Derived from the issue's `status:*` label. |
 | **State-machine order** | The linear ordering of the first 7 `TicketStatus` values above. Used to resolve a conflicting multi-`status:*` label set: the value **furthest along** this order wins (see [[ticket-ingestion-acceptance]] AC3). |
 | **AgentId** | The value object identifying the agent currently responsible for a `Ticket`. One of `pm`, `architect`, `dev-a`, `dev-b`, `qa`, `security`. Derived from the issue's `agent:*` label; `null` when absent (assignees are not consulted in the MVP). |

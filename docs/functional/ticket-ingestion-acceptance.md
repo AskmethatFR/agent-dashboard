@@ -3,13 +3,15 @@ id: "ticket-ingestion-acceptance"
 type: "functional"
 owner: "pm"
 status: "current"
-updated: "2026-05-30"
+updated: "2026-05-31"
 links:
   - "feature-catalog"
   - "glossary"
   - "ticket-tracking-write-side"
   - "adr-011"
   - "adr-010"
+  - "adr-005"
+  - "adr-008"
 answers:
   - "What are the acceptance criteria for GitHub Issues ingestion into the Ticket write model?"
   - "How is a Ticket row keyed, and when is it inserted vs updated?"
@@ -34,7 +36,7 @@ This node settles *what correct ingestion behavior looks like* — independent o
 
 | # | Given | Then |
 |---|---|---|
-| AC1 | An open issue with at most one `status:*` label, when the poller runs | A `Ticket` row exists in SQLite keyed by `(repo, github_issue_number)` carrying `id`, `title`, `status`, `agent` (nullable), `retry_count` (0..3), `github_url`, `created_at_utc`, `updated_at_utc`, `closed_at_utc` (nullable). |
+| AC1 | An open issue with at most one `status:*` label, when the poller runs | A `Ticket` row exists in SQLite keyed by `github_issue_number` carrying `title`, `status`, `agent` (nullable), `retry_count` (0..3), `github_url`, `created_at_utc`, `updated_at_utc`, `closed_at_utc` (nullable). |
 | AC2 | An issue is observed again with a changed label set | The existing row is updated **in place** — no duplicate rows. |
 | AC3 | An issue carries multiple `status:*` labels | The status matching the **latest position in the state-machine order** is selected; a [[glossary]] `MappingWarning` is surfaced naming the issue and the conflicting labels; the row is still written. |
 | AC4 | An issue carries no `status:*` label | It is treated as `status:created`; a `MappingWarning` is surfaced; the row is still written. |
@@ -65,7 +67,7 @@ This node settles *what correct ingestion behavior looks like* — independent o
 
 ## Consequences / Constraints
 
-- **MUST**: keying is `(repo, github_issue_number)` — this is the natural identity of an ingested `Ticket`. Insert-or-update is decided on this key (AC1/AC2).
+- **MUST**: keying is `github_issue_number` alone — this is the natural identity of an ingested `Ticket` (v1.0 observes a single hardcoded repo per [[adr-005]]; the former `(repo, github_issue_number)` composite was dropped, see [[adr-008]]). Insert-or-update is decided on this key (AC1/AC2).
 - **MUST**: a row is **always** written even when labels are ambiguous or absent (AC3/AC4) — ingestion never drops an observed issue.
 - **MUST NOT**: derive `agent` from GitHub assignees in the MVP (AC6) — only the `agent:*` label is authoritative.
 - **Out of scope**: read-side projection, closed-ticket lifecycle beyond `closed_at_utc` nullability, ETag requests, webhooks — see [[feature-catalog]].
