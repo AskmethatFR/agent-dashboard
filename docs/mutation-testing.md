@@ -1,3 +1,11 @@
+---
+id: mutation-testing-strategy
+type: technical
+owner: architect
+status: current
+links: [[adr-012]], [[adr-013]]
+---
+
 # Mutation testing (Stryker.NET)
 
 We measure test **effectiveness** with mutation testing, not just line/branch
@@ -16,9 +24,13 @@ coverage and reports the mapper as "NoCoverage", understating the real score.
 
 Measured per bounded-context instead, the Application score moved from a
 misleading **48.86 %** (unit-project only) to a truthful **64.20 %** (unit +
-integration). The residual gap is concentrated in the read-side projection
-`GitHubBoardMapper` — tracked by issue #45, which pulls that projection into an
-Application-owned use case so its verification stops depending on Infrastructure.
+integration). That residual gap — once concentrated in the read-side projection
+`GitHubBoardMapper` — is **closed by issue #45**: the projection is now
+`BoardProjection`, a first-class Application use case behind `IBoardProjection`
+([ADR-013](adr/ADR-013-read-side-projection-is-an-application-use-case.md)),
+verified by a behavioral `[Theory]` at the Application boundary
+(`BoardProjectionShould`) instead of through Infrastructure. The
+per-bounded-context **Application target is ≥ 80 %**, **achieved 85.80 %**.
 
 | Context | `--config-file` | Mutated project | Test set |
 |---|---|---|---|
