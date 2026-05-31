@@ -159,16 +159,15 @@ public sealed class GitHubIssuesPollerSqliteIntegrationTests : IAsyncLifetime
 
         await using var conn = new SqliteConnection("Data Source=" + _testDbPath);
         await conn.OpenAsync(CancellationToken.None);
-        await using var cmd = new SqliteCommand("SELECT title, repo, github_issue_number FROM tickets ORDER BY github_issue_number", conn);
+        await using var cmd = new SqliteCommand("SELECT title, github_issue_number FROM tickets ORDER BY github_issue_number", conn);
         var reader = await cmd.ExecuteReaderAsync(CancellationToken.None);
 
-        var tickets = new List<(string Title, string Repo, int Number)>();
+        var tickets = new List<(string Title, int Number)>();
         while (await reader.ReadAsync(CancellationToken.None))
         {
             tickets.Add((
                 reader.GetString(0),
-                reader.GetString(1),
-                reader.GetInt32(2)
+                reader.GetInt32(1)
             ));
         }
 

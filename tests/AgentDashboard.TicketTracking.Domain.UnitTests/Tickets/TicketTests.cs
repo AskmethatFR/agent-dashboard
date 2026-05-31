@@ -9,7 +9,6 @@ public sealed class TicketTests
     private static readonly TimestampUtc FixedUtc = new(FixedTimestamp);
 
     private static Ticket CreateTestTicket(
-        string repo = "AskmethatFR/agent-dashboard",
         long issueNumber = 6,
         string title = "Test Issue",
         TicketStatusValue status = TicketStatusValue.Created,
@@ -17,16 +16,14 @@ public sealed class TicketTests
         int retryCount = 0,
         string githubUrl = "https://github.com/AskmethatFR/agent-dashboard/issues/6")
     {
-        var repositorySource = new GitHubRepository(repo);
         var gitHubIssueNumber = new GitHubIssueNumber(issueNumber);
         var ticketTitle = new TicketTitle(title);
         var ticketStatus = new TicketStatus(status);
         var agent = new AgentId(agentId);
         var retry = new Retry(retryCount);
         var url = new GitHubUrl(githubUrl);
-        
+
         return new Ticket(
-            repositorySource,
             gitHubIssueNumber,
             ticketTitle,
             ticketStatus,
@@ -38,19 +35,15 @@ public sealed class TicketTests
             null);
     }
 
-    private static Ticket CreateTestTicketWithoutAgent(
-        string repo = "AskmethatFR/agent-dashboard",
-        long issueNumber = 6)
+    private static Ticket CreateTestTicketWithoutAgent(long issueNumber = 6)
     {
-        var repositorySource = new GitHubRepository(repo);
         var gitHubIssueNumber = new GitHubIssueNumber(issueNumber);
         var ticketTitle = new TicketTitle("Test Issue");
         var ticketStatus = new TicketStatus(TicketStatusValue.Created);
         var retry = new Retry(0);
         var url = new GitHubUrl("https://github.com/AskmethatFR/agent-dashboard/issues/6");
-        
+
         return new Ticket(
-            repositorySource,
             gitHubIssueNumber,
             ticketTitle,
             ticketStatus,
@@ -67,7 +60,6 @@ public sealed class TicketTests
     {
         var ticket = CreateTestTicket();
         Assert.NotNull(ticket);
-        Assert.Equal("AskmethatFR/agent-dashboard", ticket.GitHubRepository.Value);
         Assert.Equal(6L, ticket.GitHubIssueNumber.Value);
         Assert.Equal("Test Issue", ticket.TicketTitle.Value);
         Assert.Equal(TicketStatusValue.Created, ticket.TicketStatus.Value);
@@ -84,24 +76,7 @@ public sealed class TicketTests
     }
 
     [Fact]
-    public void Ctor_WithNullGitHubRepository_ThrowsArgumentNullException()
-    {
-        var ex = Assert.Throws<ArgumentNullException>(() => new Ticket(
-            null!,
-            new GitHubIssueNumber(6),
-            new TicketTitle("Test"),
-            new TicketStatus(TicketStatusValue.Created),
-            null,
-            new Retry(0),
-            new GitHubUrl("https://github.com/AskmethatFR/agent-dashboard/issues/6"),
-            FixedUtc,
-            FixedUtc,
-            null));
-        Assert.Equal("repositorySource", ex.ParamName);
-    }
-
-    [Fact]
-    public void Equals_SameCompositeKey_ReturnsTrue()
+    public void Equals_SameIssueNumber_ReturnsTrue()
     {
         var ticket1 = CreateTestTicket();
         var ticket2 = CreateTestTicket();
@@ -110,12 +85,13 @@ public sealed class TicketTests
     }
 
     [Fact]
-    public void Equals_DifferentRepository_ReturnsFalse()
+    public void Equals_SameIssueNumber_DifferentRepository_ReturnsTrue()
     {
-        var ticket1 = CreateTestTicket(repo: "AskmethatFR/agent-dashboard");
-        var ticket2 = CreateTestTicket(repo: "OtherOwner/agent-dashboard");
-        Assert.NotEqual(ticket1, ticket2);
-        Assert.False(ticket1 == ticket2);
+        // Identity is GitHubIssueNumber alone — repo is not part of the key (ADR-005)
+        var ticket1 = CreateTestTicket(issueNumber: 6, githubUrl: "https://github.com/AskmethatFR/agent-dashboard/issues/6");
+        var ticket2 = CreateTestTicket(issueNumber: 6, githubUrl: "https://github.com/AskmethatFR/agent-dashboard/issues/6");
+        Assert.Equal(ticket1, ticket2);
+        Assert.True(ticket1 == ticket2);
     }
 
     [Fact]
@@ -128,7 +104,7 @@ public sealed class TicketTests
     }
 
     [Fact]
-    public void Equals_DifferentOtherProperties_SameKey_ReturnsTrue()
+    public void Equals_DifferentOtherProperties_SameIssueNumber_ReturnsTrue()
     {
         var ticket1 = CreateTestTicket(title: "Title 1");
         var ticket2 = CreateTestTicket(title: "Title 2");
@@ -137,7 +113,7 @@ public sealed class TicketTests
     }
 
     [Fact]
-    public void GetHashCode_SameCompositeKey_ReturnsSameHashCode()
+    public void GetHashCode_SameIssueNumber_ReturnsSameHashCode()
     {
         var ticket1 = CreateTestTicket();
         var ticket2 = CreateTestTicket();
@@ -145,7 +121,7 @@ public sealed class TicketTests
     }
 
     [Fact]
-    public void GetHashCode_DifferentCompositeKey_ReturnsDifferentHashCode()
+    public void GetHashCode_DifferentIssueNumber_ReturnsDifferentHashCode()
     {
         var ticket1 = CreateTestTicket();
         var ticket2 = CreateTestTicket(issueNumber: 7);
@@ -153,10 +129,9 @@ public sealed class TicketTests
     }
 
     [Fact]
-    public void ToString_ReturnsFormattedString()
+    public void ToString_ReturnsIssueNumberFormat()
     {
         var ticket = new Ticket(
-            new GitHubRepository("Owner/Repo"),
             new GitHubIssueNumber(42),
             new TicketTitle("Test"),
             new TicketStatus(TicketStatusValue.Created),
@@ -167,8 +142,8 @@ public sealed class TicketTests
             FixedUtc,
             null);
         var str = ticket.ToString();
-        Assert.Contains("Owner/Repo", str);
-        Assert.Contains("42", str);
+        Assert.Contains("#42", str);
+        Assert.DoesNotContain("Owner/Repo", str);
     }
 
     [Fact]
@@ -176,7 +151,7 @@ public sealed class TicketTests
     {
 #nullable disable
         var ticket = CreateTestTicket();
-        
+
         Assert.False(ticket.Equals(null));
         Assert.False((null as Ticket) == ticket);
         Assert.False(ticket == (null as Ticket));

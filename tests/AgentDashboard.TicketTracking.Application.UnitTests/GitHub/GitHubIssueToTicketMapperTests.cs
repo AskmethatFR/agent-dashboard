@@ -26,8 +26,6 @@ namespace AgentDashboard.TicketTracking.Application.GitHub;
 //   [x] exactly one status + one agent + one retry -> mapped correctly, Warnings EMPTY
 public class GitHubIssueToTicketMapperTests
 {
-    private static readonly GitHubRepository Repository = new("AskmethatFR/agent-dashboard");
-
     private static MappingResult Map(long number, params string[] labels)
     {
         var record = new GitHubIssueRecordBuilder()
@@ -35,7 +33,7 @@ public class GitHubIssueToTicketMapperTests
             .WithLabels(labels)
             .Build();
 
-        return GitHubIssueToTicketMapper.Map(record, Repository);
+        return GitHubIssueToTicketMapper.Map(record);
     }
 
     [Theory]

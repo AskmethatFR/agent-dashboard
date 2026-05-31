@@ -1,7 +1,6 @@
 using System.Text.RegularExpressions;
 using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Application.Ports;
-using AgentDashboard.TicketTracking.Domain.Tickets;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
@@ -10,7 +9,6 @@ namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 public sealed partial class GitHubIssuesPoller : BackgroundService
 {
     private const int MinimumNextPollSeconds = 0;
-    private readonly static GitHubRepository HardcodedGitHubRepository = new("AskmethatFR/agent-dashboard");
 
     private readonly IGitHubIssuesClient _client;
     private readonly IBoardSnapshotUpdater _snapshotUpdater;
@@ -94,7 +92,7 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
             // Save tickets to SQLite
             foreach (var record in records)
             {
-                var mappingResult = GitHubIssueToTicketMapper.Map(record, HardcodedGitHubRepository);
+                var mappingResult = GitHubIssueToTicketMapper.Map(record);
                 await _ticketWriteRepository.SaveAsync(mappingResult.Ticket, cancellationToken).ConfigureAwait(false);
 
                 foreach (var warning in mappingResult.Warnings)

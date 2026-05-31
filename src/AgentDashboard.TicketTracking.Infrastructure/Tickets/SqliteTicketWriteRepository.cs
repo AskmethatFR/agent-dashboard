@@ -91,7 +91,7 @@ public sealed class SqliteTicketWriteRepository : ITicketWriteRepository
             .ConfigureAwait(false);
 
         var existing = await context.Tickets
-            .FindAsync([row.Repo, row.GitHubIssueNumber], cancellationToken)
+            .FindAsync([row.GitHubIssueNumber], cancellationToken)
             .ConfigureAwait(false);
 
         if (existing is null)

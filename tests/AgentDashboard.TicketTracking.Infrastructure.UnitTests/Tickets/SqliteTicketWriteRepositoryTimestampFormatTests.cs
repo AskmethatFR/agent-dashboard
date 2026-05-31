@@ -36,7 +36,6 @@ public sealed class SqliteTicketWriteRepositoryTimestampFormatTests : IDisposabl
     {
         var created = new DateTimeOffset(2026, 5, 22, 9, 0, 0, TimeSpan.Zero);
         var ticket = new Ticket(
-            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(1),
             new TicketTitle("Timestamp byte-compat"),
             TicketStatusValue.Created,

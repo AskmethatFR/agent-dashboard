@@ -105,7 +105,6 @@ public sealed class SqliteTicketWriteRepositorySchemaBootstrapTests : IDisposabl
 
     private static Ticket CreateTestTicket(int issueNumber, string title)
         => new(
-            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(issueNumber),
             new TicketTitle(title),
             TicketStatusValue.Created,

@@ -10,7 +10,7 @@ using AgentDashboard.TicketTracking.Domain.Tickets;
 public static class GitHubIssueToTicketMapper
 {
     // State machine order from docs/labels.md
-    private static readonly TicketStatusValue[] StateMachineOrder = 
+    private static readonly TicketStatusValue[] StateMachineOrder =
     {
         TicketStatusValue.Created,
         TicketStatusValue.Specified,
@@ -26,12 +26,10 @@ public static class GitHubIssueToTicketMapper
     /// Maps a GitHub issue record to a Ticket entity.
     /// </summary>
     /// <param name="record">The GitHub issue record.</param>
-    /// <param name="repositorySource">The repository source.</param>
     /// <returns>The mapped ticket plus any label-mapping warnings.</returns>
-    public static MappingResult Map(GitHubIssueRecord record, GitHubRepository repositorySource)
+    public static MappingResult Map(GitHubIssueRecord record)
     {
         ArgumentNullException.ThrowIfNull(record);
-        ArgumentNullException.ThrowIfNull(repositorySource);
 
         var recognizedStatusLabels = FindRecognizedStatusLabels(record.Labels);
         var selectedStatusLabel = SelectLatestStatusLabel(recognizedStatusLabels);
@@ -62,7 +60,6 @@ public static class GitHubIssueToTicketMapper
         var closedAt = record.ClosedAt is not null ? new TimestampUtc(record.ClosedAt.Value) : null;
 
         var ticket = new Ticket(
-            repositorySource,
             new GitHubIssueNumber(record.Number),
             ticketTitle,
             ticketStatus,
@@ -123,7 +120,7 @@ public static class GitHubIssueToTicketMapper
     private static int FindHighestRetryCount(IReadOnlyList<string> labels)
     {
         var retryLabels = labels.Where(l => l.StartsWith("retry:", StringComparison.OrdinalIgnoreCase)).ToList();
-        
+
         if (retryLabels.Count == 0)
         {
             return 0;

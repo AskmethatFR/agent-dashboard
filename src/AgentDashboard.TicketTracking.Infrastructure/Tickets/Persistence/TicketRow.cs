@@ -11,7 +11,6 @@ using AgentDashboard.TicketTracking.Domain.Tickets;
 /// </summary>
 internal sealed class TicketRow
 {
-    public string Repo { get; set; } = string.Empty;
     public long GitHubIssueNumber { get; set; }
     public string Title { get; set; } = string.Empty;
     public string Status { get; set; } = string.Empty;
@@ -28,7 +27,6 @@ internal sealed class TicketRow
 
         return new TicketRow
         {
-            Repo = ticket.GitHubRepository.Value,
             GitHubIssueNumber = ticket.GitHubIssueNumber.Value,
             Title = ticket.TicketTitle.Value,
             Status = ticket.TicketStatus.Value.ToString(),
@@ -42,7 +40,6 @@ internal sealed class TicketRow
     }
 
     internal Ticket ToTicket() => new(
-        new GitHubRepository(Repo),
         new GitHubIssueNumber(GitHubIssueNumber),
         new TicketTitle(Title),
         ParseColumn("status", () => TicketStatus.Parse(Status)),
@@ -61,7 +58,7 @@ internal sealed class TicketRow
         }
         catch (Exception inner) when (inner is FormatException or ArgumentException)
         {
-            throw new CorruptedTicketRowException(column, Repo, GitHubIssueNumber, inner);
+            throw new CorruptedTicketRowException(column, GitHubIssueNumber, inner);
         }
     }
 

@@ -16,16 +16,16 @@ namespace AgentDashboard.TicketTracking.Infrastructure.UnitTests.Tickets;
 //  [x] every TicketStatusValue round-trips (enum-name ⇄ Parse)
 //
 // FIELD FLATTENING (FromTicket flattens VO → primitive, exact column shape):
-//  [x] FromTicket maps each VO to its primitive (repo, number, title, status name,
+//  [x] FromTicket maps each VO to its primitive (number, title, status name,
 //      agent, retry, url, created/updated/closed as "o" ISO-8601)
 //
 // TIMESTAMP BYTE-COMPATIBILITY (must match on-disk format = DateTimeOffset.ToString("o")):
 //  [x] CreatedAtUtc row string equals VO.ToString() ("o" round-trip format)
 //
 // CORRUPTED-ROW GUARDING (ToTicket() wraps raw parse failures, hides raw value):
-//  [x] invalid Status string → CorruptedTicketRowException naming "status" + row key,
+//  [x] invalid Status string → CorruptedTicketRowException naming "status" + #number,
 //      NOT echoing the raw bad value, inner = original ArgumentException
-//  [x] malformed CreatedAtUtc → CorruptedTicketRowException naming "created_at_utc"
+//  [x] malformed CreatedAtUtc → CorruptedTicketRowException naming "created_at_utc" + #number
 // ========================================================================
 
 public sealed class TicketRowMappingTests
@@ -37,7 +37,6 @@ public sealed class TicketRowMappingTests
 
         var restored = TicketRow.FromTicket(original).ToTicket();
 
-        restored.GitHubRepository.Value.Should().Be(original.GitHubRepository.Value);
         restored.GitHubIssueNumber.Value.Should().Be(original.GitHubIssueNumber.Value);
         restored.TicketTitle.Value.Should().Be(original.TicketTitle.Value);
         restored.TicketStatus.Value.Should().Be(original.TicketStatus.Value);
@@ -53,7 +52,6 @@ public sealed class TicketRowMappingTests
     public void RoundTrip_NullAgent()
     {
         var original = new Ticket(
-            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(7),
             new TicketTitle("No agent"),
             TicketStatusValue.Created,
@@ -77,7 +75,6 @@ public sealed class TicketRowMappingTests
         var full = FullTicket();
 
         var open = new Ticket(
-            full.GitHubRepository,
             full.GitHubIssueNumber,
             full.TicketTitle,
             full.TicketStatus,
@@ -107,7 +104,6 @@ public sealed class TicketRowMappingTests
     public void RoundTrip_EveryStatusValue(TicketStatusValue status)
     {
         var original = new Ticket(
-            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(11),
             new TicketTitle("Status round-trip"),
             new TicketStatus(status),
@@ -132,7 +128,6 @@ public sealed class TicketRowMappingTests
 
         var row = TicketRow.FromTicket(ticket);
 
-        row.Repo.Should().Be("AskmethatFR/agent-dashboard");
         row.GitHubIssueNumber.Should().Be(42);
         row.Title.Should().Be("Full ticket");
         row.Status.Should().Be(nameof(TicketStatusValue.InReview));
@@ -163,8 +158,8 @@ public sealed class TicketRowMappingTests
 
         var thrown = act.Should().Throw<CorruptedTicketRowException>().Which;
         thrown.Message.Should().Contain("status");
-        thrown.Message.Should().Contain("AskmethatFR/agent-dashboard");
-        thrown.Message.Should().Contain("42");
+        thrown.Message.Should().Contain("#42");
+        thrown.Message.Should().NotContain("AskmethatFR/agent-dashboard");
         thrown.Message.Should().NotContain("not-a-status");
         thrown.InnerException.Should().BeOfType<ArgumentException>();
     }
@@ -179,8 +174,8 @@ public sealed class TicketRowMappingTests
 
         var thrown = act.Should().Throw<CorruptedTicketRowException>().Which;
         thrown.Message.Should().Contain("created_at_utc");
-        thrown.Message.Should().Contain("AskmethatFR/agent-dashboard");
-        thrown.Message.Should().Contain("42");
+        thrown.Message.Should().Contain("#42");
+        thrown.Message.Should().NotContain("AskmethatFR/agent-dashboard");
         thrown.Message.Should().NotContain("garbage");
         thrown.InnerException.Should().BeOfType<FormatException>();
     }
@@ -191,7 +186,6 @@ public sealed class TicketRowMappingTests
     {
         var created = new DateTimeOffset(2026, 5, 22, 9, 0, 0, TimeSpan.Zero);
         return new Ticket(
-            new GitHubRepository("AskmethatFR/agent-dashboard"),
             new GitHubIssueNumber(42),
             new TicketTitle("Full ticket"),
             new TicketStatus(TicketStatusValue.InReview),
