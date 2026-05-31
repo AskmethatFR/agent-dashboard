@@ -68,5 +68,20 @@ Reports land in `StrykerOutput/` (git-ignored): `reports/mutation-report.html`
 to browse, `mutation-report.json` to script against, plus a `cleartext` summary
 on stdout.
 
-> `thresholds.break` is `0` for now (report-only). The CI-failing gate is wired
-> separately once the scores are lifted — see issue #48.
+## CI gate & ratchet
+
+The **Domain** run is CI-gated: the `mutation-domain` job in `.github/workflows/ci.yml`
+runs `stryker.domain.config.json`, whose `thresholds.break` is **90** — Stryker exits
+non-zero (failing the PR) if the Domain mutation score drops below 90 %. Current Domain
+score is ~98 %, so the gate has ~8 pts of headroom and catches regressions, not noise.
+
+The **Application** run stays **report-only** (`break: 0`): its aggregate score is
+non-deterministic while `GitHubIssuesPollerSqliteIntegrationTests` are flaky under
+repeated execution (see the ⚠️ note above; fix tracked by issue #54). Gating a flaky
+score would fail PRs at random — worse than no gate. Once #54 lands and the Application
+score is reproducible, raise its `break` to **70 → ratchet 80**.
+
+**Ratchet policy.** Thresholds live in the two `stryker.*.config.json` files. Raise a
+`break` value only after the score has sat comfortably above the next step for a few
+cycles — never lower it to make a red build pass (fix the surviving mutant instead).
+Domain ratchet: 90 → 95. Application ratchet (post-#54): 70 → 80.
