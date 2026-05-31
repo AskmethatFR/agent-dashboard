@@ -11,6 +11,7 @@ links:
   - "adr-009"
   - "adr-010"
   - "adr-011"
+  - "adr-012"
 answers:
   - "How is a Ticket persisted to SQLite?"
   - "Where does the persistence snapshot/mapping live, and why is it NOT a Domain snapshot?"
@@ -19,6 +20,7 @@ answers:
   - "What happens when a persisted row fails to rehydrate?"
   - "How are ambiguous label-mapping situations surfaced and logged?"
   - "What is the Ticket's persistence identity / upsert key, and why is it not composite with the repo?"
+  - "Where is the GitHub-issue→Ticket mapping tested, and why is there no isolated mapper unit suite?"
 decided_in:
   - "#6"
 ---
@@ -26,7 +28,7 @@ decided_in:
 # TicketTracking Write-Side
 
 > **One-liner**: The EF Core code-first write path that persists a domain `Ticket` to the SQLite cache — its mapping, idempotent bootstrap, upsert semantics, corruption handling, and label-mapping warnings.
-> **Links**: [[architecture-overview]] [[adr-005]] [[adr-010]] [[adr-011]] [[adr-008]] [[adr-009]] — the ADRs carry the full rationale; this node is the navigable summary.
+> **Links**: [[architecture-overview]] [[adr-005]] [[adr-010]] [[adr-011]] [[adr-008]] [[adr-009]] [[adr-012]] — the ADRs carry the full rationale; this node is the navigable summary.
 
 ## Context
 
@@ -99,6 +101,18 @@ The bidirectional Ticket↔row mapping is folded into the single Infrastructure 
 | Warning surfacing | Infrastructure poller (`GitHubIssuesPoller`) logs each warning via sanitized `LoggerMessage` **EventId 202** | [[adr-011]] |
 | Hyphenated `status:*` labels | parse fixed (e.g. `status:in-development`) | #6 |
 
+### How the mapping is tested ([[adr-012]])
+
+`GitHubIssueToTicketMapper` is a single-consumer, never-reused mapper (its only production
+caller is `GitHubIssuesPoller`). Its behavior is verified **at the slice boundary**, in
+`GitHubIssuesPollerTests`, asserting the observable outcome of the slice (warning logged,
+SQLite row persisted), with a minimum representative `[Theory]` set of cases that could
+break the mapping. AC3/AC4/AC10 + happy-path warning+mapping coverage was moved there in
+PR #44, and the isolated `GitHubIssueToTicketMapperTests` suite was **removed** (it was
+surtest — duplicate coverage that froze the mapper's internal structure). No AC was lost.
+See [[adr-012]] for the rule and rationale; the read-side equivalent (`GitHubBoardMapper`)
+is tracked in #45.
+
 ## Consequences / Constraints
 
 - **MUST**: keep `ITicketWriteRepository` EF-unaware; all EF Core usage stays inside `SqliteTicketWriteRepository`/`Persistence/`.
@@ -106,6 +120,7 @@ The bidirectional Ticket↔row mapping is folded into the single Infrastructure 
 - **MUST**: surface label ambiguity as `MappingWarning` data — never throw, never silently drop ([[adr-011]]).
 - **MUST NOT**: add a Domain persistence snapshot or a standalone mapper — `TicketRow` self-maps (the [[adr-010]] deviation from `ca-snapshot`).
 - **MUST NOT**: add EF migrations or the `.Design` package — schema is `EnsureCreated()` only.
+- **MUST NOT**: reintroduce an isolated `GitHubIssueToTicketMapperTests` suite — the mapping is verified at the poller slice boundary ([[adr-012]]).
 - **Out of scope**: the read-side query path (Dapper, EPIC-2); board read projections ([[adr-001]]).
 
 ## Open questions / Gaps

@@ -25,8 +25,9 @@
 | `adr-009` | Database migration strategy — hand-rolled SQL for SQLite | superseded | 2026-05-30 | `[[adr-010]]` | `docs/adr/ADR-009-database-migration-strategy-sqlite.md` |
 | `adr-010` | EF Core code-first for the SQLite write-side | current | 2026-05-31 | `[[ticket-tracking-write-side]]`, `[[adr-009]]`, `[[adr-005]]`, `[[adr-008]]` | `docs/adr/ADR-010-ef-core-code-first-write-side.md` |
 | `adr-011` | Label-mapping warnings surfaced as data, logged in Infrastructure | current | 2026-05-30 | `[[ticket-tracking-write-side]]` | `docs/adr/ADR-011-label-mapping-warnings-as-data.md` |
+| `adr-012` | Test single-consumer mappers at the slice boundary, not in isolated unit suites | current | 2026-05-31 | `[[ticket-tracking-write-side]]`, `[[adr-011]]`, `[[adr-010]]` | `docs/adr/ADR-012-test-mappers-at-slice-boundary.md` |
 | `architecture-overview` | System shape, bounded contexts, layers | current | 2026-05-30 | `[[ticket-tracking-write-side]]`, `[[adr-003]]`, `[[adr-008]]`, `[[adr-010]]` | `docs/technical/architecture.md` |
-| `ticket-tracking-write-side` | TicketTracking write-side — EF Core code-first persistence | current | 2026-05-31 | `[[architecture-overview]]`, `[[adr-005]]`, `[[adr-008]]`, `[[adr-009]]`, `[[adr-010]]`, `[[adr-011]]` | `docs/technical/ticket-tracking-write-side.md` |
+| `ticket-tracking-write-side` | TicketTracking write-side — EF Core code-first persistence | current | 2026-05-31 | `[[architecture-overview]]`, `[[adr-005]]`, `[[adr-008]]`, `[[adr-009]]`, `[[adr-010]]`, `[[adr-011]]`, `[[adr-012]]` | `docs/technical/ticket-tracking-write-side.md` |
 
 ## Functional nodes (owner: pm)
 
@@ -34,7 +35,7 @@
 |---|---|---|---|---|---|
 | `feature-catalog` | All capabilities → behavior → acceptance | current | 2026-05-31 | `[[ticket-ingestion-acceptance]]`, `[[glossary]]` | `docs/functional/features.md` |
 | `glossary` | Ubiquitous language — TicketTracking domain terms | current | 2026-05-31 | `[[feature-catalog]]`, `[[ticket-ingestion-acceptance]]`, `[[ticket-tracking-write-side]]`, `[[adr-008]]`, `[[adr-005]]` | `docs/functional/glossary.md` |
-| `ticket-ingestion-acceptance` | GitHub Issues → Ticket write model — acceptance (AC1..AC10) | current | 2026-05-31 | `[[feature-catalog]]`, `[[glossary]]`, `[[ticket-tracking-write-side]]`, `[[adr-011]]`, `[[adr-010]]`, `[[adr-005]]`, `[[adr-008]]` | `docs/functional/ticket-ingestion-acceptance.md` |
+| `ticket-ingestion-acceptance` | GitHub Issues → Ticket write model — acceptance (AC1..AC10) | current | 2026-05-31 | `[[feature-catalog]]`, `[[glossary]]`, `[[ticket-tracking-write-side]]`, `[[adr-011]]`, `[[adr-010]]`, `[[adr-005]]`, `[[adr-008]]`, `[[adr-012]]` | `docs/functional/ticket-ingestion-acceptance.md` |
 
 ## Graph health (maintained by the owners at end of each cycle)
 

@@ -12,6 +12,7 @@ links:
   - "adr-010"
   - "adr-005"
   - "adr-008"
+  - "adr-012"
 answers:
   - "What are the acceptance criteria for GitHub Issues ingestion into the Ticket write model?"
   - "How is a Ticket row keyed, and when is it inserted vs updated?"
@@ -24,7 +25,7 @@ decided_in:
 # Ticket Ingestion — Acceptance Criteria
 
 > **One-liner**: The authoritative acceptance criteria for mapping each open GitHub Issue to a deterministic `Ticket` write-model row in SQLite (EPIC-1, delivered in #6).
-> **Links**: [[feature-catalog]] [[glossary]] [[ticket-tracking-write-side]] [[adr-011]] [[adr-010]] — follow these for the parent capability, vocabulary, the write-side technical decision, and the migration/warning ADRs.
+> **Links**: [[feature-catalog]] [[glossary]] [[ticket-tracking-write-side]] [[adr-011]] [[adr-010]] [[adr-012]] — follow these for the parent capability, vocabulary, the write-side technical decision, the warning ADR, and the testing-strategy decision.
 
 ## Context
 
@@ -44,8 +45,8 @@ This node settles *what correct ingestion behavior looks like* — independent o
 | AC6 | An issue carries an `agent:*` label | `agent` is set to that `AgentId`; otherwise `agent` is `null`. **Assignees are NOT consulted** in the MVP (Q2 arbitration). |
 | AC7 | Application startup | The SQLite database file lives under `DATA_PATH` (default `/data`, env-overridable); the schema is created **idempotently** at startup; the migration approach is documented in an ADR — see [[adr-010]]. |
 | AC8 | Architecture layering | A write-repository port lives in `AgentDashboard.TicketTracking.Application`; the SQLite implementation lives in `AgentDashboard.TicketTracking.Infrastructure` — see [[ticket-tracking-write-side]]. |
-| AC9 | Test strategy — integration | A real on-disk SQLite database covers: insert new ticket, update existing ticket, ignore unchanged ticket. |
-| AC10 | Test strategy — unit | Chicago-school table-driven cases cover the label-to-domain mapping, **including the warning paths** of AC3, AC4, AC5. |
+| AC9 | Test strategy — integration | A real on-disk SQLite database covers: insert new ticket, update existing ticket, ignore unchanged ticket. The integration tests (`GitHubIssuesPollerTests`) drive the real mapper end-to-end, verifying the label-to-domain mapping and warning emission at the poller slice boundary — see [[adr-012]] for the rationale. |
+| AC10 | Test strategy | Label-to-domain mapping acceptance — **AC3** (multiple `status:*` labels → latest selected + warning), **AC4** (no/unrecognized `status:*` → Created + warning), **AC5** (multiple `retry:N` labels → highest, no warning) — is verified at the **poller integration slice** (`GitHubIssuesPollerTests`), asserting the observable outcome: warning logged (or not) + persisted `Ticket` row with the correct `status` / `retry_count`. |
 
 ### Label-mapping & warning rules
 
