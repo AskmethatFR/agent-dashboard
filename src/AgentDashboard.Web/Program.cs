@@ -9,6 +9,11 @@ using Blazor.Redux.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
+if (string.IsNullOrEmpty(builder.Configuration["DATA_PATH"]))
+{
+    builder.Configuration["DATA_PATH"] = Path.Combine(builder.Environment.ContentRootPath, "data");
+}
+
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();

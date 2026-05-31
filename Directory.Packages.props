@@ -29,6 +29,7 @@
 
     <!-- Persistence (added in step 1.5) -->
     <PackageVersion Include="Microsoft.Data.Sqlite" Version="10.0.0" />
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.0" />
     <PackageVersion Include="Dapper" Version="2.1.66" />
 
     <!-- GitHub integration (added in step 1.5) -->

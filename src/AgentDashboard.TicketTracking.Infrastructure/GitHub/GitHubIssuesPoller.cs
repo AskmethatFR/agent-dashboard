@@ -1,25 +1,29 @@
+using System.Text.RegularExpressions;
+using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Application.Ports;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace AgentDashboard.TicketTracking.Infrastructure.GitHub;
 
-internal sealed partial class GitHubIssuesPoller : BackgroundService
+public sealed partial class GitHubIssuesPoller : BackgroundService
 {
     private const int MinimumNextPollSeconds = 0;
 
     private readonly IGitHubIssuesClient _client;
     private readonly IBoardSnapshotUpdater _snapshotUpdater;
     private readonly BoardRefreshTrigger _trigger;
+    private readonly ITicketWriteRepository _ticketWriteRepository;
     private readonly GitHubPollingOptions _options;
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<GitHubIssuesPoller> _logger;
     private readonly string _repoLabel;
 
-    public GitHubIssuesPoller(
+    internal GitHubIssuesPoller(
         IGitHubIssuesClient client,
         IBoardSnapshotUpdater snapshotUpdater,
         BoardRefreshTrigger trigger,
+        ITicketWriteRepository ticketWriteRepository,
         GitHubPollingOptions options,
         TimeProvider timeProvider,
         ILogger<GitHubIssuesPoller> logger)
@@ -27,12 +31,14 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
         ArgumentNullException.ThrowIfNull(client);
         ArgumentNullException.ThrowIfNull(snapshotUpdater);
         ArgumentNullException.ThrowIfNull(trigger);
+        ArgumentNullException.ThrowIfNull(ticketWriteRepository);
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(timeProvider);
         ArgumentNullException.ThrowIfNull(logger);
         _client = client;
         _snapshotUpdater = snapshotUpdater;
         _trigger = trigger;
+        _ticketWriteRepository = ticketWriteRepository;
         _options = options;
         _timeProvider = timeProvider;
         _logger = logger;
@@ -83,6 +89,18 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
             var records = await _client.GetOpenIssuesAsync(cancellationToken).ConfigureAwait(false);
             var now = _timeProvider.GetUtcNow();
             
+            // Save tickets to SQLite
+            foreach (var record in records)
+            {
+                var mappingResult = GitHubIssueToTicketMapper.Map(record);
+                await _ticketWriteRepository.SaveAsync(mappingResult.Ticket, cancellationToken).ConfigureAwait(false);
+
+                foreach (var warning in mappingResult.Warnings)
+                {
+                    GitHubIssuesPollerLog.LabelMappingWarning(_logger, Sanitize(FormatWarning(warning)));
+                }
+            }
+
             // Update the board snapshot via the port
             _snapshotUpdater.Update(records, now);
 
@@ -100,20 +118,39 @@ internal sealed partial class GitHubIssuesPoller : BackgroundService
         {
             throw;
         }
-#pragma warning disable CA1031 // intentional: a single failing poll must not crash the host
+#pragma warning disable CA1031
         catch (Exception ex)
 #pragma warning restore CA1031
         {
-            // Log only the exception type and message, not the full details which may contain sensitive information
-            GitHubIssuesPollerLog.PollFailed(_logger, ex.GetType().Name, ex.Message);
+            GitHubIssuesPollerLog.PollFailed(_logger, ex.GetType().Name, SanitizeExceptionMessage(ex));
         }
     }
+
+    private static string SanitizeExceptionMessage(Exception ex) => Sanitize(ex.ToString());
+
+    private static string Sanitize(string message)
+    {
+        message = Regex.Replace(message, "ghp_[A-Za-z0-9]{36}", "[REDACTED_TOKEN]");
+        message = Regex.Replace(message, "github_pat_[A-Za-z0-9]{22}", "[REDACTED_TOKEN]");
+        message = Regex.Replace(message, "Authorization:.*", "Authorization: [REDACTED]");
+        return message;
+    }
+
+    private static string FormatWarning(MappingWarning warning) => warning.Kind switch
+    {
+        MappingWarningKind.MultipleStatusLabels =>
+            $"Issue #{warning.IssueNumber}: multiple status labels {string.Join(", ", warning.ConflictingStatusLabels)} — selected '{warning.SelectedStatusLabel}' (latest in state machine).",
+        MappingWarningKind.MissingStatusLabel =>
+            $"Issue #{warning.IssueNumber}: no status label — defaulted to 'status:created'.",
+        _ => $"Issue #{warning.IssueNumber}: label mapping anomaly."
+    };
 }
 
-internal static partial class GitHubIssuesPollerLog
+public static partial class GitHubIssuesPollerLog
 {
     private const int PollSucceededEventId = 200;
     private const int PollFailedEventId = 201;
+    private const int LabelMappingWarningEventId = 202;
 
     [LoggerMessage(
         EventId = PollSucceededEventId,
@@ -126,4 +163,10 @@ internal static partial class GitHubIssuesPollerLog
         Level = LogLevel.Error,
         Message = "GitHub poll failed: {exception_type} - {exception_message}")]
     public static partial void PollFailed(ILogger logger, string exception_type, string exception_message);
+
+    [LoggerMessage(
+        EventId = LabelMappingWarningEventId,
+        Level = LogLevel.Warning,
+        Message = "{label_mapping_warning}")]
+    public static partial void LabelMappingWarning(ILogger logger, string label_mapping_warning);
 }
