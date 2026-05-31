@@ -59,7 +59,7 @@ This aligns the code with [[adr-005]] (repo = Infrastructure deployment constant
 | Port | `ITicketWriteRepository.SaveAsync(Ticket, CancellationToken)` — EF-unaware | Application | [[adr-010]] |
 | Adapter | `SqliteTicketWriteRepository` | Infrastructure | [[adr-010]] |
 | Read engine | Dapper (unchanged, EPIC-2 — not in this PR) | Infrastructure | — |
-| Storage location | single SQLite file under `DATA_PATH` (default `/data`); prod default unchanged | Infrastructure | [[adr-010]] |
+| Storage location | single SQLite file under the `DATA_PATH` config key. **Default owned by the composition root (`Program.cs`): local dev → `Path.Combine(ContentRootPath, "data")`; Docker → `DATA_PATH=/data`. Infrastructure keeps `/data` only as a last-resort fallback when no composition root supplies the key.** | Composition root / Infrastructure | [[adr-010]] |
 
 ### Mapping — the `ca-snapshot` deviation (deliberate, owner-decided)
 
