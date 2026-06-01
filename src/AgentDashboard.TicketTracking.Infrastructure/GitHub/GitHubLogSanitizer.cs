@@ -15,7 +15,7 @@ internal static partial class GitHubLogSanitizer
     [GeneratedRegex("ghp_[A-Za-z0-9]{36}")]
     private static partial Regex GhpTokenPattern();
 
-    [GeneratedRegex("github_pat_[A-Za-z0-9]{22}")]
+    [GeneratedRegex("github_pat_[A-Za-z0-9_]{22,}")]
     private static partial Regex PatTokenPattern();
 
     [GeneratedRegex("Authorization:.*")]
