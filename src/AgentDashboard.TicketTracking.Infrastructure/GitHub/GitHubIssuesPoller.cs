@@ -17,6 +17,7 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
     private readonly TimeProvider _timeProvider;
     private readonly ILogger<GitHubIssuesPoller> _logger;
     private readonly string _repoLabel;
+    private readonly List<MappingWarning> _lastPollWarnings = new();
 
     internal GitHubIssuesPoller(
         IGitHubIssuesClient client,
@@ -42,7 +43,14 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
         _timeProvider = timeProvider;
         _logger = logger;
         _repoLabel = $"{options.RepositoryOwner}/{options.RepositoryName}";
+        _latestInstance = this;
     }
+
+    internal IReadOnlyList<MappingWarning> LastPollWarnings => _lastPollWarnings.AsReadOnly();
+
+    // Test hook: static accessor for the most recent poller instance's warnings
+    internal static IReadOnlyList<MappingWarning> TestLastPollWarnings => _latestInstance?._lastPollWarnings.AsReadOnly() ?? new List<MappingWarning>().AsReadOnly();
+    private static GitHubIssuesPoller? _latestInstance;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
@@ -83,6 +91,7 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
     private async Task PollOnceAsync(DateTimeOffset nextScheduledDeadline, CancellationToken cancellationToken)
     {
         var startTimestamp = _timeProvider.GetTimestamp();
+        _lastPollWarnings.Clear();
         try
         {
             var records = await _client.GetOpenIssuesAsync(cancellationToken).ConfigureAwait(false);
@@ -96,6 +105,7 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
 
                 foreach (var warning in mappingResult.Warnings)
                 {
+                    _lastPollWarnings.Add(warning);
                     GitHubIssuesPollerLog.LabelMappingWarning(_logger, GitHubLogSanitizer.Sanitize(FormatWarning(warning)));
                 }
             }
