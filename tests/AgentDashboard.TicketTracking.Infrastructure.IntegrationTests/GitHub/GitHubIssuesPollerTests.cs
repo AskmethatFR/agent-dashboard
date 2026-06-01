@@ -44,6 +44,21 @@ public sealed class GitHubIssuesPollerTests : IAsyncLifetime
     private WebApplicationFactory<Program> _factory = null!;
     private string _testDbPath = null!;
 
+    private static void AssertSingleWarning(
+        GitHubIssuesPoller poller,
+        MappingWarningKind expectedKind,
+        long expectedIssueNumber,
+        IReadOnlyList<string> expectedConflictingLabels,
+        string? expectedSelectedLabel)
+    {
+        poller.LastPollWarnings.Should().HaveCount(1);
+        var w = poller.LastPollWarnings[0];
+        w.Kind.Should().Be(expectedKind);
+        w.IssueNumber.Should().Be(expectedIssueNumber);
+        w.ConflictingStatusLabels.Should().Equal(expectedConflictingLabels);
+        w.SelectedStatusLabel.Should().Be(expectedSelectedLabel);
+    }
+
     public Task InitializeAsync()
     {
         var dir = Path.Combine(Path.GetTempPath(), "agent-dashboard-it", Guid.NewGuid().ToString("N"));
@@ -216,14 +231,8 @@ public sealed class GitHubIssuesPollerTests : IAsyncLifetime
         await WaitUntilAsync(() => _fakeClient.CallCount >= 1);
         await WaitUntilAsync(() => _pollerLogger.Entries.Any(e => e.Level == LogLevel.Warning));
 
-
         var poller = _factory.Services.GetRequiredService<GitHubIssuesPoller>();
-        poller.LastPollWarnings.Should().HaveCount(1);
-        var w = poller.LastPollWarnings[0];
-        w.Kind.Should().Be(MappingWarningKind.MultipleStatusLabels);
-        w.IssueNumber.Should().Be(42);
-        w.ConflictingStatusLabels.Should().Equal(MultipleStatusLabels);
-        w.SelectedStatusLabel.Should().Be("status:done");
+        AssertSingleWarning(poller, MappingWarningKind.MultipleStatusLabels, 42, MultipleStatusLabels, "status:done");
         var warning = _pollerLogger.Entries.Should().ContainSingle(e => e.Level == LogLevel.Warning).Subject;
         warning.Message.Should().Contain("Issue #42");
         warning.Message.Should().Contain("status:in-qa");
@@ -250,14 +259,8 @@ public sealed class GitHubIssuesPollerTests : IAsyncLifetime
         await WaitUntilAsync(() => _fakeClient.CallCount >= 1);
         await WaitUntilAsync(() => _pollerLogger.Entries.Any(e => e.Level == LogLevel.Warning));
 
-
         var poller = _factory.Services.GetRequiredService<GitHubIssuesPoller>();
-        poller.LastPollWarnings.Should().HaveCount(1);
-        var w = poller.LastPollWarnings[0];
-        w.Kind.Should().Be(MappingWarningKind.MissingStatusLabel);
-        w.IssueNumber.Should().Be(100);
-        w.ConflictingStatusLabels.Should().BeEmpty();
-        w.SelectedStatusLabel.Should().BeNull();
+        AssertSingleWarning(poller, MappingWarningKind.MissingStatusLabel, 100, Array.Empty<string>(), null);
         var warning = _pollerLogger.Entries.Should().ContainSingle(e => e.Level == LogLevel.Warning).Subject;
         warning.Message.Should().Contain("Issue #100");
         warning.Message.Should().Contain("no status label");
@@ -283,14 +286,8 @@ public sealed class GitHubIssuesPollerTests : IAsyncLifetime
         await WaitUntilAsync(() => _fakeClient.CallCount >= 1);
         await WaitUntilAsync(() => _pollerLogger.Entries.Any(e => e.Level == LogLevel.Warning));
 
-
         var poller = _factory.Services.GetRequiredService<GitHubIssuesPoller>();
-        poller.LastPollWarnings.Should().HaveCount(1);
-        var w = poller.LastPollWarnings[0];
-        w.Kind.Should().Be(MappingWarningKind.MissingStatusLabel);
-        w.IssueNumber.Should().Be(101);
-        w.ConflictingStatusLabels.Should().BeEmpty();
-        w.SelectedStatusLabel.Should().BeNull();
+        AssertSingleWarning(poller, MappingWarningKind.MissingStatusLabel, 101, Array.Empty<string>(), null);
         var warning = _pollerLogger.Entries.Should().ContainSingle(e => e.Level == LogLevel.Warning).Subject;
         warning.Message.Should().Contain("Issue #101");
         warning.Message.Should().Contain("no status label");
