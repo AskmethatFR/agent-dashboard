@@ -19,7 +19,7 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
     private readonly string _repoLabel;
     private readonly List<MappingWarning> _lastPollWarnings = new();
 
-    internal GitHubIssuesPoller(
+    public GitHubIssuesPoller(
         IGitHubIssuesClient client,
         IBoardSnapshotUpdater snapshotUpdater,
         BoardRefreshTrigger trigger,
@@ -43,14 +43,10 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
         _timeProvider = timeProvider;
         _logger = logger;
         _repoLabel = $"{options.RepositoryOwner}/{options.RepositoryName}";
-        _latestInstance = this;
     }
 
     internal IReadOnlyList<MappingWarning> LastPollWarnings => _lastPollWarnings.AsReadOnly();
 
-    // Test hook: static accessor for the most recent poller instance's warnings
-    internal static IReadOnlyList<MappingWarning> TestLastPollWarnings => _latestInstance?._lastPollWarnings.AsReadOnly() ?? new List<MappingWarning>().AsReadOnly();
-    private static GitHubIssuesPoller? _latestInstance;
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {

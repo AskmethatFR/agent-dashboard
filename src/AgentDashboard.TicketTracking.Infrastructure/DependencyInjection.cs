@@ -69,19 +69,8 @@ public static class DependencyInjection
                 sp.GetRequiredService<TimeProvider>(),
                 sp.GetRequiredService<ILogger<GitHubBoardReader>>()));
 
-        // Register GitHubIssuesPoller as a singleton service for testing access
-        services.AddSingleton<GitHubIssuesPoller>(sp =>
-            new GitHubIssuesPoller(
-                sp.GetRequiredService<IGitHubIssuesClient>(),
-                sp.GetRequiredService<IBoardSnapshotUpdater>(),
-                sp.GetRequiredService<BoardRefreshTrigger>(),
-                sp.GetRequiredService<ITicketWriteRepository>(),
-                sp.GetRequiredService<GitHubPollingOptions>(),
-                sp.GetRequiredService<TimeProvider>(),
-                sp.GetRequiredService<ILogger<GitHubIssuesPoller>>()));
-        
-        services.AddHostedService<GitHubIssuesPoller>(sp =>
-            sp.GetRequiredService<GitHubIssuesPoller>());
+        services.AddSingleton<GitHubIssuesPoller>();
+        services.AddHostedService<GitHubIssuesPoller>(sp => sp.GetRequiredService<GitHubIssuesPoller>());
 
         return services;
     }
