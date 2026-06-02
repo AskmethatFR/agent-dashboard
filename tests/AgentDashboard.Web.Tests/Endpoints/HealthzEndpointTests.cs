@@ -1,19 +1,37 @@
 using System.Net;
 using FluentAssertions;
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc.Testing;
+using Microsoft.Extensions.Configuration;
 using Xunit;
 
 namespace AgentDashboard.Web.Tests.Endpoints;
+
+public class CustomWebApplicationFactory : WebApplicationFactory<Program>
+{
+    protected override void ConfigureWebHost(IWebHostBuilder builder)
+    {
+        builder.ConfigureAppConfiguration((_, configuration) =>
+        {
+            configuration.Sources.Clear();
+            configuration.AddInMemoryCollection(new Dictionary<string, string?>
+            {
+                ["GITHUB_TOKEN"] = "ghp_1234567890",
+                ["GITHUB_REPO"] = "AskmethatFR/agent-dashboard"
+            });
+        });
+    }
+}
 
 /// <summary>
 /// Tests for HealthzEndpoint.
 /// Verifies the health check endpoint returns 200 OK with no body.
 /// </summary>
-public class HealthzEndpointTests : IClassFixture<WebApplicationFactory<Program>>
+public class HealthzEndpointTests : IClassFixture<CustomWebApplicationFactory>
 {
-    private readonly WebApplicationFactory<Program> _factory;
+    private readonly CustomWebApplicationFactory _factory;
 
-    public HealthzEndpointTests(WebApplicationFactory<Program> factory)
+    public HealthzEndpointTests(CustomWebApplicationFactory factory)
     {
         _factory = factory;
     }
