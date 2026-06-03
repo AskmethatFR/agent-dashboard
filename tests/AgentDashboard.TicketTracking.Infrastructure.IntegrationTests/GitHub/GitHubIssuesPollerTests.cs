@@ -1,3 +1,4 @@
+using AgentDashboard.TicketTracking.Application.GitHub;
 using AgentDashboard.TicketTracking.Application.Ports;
 using AgentDashboard.TicketTracking.Infrastructure.GitHub;
 using AgentDashboard.TicketTracking.Infrastructure.Tickets;
@@ -348,5 +349,99 @@ public sealed class GitHubIssuesPollerTests : IAsyncLifetime
             }
             await Task.Delay(20);
         }
+    }
+
+    // Issue #53 - Structural assertions for MappingWarning at poller slice boundary
+
+    private static readonly string[] MultipleStatusLabelsExpected = { "status:in-qa", "status:done" };
+
+    [Fact]
+    public void Map_ProducesMultipleStatusLabelsWarning_WithCorrectKindAndFields()
+    {
+        // Arrange
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(42)
+            .WithTitle("conflicting issue")
+            .WithLabels("status:in-qa", "status:done", "agent:dev-a")
+            .AsOpen()
+            .Build();
+
+        // Act
+        var result = GitHubIssueToTicketMapper.Map(record);
+
+        // Assert
+        result.Warnings.Should().HaveCount(1);
+        var warning = result.Warnings[0];
+
+        warning.Kind.Should().Be(MappingWarningKind.MultipleStatusLabels);
+        warning.IssueNumber.Should().Be(42);
+        warning.ConflictingStatusLabels.Should().BeEquivalentTo(MultipleStatusLabelsExpected);
+        warning.SelectedStatusLabel.Should().Be("status:done");
+    }
+
+    [Fact]
+    public void Map_ProducesMissingStatusLabelWarning_WithCorrectKindAndIssueNumber()
+    {
+        // Arrange
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(100)
+            .WithTitle("no-status issue")
+            .WithLabels("type:feat", "agent:dev-a")
+            .AsOpen()
+            .Build();
+
+        // Act
+        var result = GitHubIssueToTicketMapper.Map(record);
+
+        // Assert
+        result.Warnings.Should().HaveCount(1);
+        var warning = result.Warnings[0];
+
+        warning.Kind.Should().Be(MappingWarningKind.MissingStatusLabel);
+        warning.IssueNumber.Should().Be(100);
+        warning.ConflictingStatusLabels.Should().BeEmpty();
+        warning.SelectedStatusLabel.Should().BeNull();
+    }
+
+    [Fact]
+    public void Map_ProducesMissingStatusLabelWarning_WhenOnlyUnrecognizedStatusLabel()
+    {
+        // Arrange
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(101)
+            .WithTitle("unrecognized-status issue")
+            .WithLabels("status:foo", "agent:dev-a")
+            .AsOpen()
+            .Build();
+
+        // Act
+        var result = GitHubIssueToTicketMapper.Map(record);
+
+        // Assert
+        result.Warnings.Should().HaveCount(1);
+        var warning = result.Warnings[0];
+
+        warning.Kind.Should().Be(MappingWarningKind.MissingStatusLabel);
+        warning.IssueNumber.Should().Be(101);
+        warning.ConflictingStatusLabels.Should().BeEmpty();
+        warning.SelectedStatusLabel.Should().BeNull();
+    }
+
+    [Fact]
+    public void Map_ProducesNoWarning_OnHappyPath()
+    {
+        // Arrange
+        var record = new GitHubIssueRecordBuilder()
+            .WithNumber(1)
+            .WithTitle("happy path issue")
+            .WithLabels("status:in-development", "agent:dev-a", "retry:1")
+            .AsOpen()
+            .Build();
+
+        // Act
+        var result = GitHubIssueToTicketMapper.Map(record);
+
+        // Assert
+        result.Warnings.Should().BeEmpty();
     }
 }
