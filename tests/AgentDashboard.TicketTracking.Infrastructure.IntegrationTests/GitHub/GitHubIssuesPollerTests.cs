@@ -199,6 +199,77 @@ public sealed class GitHubIssuesPollerTests : IAsyncLifetime
     }
 
     [Fact]
+    public async Task NeverLogTheFullFineGrainedGitHubPat()
+    {
+        // Arrange - use a full 82-char fine-grained PAT
+        const string fineGrainedPat = "github_pat_1111111111111111111111_22222222222222222222222222222222222222222222222222222222222222";
+        
+        var dir = Path.Combine(Path.GetTempPath(), "agent-dashboard-it", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var testDbPath = Path.Combine(dir, "tickets.db");
+
+        var timeProvider = new FakeTimeProvider(new DateTimeOffset(2026, 5, 22, 9, 0, 0, TimeSpan.Zero));
+        var fakeClient = new FakeGitHubIssuesClient(timeProvider);
+        var pollerLogger = new RecordingLogger<GitHubIssuesPoller>();
+
+        var factory = new WebApplicationFactory<Program>()
+            .WithWebHostBuilder(builder =>
+            {
+                builder.ConfigureAppConfiguration((_, configuration) =>
+                {
+                    configuration.AddInMemoryCollection(new Dictionary<string, string?>
+                    {
+                        ["GITHUB_TOKEN"] = fineGrainedPat,
+                        ["POLL_INTERVAL_SECONDS"] = ((int)PollInterval.TotalSeconds).ToString(System.Globalization.CultureInfo.InvariantCulture),
+                    });
+                });
+
+                builder.ConfigureServices(services =>
+                {
+                    services.Replace(ServiceDescriptor.Singleton<IGitHubIssuesClient>(fakeClient));
+                    services.Replace(ServiceDescriptor.Singleton<TimeProvider>(timeProvider));
+                    services.Replace(ServiceDescriptor.Singleton<ILogger<GitHubIssuesPoller>>(pollerLogger));
+
+                    services.RemoveAll<ITicketWriteRepository>();
+                    services.AddSingleton<ITicketWriteRepository>(_ =>
+                        new SqliteTicketWriteRepository("Data Source=" + testDbPath));
+                });
+            });
+
+        try
+        {
+            // Act
+            _ = factory.Server;
+            await WaitUntilAsync(() => fakeClient.CallCount >= 1);
+
+            // Assert
+            pollerLogger.Entries.Should().NotContain(e => e.Message.Contains(fineGrainedPat, StringComparison.Ordinal));
+            foreach (var entry in pollerLogger.Entries)
+            {
+                foreach (var value in entry.State.Values)
+                {
+                    if (value is string s)
+                    {
+                        s.Should().NotContain(fineGrainedPat);
+                    }
+                }
+            }
+        }
+        finally
+        {
+            factory.Dispose();
+            if (File.Exists(testDbPath))
+            {
+                File.Delete(testDbPath);
+            }
+            if (Directory.Exists(dir))
+            {
+                Directory.Delete(dir, recursive: true);
+            }
+        }
+    }
+
+    [Fact]
     public async Task LogWarning_WhenIssueHasMultipleStatusLabels()
     {
         _fakeClient.SetIssues(new[]

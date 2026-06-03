@@ -131,7 +131,7 @@ public sealed partial class GitHubIssuesPoller : BackgroundService
     private static string Sanitize(string message)
     {
         message = Regex.Replace(message, "ghp_[A-Za-z0-9]{36}", "[REDACTED_TOKEN]");
-        message = Regex.Replace(message, "github_pat_[A-Za-z0-9]{22}", "[REDACTED_TOKEN]");
+        message = Regex.Replace(message, "github_pat_\\S+", "[REDACTED_TOKEN]");
         message = Regex.Replace(message, "Authorization:.*", "Authorization: [REDACTED]");
         return message;
     }
