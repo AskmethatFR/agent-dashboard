@@ -1,0 +1,61 @@
+# Git
+.git
+.gitignore
+
+# IDE
+.idea
+.vscode
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build outputs
+bin/
+obj/
+
+# Test outputs
+TestResults/
+StrykerOutput/
+
+# User secrets
+UserSecrets/
+appsecrets.json
+appsecrets.*.json
+secrets.json
+
+# Debug symbols
+*.pdb
+
+# Local configuration
+appsettings.*.json
+launchSettings.json
+*.local
+
+# Packages
+**/packages/**
+
+# NuGet
+*.nupkg
+NuGet.exe
+
+# Logs
+*.log
+logs/
+
+# Docker
+Dockerfile
+docker-compose*
+.docker/
+
+# Node (if any)
+node_modules/
+npm-debug.log
+
+# Temporary files
+*.tmp
+*.temp

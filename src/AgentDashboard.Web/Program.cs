@@ -1,6 +1,7 @@
 using AgentDashboard.TicketTracking.Application;
 using AgentDashboard.TicketTracking.Infrastructure;
 using AgentDashboard.Web.Components;
+using AgentDashboard.Web.Endpoints;
 using AgentDashboard.Web.Store;
 using Blazor.Redux;
 using Blazor.Redux.Core;
@@ -59,6 +60,9 @@ app.UseAntiforgery();
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
     .AddInteractiveServerRenderMode();
+
+// Health check endpoint for Docker HEALTHCHECK
+app.MapHealthz();
 
 app.Run();
 
