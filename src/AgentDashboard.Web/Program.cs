@@ -4,8 +4,8 @@ using AgentDashboard.TicketTracking.Application;
 using AgentDashboard.TicketTracking.Infrastructure;
 using AgentDashboard.Web.Components;
 using AgentDashboard.Web.Endpoints;
-using AgentDashboard.Web.Middleware;
 using AgentDashboard.Web.Store;
+using Microsoft.AspNetCore.Localization;
 using AspNetCore.Localizer.Json.Extensions;
 using AspNetCore.Localizer.Json.JsonOptions;
 using Blazor.Redux;
@@ -78,15 +78,13 @@ app.UseHttpsRedirection();
 
 app.UseAntiforgery();
 
-// Configure culture middleware (handles query string and cookie)
-app.UseMiddleware<CultureMiddleware>();
-
-// Configure request localization
+// Configure request localization with query string and cookie support
 var supportedCultures = new[] { "en-US", "fr-FR" };
 var localizationOptions = new RequestLocalizationOptions()
     .SetDefaultCulture(supportedCultures[0])
     .AddSupportedCultures(supportedCultures)
-    .AddSupportedUICultures(supportedCultures);
+    .AddSupportedUICultures(supportedCultures)
+    .AddInitialRequestCultureProvider(new QueryStringRequestCultureProvider());
 app.UseRequestLocalization(localizationOptions);
 
 app.MapStaticAssets();
