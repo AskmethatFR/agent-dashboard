@@ -33,11 +33,13 @@
             await JSRuntime.InvokeVoidAsync("blazorCulture.set", culture);
             
             // Reload the page with culture query parameter
-            var uriBuilder = new UriBuilder(NavigationManager.Uri);
-            var query = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
-            query["culture"] = culture;
-            uriBuilder.Query = query.ToString();
-            NavigationManager.NavigateTo(uriBuilder.Uri.ToString(), forceLoad: true);
+            var uri = new Uri(NavigationManager.Uri);
+            var queryString = uri.Query.TrimStart('?');
+            var queryDict = System.Web.HttpUtility.ParseQueryString(queryString);
+            queryDict["culture"] = culture;
+            var newQuery = queryDict.ToString();
+            var newUri = $"{uri.Scheme}://{uri.Host}:{uri.Port}{uri.PathAndQuery.Split('?')[0]}?{newQuery}";
+            NavigationManager.NavigateTo(newUri, forceLoad: true);
         }
     }
 }

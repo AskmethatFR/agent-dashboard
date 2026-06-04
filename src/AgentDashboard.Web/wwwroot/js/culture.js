@@ -12,7 +12,9 @@ const blazorCulture = {
         const cookieValue = `c=${encodeURIComponent(culture)}|uic=${encodeURIComponent(culture)}`;
         const expires = new Date();
         expires.setFullYear(expires.getFullYear() + 1);
-        document.cookie = `${COOKIE_NAME}=${cookieValue}; expires=${expires.toUTCString()}; path=/; SameSite=Lax; Secure`;
+        // Note: Secure flag only works in HTTPS, remove for HTTP local testing
+        // SameSite=Lax is safe for GET requests
+        document.cookie = `${COOKIE_NAME}=${cookieValue}; expires=${expires.toUTCString()}; path=/; SameSite=Lax`;
     },
     get: () => {
         return localStorage.getItem('blazor-culture');

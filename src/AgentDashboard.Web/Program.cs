@@ -5,7 +5,6 @@ using AgentDashboard.TicketTracking.Infrastructure;
 using AgentDashboard.Web.Components;
 using AgentDashboard.Web.Endpoints;
 using AgentDashboard.Web.Store;
-using Microsoft.AspNetCore.Localization;
 using AspNetCore.Localizer.Json.Extensions;
 using AspNetCore.Localizer.Json.JsonOptions;
 using Blazor.Redux;
@@ -73,19 +72,20 @@ if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
-app.UseStatusCodePagesWithReExecute("/not-found");
-app.UseHttpsRedirection();
 
-app.UseAntiforgery();
-
-// Configure request localization with query string and cookie support
+// Configure request localization FIRST - must be before any other middleware
+// that depends on culture (including UseAntiforgery, static files, etc.)
 var supportedCultures = new[] { "en-US", "fr-FR" };
 var localizationOptions = new RequestLocalizationOptions()
     .SetDefaultCulture(supportedCultures[0])
     .AddSupportedCultures(supportedCultures)
-    .AddSupportedUICultures(supportedCultures)
-    .AddInitialRequestCultureProvider(new QueryStringRequestCultureProvider());
+    .AddSupportedUICultures(supportedCultures);
 app.UseRequestLocalization(localizationOptions);
+
+app.UseStatusCodePagesWithReExecute("/not-found");
+app.UseHttpsRedirection();
+
+app.UseAntiforgery();
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()
