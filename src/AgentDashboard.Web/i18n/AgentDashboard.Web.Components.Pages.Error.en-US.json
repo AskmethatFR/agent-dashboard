@@ -1,0 +1,10 @@
+{
+  "Error": "Error",
+  "ErrorTitle": "Error.",
+  "ErrorDescription": "An error occurred while processing your request.",
+  "RequestID": "Request ID:",
+  "DevelopmentMode": "Development Mode",
+  "DevelopmentModeDescription": "Swapping to Development environment will display more detailed information about the error that occurred.",
+  "DevelopmentEnvironmentWarning": "The Development environment shouldn't be enabled for deployed applications.",
+  "DevelopmentEnvironmentExplanation": "It can result in displaying sensitive information from exceptions to end users. For local debugging, enable the Development environment by setting the ASPNETCORE_ENVIRONMENT environment variable to Development and restarting the app."
+}

@@ -1,11 +1,13 @@
 @using Microsoft.AspNetCore.Components
 @using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos
 @using AgentDashboard.Web.Components.Shared
+@using AspNetCore.Localizer.Json.Localizer
+@inject IJsonStringLocalizer<TicketCard> Localizer
 
 <div class="card @GetCardStateClass()" @key="TicketSnapshot">
     @if (TicketSnapshot.IsEscalated)
     {
-        <span class="esc-badge"><span class="siren" aria-hidden="true">◆</span> esc → @TicketSnapshot.EscalationTargetId</span>
+        <span class="esc-badge"><span class="siren" aria-hidden="true">◆</span> @Localizer["Escalated"] → @TicketSnapshot.EscalationTargetId</span>
     }
     <div class="card-head">
         <span class="card-id mono">#@TicketSnapshot.Id</span>

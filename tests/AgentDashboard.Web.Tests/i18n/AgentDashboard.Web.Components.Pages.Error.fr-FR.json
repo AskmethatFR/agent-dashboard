@@ -1,0 +1,10 @@
+{
+  "Error": "Erreur",
+  "ErrorTitle": "Erreur.",
+  "ErrorDescription": "Une erreur est survenue lors du traitement de votre requête.",
+  "RequestID": "ID de la requête :",
+  "DevelopmentMode": "Mode Développement",
+  "DevelopmentModeDescription": "Le passage en environnement Développement affichera plus d'informations détaillées sur l'erreur qui s'est produite.",
+  "DevelopmentEnvironmentWarning": "L'environnement Développement ne doit pas être activé pour les applications déployées.",
+  "DevelopmentEnvironmentExplanation": "Cela peut entraîner l'affichage d'informations sensibles des exceptions aux utilisateurs finaux. Pour le débogage local, activez l'environnement Développement en définissant la variable d'environnement ASPNETCORE_ENVIRONMENT sur Development et en redémarrant l'application."
+}

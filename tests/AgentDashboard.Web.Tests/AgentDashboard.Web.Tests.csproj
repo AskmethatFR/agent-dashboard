@@ -12,6 +12,7 @@
     <PackageReference Include="FluentAssertions" />
     <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" />
     <PackageReference Include="Microsoft.Extensions.TimeProvider.Testing" />
+    <PackageReference Include="AspNetCore.Localizer.Json" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="NSubstitute" />
     <PackageReference Include="xunit" />
@@ -20,6 +21,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\AgentDashboard.Web\AgentDashboard.Web.csproj" />
+  </ItemGroup>
+
+  <!-- Localization: Copy JSON files to output directory -->
+  <ItemGroup>
+    <Content Update="i18n\**\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
   </ItemGroup>
 
 </Project>

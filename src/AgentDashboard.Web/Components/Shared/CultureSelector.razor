@@ -1,0 +1,41 @@
+@using System.Globalization
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<div class="culture-selector" role="region" aria-label="Language selector">
+    @foreach (var culture in SupportedCultures)
+    {
+        var isCurrent = CultureInfo.CurrentUICulture.Name == culture.Name;
+        <button 
+            type="button"
+            class="culture-btn @(isCurrent ? "active" : "")"
+            @onclick="() => SetCulture(culture.Name)"
+            aria-pressed="@isCurrent"
+            aria-label="@culture.NativeName"
+            title="@culture.NativeName">
+            @culture.TwoLetterISOLanguageName.ToUpper()
+        </button>
+    }
+</div>
+
+@code {
+    private readonly CultureInfo[] SupportedCultures = [
+        new CultureInfo("en-US"),
+        new CultureInfo("fr-FR")
+    ];
+
+    private async Task SetCulture(string culture)
+    {
+        if (CultureInfo.CurrentUICulture.Name != culture)
+        {
+            // Save to localStorage
+            await JSRuntime.InvokeVoidAsync("blazorCulture.set", culture);
+            
+            // Reload the page with culture query parameter
+            var uri = new Uri(NavigationManager.Uri)
+                .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
+            var query = $"?culture={Uri.EscapeDataString(culture)}";
+            NavigationManager.NavigateTo(uri + query, forceLoad: true);
+        }
+    }
+}

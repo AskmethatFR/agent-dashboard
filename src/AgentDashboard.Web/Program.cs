@@ -1,8 +1,13 @@
+using System.Globalization;
+using System.Text;
 using AgentDashboard.TicketTracking.Application;
 using AgentDashboard.TicketTracking.Infrastructure;
 using AgentDashboard.Web.Components;
 using AgentDashboard.Web.Endpoints;
+using AgentDashboard.Web.Middleware;
 using AgentDashboard.Web.Store;
+using AspNetCore.Localizer.Json.Extensions;
+using AspNetCore.Localizer.Json.JsonOptions;
 using Blazor.Redux;
 using Blazor.Redux.Core;
 using Blazor.Redux.Extensions;
@@ -18,6 +23,22 @@ if (string.IsNullOrEmpty(builder.Configuration["DATA_PATH"]))
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+// Configure JSON-based localization
+builder.Services.AddJsonLocalization(options =>
+{
+    options.ResourcesPath = "i18n";
+    options.UseEmbeddedResources = false;
+    options.SupportedCultureInfos = new HashSet<CultureInfo>
+    {
+        new CultureInfo("en-US"),
+        new CultureInfo("fr-FR")
+    };
+    options.LocalizationMode = LocalizationMode.I18n;
+    options.CacheDuration = TimeSpan.FromMinutes(30);
+    options.FileEncoding = Encoding.UTF8;
+    options.IgnoreJsonErrors = false;
+});
 
 builder.Services.AddTicketTrackingApplication();
 builder.Services.AddTicketTrackingInfrastructure();
@@ -56,6 +77,17 @@ app.UseStatusCodePagesWithReExecute("/not-found");
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();
+
+// Configure culture middleware (handles query string and cookie)
+app.UseMiddleware<CultureMiddleware>();
+
+// Configure request localization
+var supportedCultures = new[] { "en-US", "fr-FR" };
+var localizationOptions = new RequestLocalizationOptions()
+    .SetDefaultCulture(supportedCultures[0])
+    .AddSupportedCultures(supportedCultures)
+    .AddSupportedUICultures(supportedCultures);
+app.UseRequestLocalization(localizationOptions);
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()

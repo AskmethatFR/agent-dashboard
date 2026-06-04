@@ -1,22 +1,25 @@
+@using AspNetCore.Localizer.Json.Localizer
+@inject IJsonStringLocalizer<NavMenu> Localizer
+
 <nav class="nav" aria-label="primary">
     @foreach (var entry in Entries)
     {
         if (entry.IsActive)
         {
-            <button type="button" class="nav-item active" aria-current="page">@entry.Label</button>
+            <button type="button" class="nav-item active" aria-current="page">@Localizer[entry.TranslationKey]</button>
         }
         else
         {
-            <button type="button" class="nav-item" disabled aria-disabled="true" title="Coming in v1.1+">@entry.Label</button>
+            <button type="button" class="nav-item" disabled aria-disabled="true" title="@Localizer["ComingSoon"]">@Localizer[entry.TranslationKey]</button>
         }
     }
 </nav>
 
 @code {
-    private static readonly (string Label, bool IsActive)[] Entries =
+    private static readonly (string TranslationKey, bool IsActive)[] Entries =
     [
         ("Home", false),
-        ("Team Board", true),
+        ("TeamBoard", true),
         ("Sessions", false),
         ("Replay", false),
         ("Agent", false),

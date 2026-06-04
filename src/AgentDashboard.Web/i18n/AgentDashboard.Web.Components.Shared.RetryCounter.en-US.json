@@ -1,0 +1,5 @@
+{
+  "RetryCount": "Retry count: {0} of {1}",
+  "RetryCountWarning": "Retry count warning: {0} of {1}",
+  "RetryCountAtMaximum": "Retry count at maximum: {0} of {1}"
+}

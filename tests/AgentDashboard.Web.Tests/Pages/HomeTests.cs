@@ -8,6 +8,8 @@ using AgentDashboard.TicketTracking.Infrastructure.Boards;
 using AgentDashboard.Web.Components.Pages;
 using AgentDashboard.Web.Store;
 using AngleSharp.Dom;
+using AspNetCore.Localizer.Json.Extensions;
+using AspNetCore.Localizer.Json.JsonOptions;
 using Bunit;
 using Blazor.Redux;
 using Blazor.Redux.Core;
@@ -15,6 +17,8 @@ using Blazor.Redux.Extensions;
 using Blazor.Redux.Interfaces;
 using FluentAssertions;
 using Microsoft.Extensions.DependencyInjection;
+using System.Globalization;
+using System.Text;
 using Xunit;
 
 namespace AgentDashboard.Web.Tests.Pages;
@@ -88,6 +92,23 @@ public class HomeTests
     private static BunitContext BuildContext()
     {
         var ctx = new BunitContext();
+        
+        // Configure JSON localization
+        ctx.Services.AddJsonLocalization(options =>
+        {
+            options.ResourcesPath = "i18n";
+            options.UseEmbeddedResources = false;
+            options.SupportedCultureInfos = new HashSet<CultureInfo>
+            {
+                new CultureInfo("en-US"),
+                new CultureInfo("fr-FR")
+            };
+            options.LocalizationMode = LocalizationMode.I18n;
+            options.CacheDuration = TimeSpan.FromMinutes(30);
+            options.FileEncoding = Encoding.UTF8;
+            options.IgnoreJsonErrors = false;
+        });
+        
         ctx.Services.AddTicketTrackingApplication();
         ctx.Services.AddTicketTrackingInfrastructure();
         
