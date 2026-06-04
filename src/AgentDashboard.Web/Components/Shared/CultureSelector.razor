@@ -1,4 +1,5 @@
 @using System.Globalization
+@using System.Web
 @inject NavigationManager NavigationManager
 @inject IJSRuntime JSRuntime
 
@@ -32,10 +33,11 @@
             await JSRuntime.InvokeVoidAsync("blazorCulture.set", culture);
             
             // Reload the page with culture query parameter
-            var uri = new Uri(NavigationManager.Uri)
-                .GetComponents(UriComponents.PathAndQuery, UriFormat.Unescaped);
-            var query = $"?culture={Uri.EscapeDataString(culture)}";
-            NavigationManager.NavigateTo(uri + query, forceLoad: true);
+            var uriBuilder = new UriBuilder(NavigationManager.Uri);
+            var query = System.Web.HttpUtility.ParseQueryString(uriBuilder.Query);
+            query["culture"] = culture;
+            uriBuilder.Query = query.ToString();
+            NavigationManager.NavigateTo(uriBuilder.Uri.ToString(), forceLoad: true);
         }
     }
 }
