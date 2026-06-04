@@ -19,4 +19,11 @@
     <PackageReference Include="AspNetCore.Localizer.Json" />
   </ItemGroup>
 
+  <!-- Localization: Copy JSON files to output directory -->
+  <ItemGroup>
+    <Content Update="i18n\**\*.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>

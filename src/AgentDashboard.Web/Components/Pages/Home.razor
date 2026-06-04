@@ -2,21 +2,23 @@
 @using AgentDashboard.TicketTracking.Application.Queries.GetBoard.Dtos
 @using AgentDashboard.Web.Components.Board
 @using AgentDashboard.Web.Store
+@using AspNetCore.Localizer.Json.Localizer
 @using Blazor.Redux.Core
 @using Blazor.Redux.Interfaces
 @implements IDisposable
 @rendermode InteractiveServer
 @inject Blazor.Redux.Core.Store Store
 @inject IAsyncDispatcher Dispatcher
+@inject IJsonStringLocalizer<Home> Localizer
 
-<PageTitle>team/ — Board</PageTitle>
+<PageTitle>@Localizer["BoardTitle"]</PageTitle>
 
 @if (_board is null && _isLoading)
 {
     <div class="board-wrap">
         <div class="board-header">
             <div class="counts">
-                <span>Loading...</span>
+                <span>@Localizer["Loading"]</span>
             </div>
         </div>
     </div>
@@ -26,7 +28,7 @@ else if (_board is null)
     <div class="board-wrap">
         <div class="board-header">
             <div class="counts">
-                <span>No data available</span>
+                <span>@Localizer["NoDataAvailable"]</span>
             </div>
         </div>
     </div>
@@ -36,11 +38,11 @@ else
     <div class="board-wrap">
         <div class="board-header">
             <div class="counts">
-                <span><strong>@_board.Columns.Where(c => c.Label != "Done").Sum(c => c.Tickets.Count)</strong> active</span>
-                <span style="color: var(--tx-3)">· @_board.Columns.Sum(c => c.Tickets.Count) total today</span>
+                <span><strong>@_board.Columns.Where(c => c.Label != "Done").Sum(c => c.Tickets.Count)</strong> @Localizer["Active"]</span>
+                <span style="color: var(--tx-3)">· @_board.Columns.Sum(c => c.Tickets.Count) @Localizer["TotalToday"]</span>
             </div>
             <div class="board-actions">
-                <button class="filter-btn">Filter <span class="caret">▾</span></button>
+                <button class="filter-btn">@Localizer["Filter"] <span class="caret">▾</span></button>
             </div>
         </div>
 

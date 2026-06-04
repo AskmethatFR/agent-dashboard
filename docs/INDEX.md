@@ -31,6 +31,7 @@
 | `architecture-overview` | System shape, bounded contexts, layers | current | 2026-05-30 | `[[ticket-tracking-write-side]]`, `[[adr-003]]`, `[[adr-008]]`, `[[adr-010]]` | `docs/technical/architecture.md` |
 | `mutation-testing-strategy` | Mutation testing (Stryker.NET) — per-bounded-context scoring strategy | current | 2026-05-31 | `[[adr-012]]`, `[[adr-013]]` | `docs/mutation-testing.md` |
 | `ticket-tracking-write-side` | TicketTracking write-side — EF Core code-first persistence | current | 2026-05-31 | `[[architecture-overview]]`, `[[adr-005]]`, `[[adr-008]]`, `[[adr-009]]`, `[[adr-010]]`, `[[adr-011]]`, `[[adr-012]]` | `docs/technical/ticket-tracking-write-side.md` |
+| `localization` | JSON-based localization with AspNetCore.Localizer.Json | current | 2026-06-04 | `[[architecture-overview]]` | `docs/technical/localization.md` |
 
 ## Functional nodes (owner: pm)
 

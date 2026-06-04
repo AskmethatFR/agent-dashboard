@@ -1,0 +1,45 @@
+@using System.Globalization
+@using System.Web
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+
+<div class="culture-selector" role="region" aria-label="Language selector">
+    @foreach (var culture in SupportedCultures)
+    {
+        var isCurrent = CultureInfo.CurrentUICulture.Name == culture.Name;
+        <button 
+            type="button"
+            class="culture-btn @(isCurrent ? "active" : "")"
+            @onclick="() => SetCulture(culture.Name)"
+            aria-pressed="@isCurrent"
+            aria-label="@culture.NativeName"
+            title="@culture.NativeName">
+            @culture.TwoLetterISOLanguageName.ToUpper()
+        </button>
+    }
+</div>
+
+@code {
+    private readonly CultureInfo[] SupportedCultures = [
+        new CultureInfo("en-US"),
+        new CultureInfo("fr-FR")
+    ];
+
+    private async Task SetCulture(string culture)
+    {
+        if (CultureInfo.CurrentUICulture.Name != culture)
+        {
+            // Save to localStorage
+            await JSRuntime.InvokeVoidAsync("blazorCulture.set", culture);
+            
+            // Reload the page with culture query parameter
+            var uri = new Uri(NavigationManager.Uri);
+            var queryString = uri.Query.TrimStart('?');
+            var queryDict = System.Web.HttpUtility.ParseQueryString(queryString);
+            queryDict["culture"] = culture;
+            var newQuery = queryDict.ToString();
+            var newUri = $"{uri.Scheme}://{uri.Host}:{uri.Port}{uri.PathAndQuery.Split('?')[0]}?{newQuery}";
+            NavigationManager.NavigateTo(newUri, forceLoad: true);
+        }
+    }
+}

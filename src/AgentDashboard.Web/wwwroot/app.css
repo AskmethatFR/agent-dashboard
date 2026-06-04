@@ -553,6 +553,36 @@ h1:focus {
 .retry-max {
     color: var(--tx-3);
 }
+
+/* ============ CULTURE SELECTOR ============ */
+.culture-selector {
+    display: flex;
+    gap: 4px;
+    margin-left: 8px;
+}
+
+.culture-btn {
+    padding: 4px 8px;
+    border: 1px solid var(--bd-2);
+    border-radius: var(--r-1);
+    color: var(--tx-1);
+    font-family: var(--ff-mono);
+    font-size: 11px;
+    background: var(--bg-2);
+    transition: all 90ms;
+}
+
+.culture-btn:hover {
+    background: var(--bg-3);
+    color: var(--tx-0);
+    border-color: var(--bd-3);
+}
+
+.culture-btn.active {
+    background: var(--st-info);
+    color: white;
+    border-color: var(--st-info);
+}
 /* ============ LIVE CLOCK ============ */
 .live-clock {
     font-family: var(--ff-mono);

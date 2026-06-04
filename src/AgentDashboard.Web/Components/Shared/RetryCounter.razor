@@ -1,4 +1,6 @@
 @using AgentDashboard.TicketTracking.Domain.Tickets
+@using AspNetCore.Localizer.Json.Localizer
+@inject IJsonStringLocalizer<RetryCounter> Localizer
 
 <span 
     class="@GetRetryClass() retry-counter mono"
@@ -21,8 +23,8 @@
 
     private string GetAriaLabel()
     {
-        if (Current >= Max) return $"Retry count at maximum: {Current} of {Max}";
-        if (Current == Retry.WarnAt) return $"Retry count warning: {Current} of {Max}";
-        return $"Retry count: {Current} of {Max}";
+        if (Current >= Max) return string.Format(Localizer["RetryCountAtMaximum"], Current, Max);
+        if (Current == Retry.WarnAt) return string.Format(Localizer["RetryCountWarning"], Current, Max);
+        return string.Format(Localizer["RetryCount"], Current, Max);
     }
 }
